@@ -8,8 +8,8 @@
 		updateOption,
 		removeOption,
 		removeComponent
-	} from '../stores/surveyStore.js';
-	import type { SurveyComponent } from '../types/survey.js';
+	} from '../../stores/surveyStore.js';
+	import type { SurveyComponent } from '../../types/survey.js';
 
 	export let component: SurveyComponent | null = null;
 
