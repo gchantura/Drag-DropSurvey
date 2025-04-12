@@ -1,8 +1,15 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { Label, Input } from 'flowbite-svelte';
 
 	import type { SurveyComponent } from '../types/survey.js';
+
+	// Import all subcomponents
+	import TextComponent from './MainComponents/TextComponent.svelte';
+	import InputComponent from './MainComponents/InputComponent.svelte';
+	import TextAreaComponent from './MainComponents/TextAreaComponent.svelte';
+	import CheckboxComponent from './MainComponents/CheckboxComponent.svelte';
+	import RadioComponent from './MainComponents/RadioComponent.svelte';
+	import DropdownComponent from './MainComponents/DropdownComponent.svelte';
 
 	export let component: SurveyComponent;
 	export let isSelected: boolean = false;
@@ -21,7 +28,7 @@
 
 	function onResizeHandle(e: MouseEvent) {
 		dispatch('startResize', { event: e, component });
-		e.stopPropagation(); // Prevent drag from starting
+		e.stopPropagation();
 	}
 
 	function onSelect(e: MouseEvent | KeyboardEvent) {
@@ -32,11 +39,9 @@
 		) {
 			return;
 		}
-
 		if (e.type === 'keydown') {
 			e.preventDefault();
 		}
-
 		dispatch('select', component);
 	}
 </script>
@@ -44,8 +49,8 @@
 <div
 	class="component {isSelected ? 'selected' : ''}"
 	style="top: {component.y}px; left: {component.x}px; width: {component.width}px; height: {component.height}px; 
-        font-family: {component.fontFamily}; font-size: {component.fontSize}px; 
-        color: {component.color};"
+		font-family: {component.fontFamily}; font-size: {component.fontSize}px; 
+		color: {component.color};"
 	on:mousedown={onMouseDown}
 	on:click|stopPropagation={() => dispatch('select', component)}
 	on:keydown={onSelect}
@@ -55,64 +60,38 @@
 	aria-pressed={isSelected}
 >
 	<div class="component-content">
-		<!-- Component type specific rendering -->
 		{#if component.type === 'text'}
-			<p>{component.label}</p>
+			<TextComponent label={component.label} />
 		{:else if component.type === 'input'}
-			<label for={`input-${component.id}`}>{component.label} {component.required ? '*' : ''}</label>
-			<Input
-				id={`input-${component.id}`}
-				type="text"
-				class="mt-1 w-full rounded border p-1"
-				placeholder="Enter text..."
-			/>
+			<InputComponent id={component.id} label={component.label} required={component.required} />
 		{:else if component.type === 'textarea'}
-			<label for={`textarea-${component.id}`}
-				>{component.label} {component.required ? '*' : ''}</label
-			>
-			<textarea
-				id={`textarea-${component.id}`}
-				class="mt-1 w-full rounded border p-1"
-				placeholder="Enter Comment"
-				on:mousedown|stopPropagation
-			></textarea>
+			<TextAreaComponent id={component.id} label={component.label} required={component.required} />
 		{:else if component.type === 'checkbox'}
-			<fieldset>
-				<legend>{component.label} {component.required ? '*' : ''}</legend>
-				{#each component.options as option, i}
-					<div class="mt-1 flex items-center text-center">
-						<input type="checkbox" id={`${component.id}-opt-${i}`} class="mr-2" />
-						<label for={`${component.id}-opt-${i}`}>{option}</label>
-					</div>
-				{/each}
-			</fieldset>
+			<CheckboxComponent
+				id={component.id}
+				label={component.label}
+				options={component.options}
+				required={component.required}
+			/>
 		{:else if component.type === 'radio'}
-			<fieldset>
-				<legend>{component.label} {component.required ? '*' : ''}</legend>
-				{#each component.options as option, i}
-					<div class="mt-1 flex items-center">
-						<input type="radio" name={component.id} id={`${component.id}-opt-${i}`} class="mr-2" />
-						<label for={`${component.id}-opt-${i}`}>{option}</label>
-					</div>
-				{/each}
-			</fieldset>
+			<RadioComponent
+				id={component.id}
+				label={component.label}
+				options={component.options}
+				required={component.required}
+			/>
 		{:else if component.type === 'dropdown'}
-			<label for={`select-${component.id}`}>{component.label} {component.required ? '*' : ''}</label
-			>
-			<select
-				id={`select-${component.id}`}
-				class="mt-1 w-full rounded border p-1"
-				on:mousedown|stopPropagation
-			>
-				<option value="">-- Select --</option>
-				{#each component.options as option}
-					<option value={option}>{option}</option>
-				{/each}
-			</select>
+			<DropdownComponent
+				id={component.id}
+				label={component.label}
+				options={component.options}
+				required={component.required}
+			/>
+		{:else}
+			<p>Unknown component type: {component.type}</p>
 		{/if}
 	</div>
 
-	<!-- Resize handle inside component -->
 	<div class="resize-handle" on:mousedown={onResizeHandle} aria-hidden="true"></div>
 </div>
 
@@ -123,7 +102,6 @@
 
 	.component-content {
 		padding: 8px;
-		/* No border or box shadow, just content */
 	}
 
 	.resize-handle {
@@ -134,6 +112,5 @@
 		height: 14px;
 		background-color: #3b82f6;
 		cursor: nwse-resize;
-		display: block;
 	}
 </style>

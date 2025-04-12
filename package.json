@@ -7,7 +7,6 @@
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"prepack": "svelte-kit sync && svelte-package && publint",
-		"format": "prettier --write .",
 		"lint": "prettier --check ."
 	},
 	"files": [
