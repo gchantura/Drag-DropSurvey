@@ -42,8 +42,8 @@
 	let gridSize = getGridSize();
 
 	// Guides
-	let horizontalGuides: number[] = [100, 300];
-	let verticalGuides: number[] = [100, 300, 500];
+	let horizontalGuides: number[] = [100, 200];
+	let verticalGuides: number[] = [100, 300];
 	let showGuides = true;
 	let draggingGuide: { direction: 'horizontal' | 'vertical'; index: number } | null = null;
 
@@ -617,7 +617,6 @@
 	}
 </script>
 
-// lib/components/Canvas.svelte
 <div class="flex h-full w-full flex-col" bind:this={containerRef}>
 	<!-- Toolbar -->
 	<div class="flex items-center justify-between border-b border-gray-300 bg-gray-100 p-2">
