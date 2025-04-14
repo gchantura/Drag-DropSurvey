@@ -10,6 +10,11 @@
 	import CheckboxComponent from './MainComponents/CheckboxComponent.svelte';
 	import RadioComponent from './MainComponents/RadioComponent.svelte';
 	import DropdownComponent from './MainComponents/DropdownComponent.svelte';
+	import FileAttachmentComponent from './MainComponents/FileAttachmentComponent.svelte';
+	import FileUploadComponent from './MainComponents/FileUploadComponent.svelte';
+	import SectionComponent from './MainComponents/SectionComponent.svelte';
+	import TitleComponent from './MainComponents/TitleComponent.svelte';
+	import IntroductionComponent from './MainComponents/IntroductionComponent.svelte';
 
 	export let component: SurveyComponent;
 	export let isSelected: boolean = false;
@@ -50,7 +55,7 @@
 	class="component {isSelected ? 'selected' : ''}"
 	style="top: {component.y}px; left: {component.x}px; width: {component.width}px; height: {component.height}px; 
 		font-family: {component.fontFamily}; font-size: {component.fontSize}px; 
-		color: {component.color};"
+		color: {component.color}; background-color: {component.bgColor};"
 	on:mousedown={onMouseDown}
 	on:click|stopPropagation={() => dispatch('select', component)}
 	on:keydown={onSelect}
@@ -87,6 +92,27 @@
 				options={component.options}
 				required={component.required}
 			/>
+		{:else if component.type === 'fileAttachment'}
+			<FileAttachmentComponent
+				id={component.id}
+				label={component.label}
+				src={component.src || ''}
+				required={component.required}
+			/>
+		{:else if component.type === 'fileUpload'}
+			<FileUploadComponent
+				id={component.id}
+				label={component.label}
+				required={component.required}
+				acceptedFileTypes={component.acceptedFileTypes || '.pdf,.doc,.docx,.jpg,.png'}
+				maxFileSize={component.maxFileSize || 5}
+			/>
+		{:else if component.type === 'section'}
+			<SectionComponent label={component.label} description={component.description || ''} />
+		{:else if component.type === 'title'}
+			<TitleComponent label={component.label} />
+		{:else if component.type === 'introduction'}
+			<IntroductionComponent label={component.label} description={component.description || ''} />
 		{:else}
 			<p>Unknown component type: {component.type}</p>
 		{/if}
@@ -98,10 +124,18 @@
 <style>
 	.component {
 		position: absolute;
+		border: 1px solid transparent;
+	}
+
+	.component.selected {
+		border: 1px solid #3b82f6;
+		box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
 	}
 
 	.component-content {
 		padding: 8px;
+		width: 100%;
+		height: 100%;
 	}
 
 	.resize-handle {

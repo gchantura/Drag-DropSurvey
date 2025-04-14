@@ -26,15 +26,13 @@ export function addComponent(type: ComponentType) {
             options: type === 'checkbox' || type === 'radio' || type === 'dropdown'
                 ? ['Option 1', 'Option 2']
                 : [],
-            description: undefined,
-            src: '',
+            description: '',
+            src: type === 'fileAttachment' ? '' : undefined,
             maxRating: 0,
-            columns: function (columns: any): unknown {
-                throw new Error('Function not implemented.');
-            },
-            rows: function (rows: any): unknown {
-                throw new Error('Function not implemented.');
-            }
+            acceptedFileTypes: type === 'fileUpload' ? '.pdf,.doc,.docx,.jpg,.png' : undefined,
+            maxFileSize: type === 'fileUpload' ? 5 : undefined, // In MB
+            columns: [],
+            rows: []
         }
     ]);
 }

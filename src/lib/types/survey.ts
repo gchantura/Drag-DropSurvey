@@ -1,5 +1,16 @@
 // lib/types/survey.ts
-export type ComponentType = 'text' | 'input' | 'textarea' | 'checkbox' | 'radio' | 'dropdown' | 'file'
+export type ComponentType =
+    'text' |
+    'input' |
+    'textarea' |
+    'checkbox' |
+    'radio' |
+    'dropdown' |
+    'fileAttachment' |
+    'fileUpload' |
+    'section' |
+    'title' |
+    'introduction';
 
 export interface SurveyComponent {
     id: string;
@@ -15,7 +26,11 @@ export interface SurveyComponent {
     bgColor: string;
     required: boolean;
     options: string[];
-    // File specific properties
-    multiple?: boolean;
-    accept?: string;
+    description?: string;
+    src?: string;
+    maxRating?: number;
+    acceptedFileTypes?: string;
+    maxFileSize?: number; // In MB
+    columns: any;
+    rows: any;
 }

@@ -1,4 +1,3 @@
-<!-- lib/components/PropertiesEditor.svelte -->
 <script lang="ts">
 	import { Label, Checkbox } from 'flowbite-svelte';
 
@@ -49,90 +48,152 @@
 			/>
 		</div>
 
+		<!-- Description field for components that use it -->
+		{#if ['section', 'introduction'].includes(component.type)}
+			<div class="mb-3">
+				<label for="comp-description" class="mb-1 block text-sm font-medium">Description:</label>
+				<textarea
+					id="comp-description"
+					class="w-full rounded border p-1"
+					rows="3"
+					value={component.description || ''}
+					on:input={(e) => handleInputChange(e, 'description')}
+				></textarea>
+			</div>
+		{/if}
+
+		<!-- File source URL for fileAttachment -->
+		{#if component.type === 'fileAttachment'}
+			<div class="mb-3">
+				<label for="comp-file-src" class="mb-1 block text-sm font-medium">File URL:</label>
+				<input
+					id="comp-file-src"
+					type="text"
+					class="w-full rounded border p-1"
+					value={component.src || ''}
+					on:input={(e) => handleInputChange(e, 'src')}
+				/>
+			</div>
+		{/if}
+
+		<!-- File upload settings -->
+		{#if component.type === 'fileUpload'}
+			<div class="mb-3">
+				<label for="comp-accepted-types" class="mb-1 block text-sm font-medium"
+					>Accepted File Types:</label
+				>
+				<input
+					id="comp-accepted-types"
+					type="text"
+					class="w-full rounded border p-1"
+					value={component.acceptedFileTypes || '.pdf,.doc,.docx,.jpg,.png'}
+					on:input={(e) => handleInputChange(e, 'acceptedFileTypes')}
+				/>
+				<p class="mt-1 text-xs text-gray-500">Comma-separated file extensions (e.g. .pdf,.jpg)</p>
+			</div>
+			<div class="mb-3">
+				<label for="comp-max-size" class="mb-1 block text-sm font-medium">Max File Size (MB):</label
+				>
+				<input
+					id="comp-max-size"
+					type="number"
+					min="1"
+					max="100"
+					class="w-full rounded border p-1"
+					value={component.maxFileSize || 5}
+					on:input={(e) => handleInputChange(e, 'maxFileSize')}
+				/>
+			</div>
+		{/if}
+
 		<!-- Font family -->
-		<div class="mb-3">
-			<label for="comp-font-family" class="mb-1 block text-sm font-medium">Font Family:</label>
-			<select
-				id="comp-font-family"
-				class="w-full rounded border p-1"
-				value={component.fontFamily}
-				on:change={(e) => handleInputChange(e, 'fontFamily')}
-			>
-				{#each fontFamilies as font}
-					<option value={font}>{font}</option>
-				{/each}
-			</select>
-		</div>
-
-		<!-- Font size -->
-		<div class="mb-3">
-			<label for="comp-font-size" class="mb-1 block text-sm font-medium">Font Size:</label>
-			<select
-				id="comp-font-size"
-				class="w-full rounded border p-1"
-				value={component.fontSize}
-				on:change={(e) => handleInputChange(e, 'fontSize')}
-			>
-				{#each fontSizes as size}
-					<option value={size}>{size}px</option>
-				{/each}
-			</select>
-		</div>
-
-		<!-- Text color -->
-		<div class="mb-3">
-			<label for="comp-text-color" class="mb-1 block text-sm font-medium">Text Color:</label>
-			<div class="flex items-center">
-				<input
-					id="comp-text-color"
-					type="color"
-					class="mr-2"
-					value={component.color}
-					on:input={(e) => handleInputChange(e, 'color')}
-				/>
-				<input
-					id="comp-text-color-hex"
-					type="text"
-					class="flex-1 rounded border p-1"
-					value={component.color}
-					on:input={(e) => handleInputChange(e, 'color')}
-				/>
+		{#if !['fileAttachment', 'fileUpload'].includes(component.type)}
+			<div class="mb-3">
+				<label for="comp-font-family" class="mb-1 block text-sm font-medium">Font Family:</label>
+				<select
+					id="comp-font-family"
+					class="w-full rounded border p-1"
+					value={component.fontFamily}
+					on:change={(e) => handleInputChange(e, 'fontFamily')}
+				>
+					{#each fontFamilies as font}
+						<option value={font}>{font}</option>
+					{/each}
+				</select>
 			</div>
-		</div>
 
-		<!-- Background color -->
-		<div class="mb-3">
-			<label for="comp-bg-color" class="mb-1 block text-sm font-medium">Background Color:</label>
-			<div class="flex items-center">
-				<input
-					id="comp-bg-color"
-					type="color"
-					class="mr-2"
-					value={component.bgColor}
-					on:input={(e) => handleInputChange(e, 'bgColor')}
-				/>
-				<input
-					id="comp-bg-color-hex"
-					type="text"
-					class="flex-1 rounded border p-1"
-					value={component.bgColor}
-					on:input={(e) => handleInputChange(e, 'bgColor')}
-				/>
+			<!-- Font size -->
+			<div class="mb-3">
+				<label for="comp-font-size" class="mb-1 block text-sm font-medium">Font Size:</label>
+				<select
+					id="comp-font-size"
+					class="w-full rounded border p-1"
+					value={component.fontSize}
+					on:change={(e) => handleInputChange(e, 'fontSize')}
+				>
+					{#each fontSizes as size}
+						<option value={size}>{size}px</option>
+					{/each}
+				</select>
 			</div>
-		</div>
 
-		<!-- Required field -->
-		<div class="mb-3 flex items-center">
-			<Label color="red" class="mt-4 flex items-center font-bold">
-				<Checkbox
-					type="checkbox"
-					id="required-field"
-					class="mr-2"
-					checked={component.required}
-					on:change={(e) => handleInputChange(e, 'required')}
-				/> Required
-			</Label>
-		</div>
+			<!-- Text color -->
+			<div class="mb-3">
+				<label for="comp-text-color" class="mb-1 block text-sm font-medium">Text Color:</label>
+				<div class="flex items-center">
+					<input
+						id="comp-text-color"
+						type="color"
+						class="mr-2"
+						value={component.color}
+						on:input={(e) => handleInputChange(e, 'color')}
+					/>
+					<input
+						id="comp-text-color-hex"
+						type="text"
+						class="flex-1 rounded border p-1"
+						value={component.color}
+						on:input={(e) => handleInputChange(e, 'color')}
+					/>
+				</div>
+			</div>
+
+			<!-- Background color -->
+			<div class="mb-3">
+				<label for="comp-bg-color" class="mb-1 block text-sm font-medium">Background Color:</label>
+				<div class="flex items-center">
+					<input
+						id="comp-bg-color"
+						type="color"
+						class="mr-2"
+						value={component.bgColor}
+						on:input={(e) => handleInputChange(e, 'bgColor')}
+					/>
+					<input
+						id="comp-bg-color-hex"
+						type="text"
+						class="flex-1 rounded border p-1"
+						value={component.bgColor}
+						on:input={(e) => handleInputChange(e, 'bgColor')}
+					/>
+				</div>
+			</div>
+		{/if}
+
+		<!-- Required field (only for form input components) -->
+		{#if ['input', 'textarea', 'checkbox', 'radio', 'dropdown', 'fileUpload'].includes(component.type)}
+			<div class="mb-3 flex items-center">
+				<Label color="red" class="mt-4 flex items-center font-bold">
+					<Checkbox
+						type="checkbox"
+						id="required-field"
+						class="mr-2"
+						checked={component.required}
+						on:change={(e) => handleInputChange(e, 'required')}
+					/> Required
+				</Label>
+			</div>
+		{/if}
 
 		<!-- Options for multi-choice components -->
 		{#if ['checkbox', 'radio', 'dropdown'].includes(component.type)}

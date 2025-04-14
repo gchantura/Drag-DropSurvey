@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { saveSurvey, loadSurvey, clearSurvey } from '$lib/stores/surveyStore.ts';
-	import ComponentButtons from './SideBarComponents/ComponentButtons.svelte';
+	import ComponentToolbar from './SideBarComponents/ComponentToolbar.svelte';
 	import SurveyActions from './SideBarComponents/SurveyActions.svelte';
 	import PropertiesEditor from './SideBarComponents/PropertiesEditor.svelte';
 	import SurveyAlert from './SideBarComponents/SurveyAlert.svelte';
@@ -43,8 +43,8 @@
 <div class="h-full w-full overflow-y-auto bg-gray-100 p-4">
 	<h2 class="mb-4 text-xl font-bold">Survey Builder</h2>
 
-	<!-- Component Buttons -->
-	<ComponentButtons />
+	<!-- Component Toolbar - Replaced ComponentButtons -->
+	<ComponentToolbar />
 
 	<!-- Survey Actions -->
 	<SurveyActions onSave={handleSave} onLoad={handleLoad} onClear={handleClear} />
