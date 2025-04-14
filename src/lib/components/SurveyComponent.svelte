@@ -18,6 +18,8 @@
 
 	export let component: SurveyComponent;
 	export let isSelected: boolean = false;
+	// svelte-ignore export_let_unused
+	export let isActive = false;
 
 	const dispatch = createEventDispatcher<{
 		select: SurveyComponent;

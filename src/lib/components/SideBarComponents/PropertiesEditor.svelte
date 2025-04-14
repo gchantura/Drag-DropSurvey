@@ -6,7 +6,7 @@
 		addOption,
 		updateOption,
 		removeOption,
-		removeComponent
+		deleteComponent
 	} from '../../stores/surveyStore.js';
 	import type { SurveyComponent } from '../../types/survey.js';
 
@@ -278,7 +278,7 @@
 		<!-- Delete component -->
 		<button
 			class="w-full rounded bg-red-600 p-2 text-white"
-			on:click={() => removeComponent(component.id)}
+			on:click={() => deleteComponent(component.id)}
 		>
 			Delete Component
 		</button>

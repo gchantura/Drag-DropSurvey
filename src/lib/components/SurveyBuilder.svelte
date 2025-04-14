@@ -9,8 +9,8 @@
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (selectedComponent && e.key === 'Delete') {
-			import('$lib/stores/surveyStore.ts').then(({ removeComponent }) => {
-				removeComponent(selectedComponent!.id);
+			import('$lib/stores/surveyStore.ts').then(({ deleteComponent }) => {
+				deleteComponent(selectedComponent!.id);
 				selectedComponent = null;
 			});
 		}

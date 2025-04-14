@@ -10,9 +10,13 @@ export type ComponentType =
     'fileUpload' |
     'section' |
     'title' |
-    'introduction';
+    'introduction' |
+    'matrix' |
+    'rating';
 
 export interface SurveyComponent {
+    startX?: number;
+    startY?: number;
     id: string;
     type: ComponentType;
     label: string;
