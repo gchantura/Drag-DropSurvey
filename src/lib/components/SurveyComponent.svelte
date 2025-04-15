@@ -15,6 +15,8 @@
 	import SectionComponent from './MainComponents/SectionComponent.svelte';
 	import TitleComponent from './MainComponents/TitleComponent.svelte';
 	import IntroductionComponent from './MainComponents/IntroductionComponent.svelte';
+	import MatrixComponent from './MainComponents/MatrixComponent.svelte';
+	import RatingComponent from './MainComponents/RatingComponent.svelte';
 
 	export let component: SurveyComponent;
 	export let isSelected: boolean = false;
@@ -99,6 +101,21 @@
 				id={component.id}
 				label={component.label}
 				src={component.src || ''}
+				required={component.required}
+			/>
+		{:else if component.type === 'matrix'}
+			<MatrixComponent
+				id={component.id}
+				label={component.label}
+				columns={component.columns}
+				rows={component.rows}
+				required={component.required}
+			/>
+		{:else if component.type === 'rating'}
+			<RatingComponent
+				id={component.id}
+				label={component.label}
+				maxRating={component.maxRating || 5}
 				required={component.required}
 			/>
 		{:else if component.type === 'fileUpload'}

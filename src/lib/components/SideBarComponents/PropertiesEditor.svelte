@@ -1,12 +1,17 @@
 <script lang="ts">
 	import { Label, Checkbox } from 'flowbite-svelte';
-
 	import {
 		updateComponent,
 		addOption,
 		updateOption,
 		removeOption,
-		deleteComponent
+		deleteComponent,
+		addRow,
+		removeRow,
+		updateRow,
+		addColumn,
+		removeColumn,
+		updateColumn
 	} from '../../stores/surveyStore.js';
 	import type { SurveyComponent } from '../../types/survey.js';
 
@@ -14,8 +19,6 @@
 
 	const fontFamilies = ['Arial', 'Times New Roman', 'Helvetica', 'Courier New', 'Georgia'];
 	const fontSizes = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32];
-	const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF'];
-	const bgColors = ['transparent', '#FFFFFF', '#F0F0F0', '#FFE0E0', '#E0FFE0', '#E0E0FF'];
 
 	function handleInputChange(e: Event, field: string) {
 		if (!component) return;
@@ -107,7 +110,7 @@
 		{/if}
 
 		<!-- Font family -->
-		{#if !['fileAttachment', 'fileUpload'].includes(component.type)}
+		{#if !['fileAttachment', 'fileUpload', 'matrix', 'rating'].includes(component.type)}
 			<div class="mb-3">
 				<label for="comp-font-family" class="mb-1 block text-sm font-medium">Font Family:</label>
 				<select
@@ -158,6 +161,21 @@
 				</div>
 			</div>
 
+			<!-- Add rating controls -->
+			{#if component.type === 'rating'}
+				<div class="mb-3">
+					<label for="comp-max-rating" class="mb-1 block text-sm font-medium">Max Rating:</label>
+					<input
+						id="comp-max-rating"
+						type="number"
+						min="1"
+						max="10"
+						class="w-full rounded border p-1"
+						value={component.maxRating || 5}
+						on:input={(e) => handleInputChange(e, 'maxRating')}
+					/>
+				</div>
+			{/if}
 			<!-- Background color -->
 			<div class="mb-3">
 				<label for="comp-bg-color" class="mb-1 block text-sm font-medium">Background Color:</label>
@@ -181,7 +199,7 @@
 		{/if}
 
 		<!-- Required field (only for form input components) -->
-		{#if ['input', 'textarea', 'checkbox', 'radio', 'dropdown', 'fileUpload'].includes(component.type)}
+		{#if ['input', 'textarea', 'checkbox', 'radio', 'dropdown', 'fileUpload', 'matrix', 'rating'].includes(component.type)}
 			<div class="mb-3 flex items-center">
 				<Label color="red" class="mt-4 flex items-center font-bold">
 					<Checkbox
@@ -282,5 +300,68 @@
 		>
 			Delete Component
 		</button>
+		<!-- Matrix-->
+		{#if component.type === 'matrix'}
+			<div class="mb-3">
+				<span class="mb-1 block text-sm font-medium">Matrix Rows:</span>
+				<ul class="space-y-2">
+					{#each component.rows as row, i}
+						<li class="flex items-center">
+							<input
+								type="text"
+								class="mr-2 flex-1 rounded border p-1"
+								value={row}
+								on:input={(e) => updateRow(component.id, i, (e.target as HTMLInputElement).value)}
+							/>
+							<button
+								class="rounded bg-red-500 p-1 text-white"
+								on:click={() => removeRow(component.id, i)}
+							>
+								×
+							</button>
+						</li>
+					{/each}
+					<li>
+						<button
+							class="w-full rounded bg-blue-500 p-1 text-white"
+							on:click={() => addRow(component.id)}
+						>
+							Add Row
+						</button>
+					</li>
+				</ul>
+			</div>
+
+			<div class="mb-3">
+				<span class="mb-1 block text-sm font-medium">Matrix Columns:</span>
+				<ul class="space-y-2">
+					{#each component.columns as column, i}
+						<li class="flex items-center">
+							<input
+								type="text"
+								class="mr-2 flex-1 rounded border p-1"
+								value={column}
+								on:input={(e) =>
+									updateColumn(component.id, i, (e.target as HTMLInputElement).value)}
+							/>
+							<button
+								class="rounded bg-red-500 p-1 text-white"
+								on:click={() => removeColumn(component.id, i)}
+							>
+								×
+							</button>
+						</li>
+					{/each}
+					<li>
+						<button
+							class="w-full rounded bg-blue-500 p-1 text-white"
+							on:click={() => addColumn(component.id)}
+						>
+							Add Column
+						</button>
+					</li>
+				</ul>
+			</div>
+		{/if}
 	</div>
 {/if}

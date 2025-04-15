@@ -5,6 +5,7 @@
 	import PropertiesEditor from './SideBarComponents/PropertiesEditor.svelte';
 	import SurveyAlert from './SideBarComponents/SurveyAlert.svelte';
 	import type { SurveyComponent } from '$lib/types/survey.ts';
+	import { DarkMode } from 'flowbite-svelte';
 
 	export let selectedComponent: SurveyComponent | null = null;
 	let alertMessage = '';
@@ -42,7 +43,7 @@
 
 <div class="h-full w-full overflow-y-auto bg-gray-100 p-4">
 	<h2 class="mb-4 text-xl font-bold">Survey Builder</h2>
-
+	<DarkMode />
 	<!-- Component Toolbar - Replaced ComponentButtons -->
 	<ComponentToolbar />
 
