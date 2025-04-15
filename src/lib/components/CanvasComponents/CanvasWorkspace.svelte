@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import SurveyComponent from './SurveyComponent.svelte';
+	import SurveyComponent from '../SurveyComponent.svelte';
 	import CanvasRuler from './CanvasRuler.svelte';
 	import CanvasGuide from './CanvasGuide.svelte';
 	import CanvasGrid from './CanvasGrid.svelte';
