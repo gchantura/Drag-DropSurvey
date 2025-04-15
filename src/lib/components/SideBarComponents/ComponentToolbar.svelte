@@ -13,7 +13,7 @@
 		{ type: 'fileUpload', label: 'File Upload', icon: '📤' },
 		{ type: 'section', label: 'Section', icon: '📑' },
 		{ type: 'title', label: 'Title', icon: '🔖' },
-		{ type: 'introduction', label: 'Introduction', icon: '📋' },
+		{ type: 'introduction', label: 'Header', icon: '📋' },
 		{ type: 'matrix', label: 'Matrix', icon: '🔢' },
 		{ type: 'rating', label: 'Rating', icon: '⭐' }
 	];

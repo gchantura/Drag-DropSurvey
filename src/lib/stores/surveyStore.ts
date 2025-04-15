@@ -33,9 +33,8 @@ export function addComponent(type: ComponentType) {
             maxFileSize: type === 'fileUpload' ? 5 : undefined, // In MB
             columns: type === 'matrix' ? ['Column 1', 'Column 2'] : [],
             rows: type === 'matrix' ? ['Row 1', 'Row 2'] : [],
-            // Adding startX and startY properties for drag operations
-            startX: 50,
-            startY: 50
+            startX: 2000,
+            startY: 2000
         }
     ]);
 }

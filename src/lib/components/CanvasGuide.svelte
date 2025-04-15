@@ -6,6 +6,7 @@
 	export let index: number;
 
 	const dispatch = createEventDispatcher();
+	const isHorizontal = direction === 'horizontal';
 
 	function startDrag(event: MouseEvent) {
 		dispatch('startMove', { direction, index });
@@ -18,37 +19,50 @@
 	}
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<!-- svelte-ignore a11y_positive_tabindex -->
+<!-- svelte-ignore a11y_positive_tabindex -->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div
-	class="guide absolute {direction === 'horizontal' ? 'w-full' : 'h-full'} cursor-move"
-	style="{direction === 'horizontal' ? 'top' : 'left'}: {position}px;"
+	role="separator"
+	aria-orientation={isHorizontal ? 'horizontal' : 'vertical'}
+	aria-label="Draggable guide"
+	tabindex="10"
+	class="guide absolute cursor-move"
+	class:w-full={isHorizontal}
+	class:h-full={!isHorizontal}
+	style={isHorizontal ? `top: ${position}px` : `left: ${position}px`}
 	on:mousedown={startDrag}
 	on:contextmenu={handleContextMenu}
 	title="Right-click to remove guide"
 >
 	<div
-		class="guide-line {direction === 'horizontal' ? 'h-px w-full' : 'h-full w-px'} bg-blue-500"
+		class="guide-line bg-blue-500"
+		class:h-px={isHorizontal}
+		class:w-full={isHorizontal}
+		class:h-full={!isHorizontal}
+		class:w-px={!isHorizontal}
 	></div>
 
-	<!-- Handle -->
 	<div
 		class="handle absolute rounded bg-blue-500"
-		style="{direction === 'horizontal'
-			? 'left: 0; top'
-			: 'top: 0; left'}: -4px; width: {direction === 'horizontal'
-			? '8px'
-			: '1px'}; height: {direction === 'horizontal' ? '1px' : '8px'};"
+		style={isHorizontal
+			? 'left: 0; top: -4px; width: 8px; height: 1px;'
+			: 'top: 0; left: -4px; width: 1px; height: 8px;'}
 	></div>
 </div>
 
 <style>
 	.guide {
 		z-index: 5;
-		pointer-events: auto; /* Allow interactions */
+		pointer-events: auto;
 	}
 
 	.guide:hover .guide-line {
-		background-color: #3b82f6; /* blue-500 */
+		background-color: #3b82f6;
 		box-shadow: 0 0 3px rgba(59, 130, 246, 0.5);
+	}
+	.bg-blue-500 {
+		background-color: var(--color-blue-500) /* oklch(62.3% 0.214 259.815) */;
 	}
 </style>
