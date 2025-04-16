@@ -97,7 +97,6 @@
 	let contextMenuTarget: EventTarget | null = null;
 
 	// --- Computed Values ---
-	$: pixelsPerUnit = units === 'cm' ? PIXEL_PER_CM : units === 'inches' ? PIXEL_PER_INCH : 10;
 	$: selectedComponentId = selectedComponent ? selectedComponent.id : null;
 
 	// --- Functions ---
@@ -278,17 +277,16 @@
 		}
 
 		let dx = 0;
-		dy = 0;
+		const dy = 0;
 		const step = e.shiftKey ? 10 : 1;
 		let update = false;
 
 		switch (e.key) {
 			case 'ArrowUp':
-				dy = -step;
 				update = true;
 				break;
 			case 'ArrowDown':
-				dy = step;
+				const dy = step;
 				update = true;
 				break;
 			case 'ArrowLeft':
@@ -802,6 +800,7 @@
 		<!-- Canvas Viewport (Scrollable Area) -->
 		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 		<!-- Added role and label to justify tabindex -->
+		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 		<div
 			bind:this={viewportRef}
 			class="absolute inset-0 overflow-auto focus:outline-none"

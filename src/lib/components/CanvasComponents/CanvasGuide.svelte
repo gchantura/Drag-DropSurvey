@@ -46,6 +46,7 @@
 	title="Drag to move, Right-click to remove"
 >
 	<!-- The visible line -->
+	<!-- svelte-ignore element_invalid_self_closing_tag -->
 	<div
 		class="guide-line absolute bg-blue-500 group-hover:bg-blue-600 dark:bg-blue-400 dark:group-hover:bg-blue-300"
 		class:h-full={!isHorizontal}
@@ -54,6 +55,7 @@
 		class:h-px={isHorizontal}
 	/>
 	<!-- Interaction area (slightly larger) -->
+	<!-- svelte-ignore element_invalid_self_closing_tag -->
 	<div
 		class="interaction-area absolute {isHorizontal
 			? 'inset-x-0 h-2 -translate-y-1/2'
@@ -86,15 +88,5 @@
 
 	.bg-blue-500 {
 		background-color: #3b82f6;
-	}
-	.group-hover\:bg-blue-600:hover .guide-line {
-		background-color: #2563eb;
-	}
-
-	.dark .dark\:bg-blue-400 {
-		background-color: #60a5fa;
-	}
-	.dark .dark\:group-hover\:bg-blue-300:hover .guide-line {
-		background-color: #93c5fd;
 	}
 </style>

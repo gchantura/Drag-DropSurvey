@@ -2,13 +2,15 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import { componentsStore } from '$lib/stores/surveyStore.ts';
+	// Assuming types/survey.ts is correct and $lib alias works
 	import type {
 		SurveyComponent as SurveyComponentType,
-		SelectionBox, // Now correctly imported if survey.ts exports it
-		DraggingGuide // Now correctly imported if survey.ts exports it
+		SelectionBox,
+		DraggingGuide
 	} from '$lib/types/survey.ts';
-	import CanvasGuide from './CanvasGuide.svelte'; // Assuming it's in the same subdir
-	import SurveyComponent from '$lib/components/SurveyComponent.svelte'; // Adjusted Path: ../ goes up one level
+	import CanvasGuide from './CanvasGuide.svelte';
+	// Use $lib alias for consistency if SurveyComponent is directly in components
+	import SurveyComponent from '$lib/components/SurveyComponent.svelte';
 
 	export let canvasWidth: number;
 	export let canvasHeight: number;
@@ -22,8 +24,9 @@
 	export let multiSelectedComponentIds: string[];
 
 	// Mouse position relative to the *unscaled* canvas content
-	export let mouseX: number = 0;
-	export let mouseY: number = 0;
+	// These props might not be needed if Canvas.svelte calculates internally
+	// export let mouseX: number = 0;
+	// export let mouseY: number = 0;
 
 	// Define explicit event map for better type checking
 	type EventMap = {
@@ -38,24 +41,33 @@
 	};
 	const dispatch = createEventDispatcher<EventMap>();
 
+	// Need mouse position *relative to this element* for dispatching
+	let localMouseX = 0;
+	let localMouseY = 0;
+	function updateLocalMouse(event: MouseEvent) {
+		const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+		localMouseX = event.clientX - rect.left;
+		localMouseY = event.clientY - rect.top;
+	}
+
 	function handleMouseDown(e: MouseEvent) {
-		// Only dispatch if clicking directly on the background, not on a component or guide
+		updateLocalMouse(e); // Update local coords based on this event
 		const target = e.target as HTMLElement;
 		if (target === e.currentTarget) {
 			if (e.button === 1 || (e.button === 0 && e.altKey)) {
-				// Middle mouse button or Alt+Left click for panning
 				dispatch('startPan', e);
 			} else if (e.button === 0) {
-				// Left click for selection box
-				dispatch('startSelectionBox', { event: e, x: mouseX, y: mouseY });
+				// Dispatch coords relative to this element (unscaled)
+				dispatch('startSelectionBox', { event: e, x: localMouseX, y: localMouseY });
 			}
 		}
 	}
 
 	function handleClick(e: MouseEvent) {
-		// Dispatch click for potential actions like adding guides or clearing selection
+		updateLocalMouse(e);
 		if (e.target === e.currentTarget) {
-			dispatch('canvasClick', { event: e, x: mouseX, y: mouseY });
+			// Dispatch coords relative to this element (unscaled)
+			dispatch('canvasClick', { event: e, x: localMouseX, y: localMouseY });
 		}
 	}
 </script>
@@ -65,6 +77,7 @@
 	style="width: {canvasWidth}px; height: {canvasHeight}px;"
 	on:mousedown={handleMouseDown}
 	on:click={handleClick}
+	on:mousemove={updateLocalMouse}
 	role="presentation"
 >
 	<!-- Background grid -->
@@ -72,7 +85,12 @@
 		<div class="grid-lines pointer-events-none absolute inset-0 overflow-hidden">
 			<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
 				<defs>
-					<pattern id="grid" width={gridSize} height={gridSize} patternUnits="userSpaceOnUse">
+					<pattern
+						id="gridPattern"
+						width={gridSize}
+						height={gridSize}
+						patternUnits="userSpaceOnUse"
+					>
 						<path
 							d="M {gridSize} 0 L 0 0 0 {gridSize}"
 							fill="none"
@@ -82,7 +100,7 @@
 						/>
 					</pattern>
 				</defs>
-				<rect width="100%" height="100%" fill="url(#grid)" />
+				<rect width="100%" height="100%" fill="url(#gridPattern)" />
 			</svg>
 		</div>
 	{/if}
@@ -124,7 +142,6 @@
                 height: {Math.abs(selectionBox.endY - selectionBox.startY)}px;
             "
 		></div>
-		<!-- **** Corrected: Removed self-closing tag **** -->
 	{/if}
 
 	<!-- Survey Components -->
@@ -142,7 +159,6 @@
 
 <style>
 	.canvas-content {
-		/* Improves rendering performance during transforms */
 		will-change: transform;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 	}
