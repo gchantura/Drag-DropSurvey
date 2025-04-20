@@ -2,6 +2,9 @@
 	import { addComponent } from '../../stores/surveyStore.js';
 	import type { ComponentType } from '../../types/survey.js';
 
+	import IconCheckbox from '$lib/components/icons/components/checkbox.svg?raw';
+	import IconAttachment from '$lib/components/icons/components/attachment.svg?raw';
+
 	const components: { type: ComponentType; label: string; icon: string }[] = [
 		{ type: 'text', label: 'Text', icon: '📝' },
 		{ type: 'input', label: 'Input', icon: '✏️' },
@@ -23,64 +26,22 @@
 	}
 </script>
 
-<div class="component-toolbar">
-	<h3 class="toolbar-title">Components</h3>
-	<div class="toolbar-buttons">
+<div class="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded p-4">
+	<h3 class="text-base font-semibold mb-4 text-gray-800 dark:text-gray-100">Components</h3>
+	<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
 		{#each components as comp}
 			<button
-				class="component-button"
+				class="flex items-center gap-3 p-3 min-h-[56px] w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition text-left overflow-hidden"
 				on:click={() => handleAddComponent(comp.type)}
 				title={comp.label}
 			>
-				<span class="component-icon">{comp.icon}</span>
-				<span class="component-label">{comp.label}</span>
+				<span class="text-2xl">{comp.icon}</span>
+				<span class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{comp.label}</span>
 			</button>
 		{/each}
 	</div>
 </div>
 
 <style>
-	.component-toolbar {
-		background-color: #f8f9fa;
-		border: 1px solid #e2e8f0;
-		border-radius: 4px;
-		padding: 12px;
-	}
 
-	.toolbar-title {
-		font-size: 1rem;
-		font-weight: 600;
-		margin-bottom: 8px;
-	}
-
-	.toolbar-buttons {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-		gap: 8px;
-	}
-
-	.component-button {
-		display: flex;
-		align-items: center;
-		padding: 8px;
-		background-color: #ffffff;
-		border: 1px solid #e2e8f0;
-		border-radius: 4px;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.component-button:hover {
-		background-color: #f1f5f9;
-		border-color: #cbd5e1;
-	}
-
-	.component-icon {
-		font-size: 1.25rem;
-		margin-right: 8px;
-	}
-
-	.component-label {
-		font-size: 0.875rem;
-	}
 </style>
