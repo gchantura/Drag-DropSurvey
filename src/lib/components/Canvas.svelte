@@ -15,12 +15,12 @@
 
 	// Adjust import paths based on your subfolder structure
 	// Assuming child components are in './CanvasComponents/' relative to Canvas.svelte
-	import CanvasToolbar from './CanvasComponents/CanvasToolbar.svelte';
-	import AlignmentToolbar from './CanvasComponents/AlignmentToolbar.svelte';
-	import CanvasRuler from './CanvasComponents/CanvasRuler.svelte';
-	import CanvasViewport from './CanvasComponents/CanvasViewport.svelte';
-	import ContextMenu from './CanvasComponents/ContextMenu.svelte';
-	import StatusBar from './CanvasComponents/StatusBar.svelte';
+	import CanvasToolbar from '$lib/components/CanvasComponents/CanvasToolbar.svelte';
+	import AlignmentToolbar from '$lib/components/CanvasComponents/AlignmentToolbar.svelte';
+	import CanvasRuler from '$lib/components/CanvasComponents/CanvasRuler.svelte';
+	import CanvasViewport from '$lib/components/CanvasComponents/CanvasViewport.svelte';
+	import ContextMenu from '$lib/components/CanvasComponents/ContextMenu.svelte';
+	import StatusBar from '$lib/components/CanvasComponents/StatusBar.svelte';
 
 	// Type needed for the component instance reference
 	import type { SvelteComponent } from 'svelte';

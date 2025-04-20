@@ -2,6 +2,13 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 
+	import AlignBottom from '$lib/components/icons/grid/align/align-bottom.svg?raw';
+	import AlignLeft from '$lib/components/icons/grid/align/align-left.svg?raw';
+	import AlignRight from '$lib/components/icons/grid/align/align-right.svg?raw';
+	import AlignHorizontally from '$lib/components/icons/grid/align/align-horizontally.svg?raw';
+	import AlignVertically from '$lib/components/icons/grid/align/align-vertically.svg?raw';
+	import AlignTop from '$lib/components/icons/grid/align/align-top.svg?raw';
+
 	type Alignment = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom';
 	type Distribution = 'horizontal' | 'vertical';
 
@@ -10,13 +17,13 @@
 		distribute: Distribution;
 	}>();
 
-	const alignmentButtons: { label: string; value: Alignment; title: string }[] = [
-		{ label: '⫷', value: 'left', title: 'Align Left' },
-		{ label: '⋮', value: 'center', title: 'Align Center Horizontally' },
-		{ label: '⫸', value: 'right', title: 'Align Right' },
-		{ label: '⫯', value: 'top', title: 'Align Top' },
-		{ label: '―', value: 'middle', title: 'Align Middle Vertically' },
-		{ label: '⫰', value: 'bottom', title: 'Align Bottom' }
+	const alignmentButtons: { icon: string; value: Alignment; title: string }[] = [
+		{ icon: AlignLeft, value: 'left', title: 'Align Left' },
+		{ icon: AlignVertically, value: 'center', title: 'Align Middle Vertically' },
+		{ icon: AlignRight, value: 'right', title: 'Align Right' },
+		{ icon: AlignTop, value: 'top', title: 'Align Top' },
+		{ icon: AlignHorizontally, value: 'middle', title: 'Align Center Horizontally' },
+		{ icon: AlignBottom, value: 'bottom', title: 'Align Bottom' }
 	];
 
 	const distributionButtons: { label: string; value: Distribution; title: string }[] = [
@@ -36,7 +43,7 @@
 				on:click={() => dispatch('align', btn.value)}
 				title={btn.title}
 			>
-				{@html btn.label}
+				{@html btn.icon}
 			</button>
 		{/each}
 	</div>
