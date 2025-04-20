@@ -543,6 +543,14 @@
 		}
 	}
 
+	function handleZoomIn(): void {
+		canvasScale = Math.min(canvasScale + 0.1, MAX_ZOOM);
+	}
+
+	function handleZoomOut(): void {
+		canvasScale = Math.max(canvasScale - 0.1, MIN_ZOOM);
+	}
+
 	function duplicateSelected(): void {
 		if (multiSelectedComponentIds.length === 0) return;
 		const newIds: string[] = [];
@@ -743,6 +751,8 @@
 		on:toggleGuides={toggleGuides}
 		on:updatePageFormat={(e) => updatePageFormat(e.detail)}
 		on:resetZoom={resetZoomAndCenter}
+		on:zoomIn={handleZoomIn}
+		on:zoomOut={handleZoomOut}
 		on:autoPosition={autoPosition}
 	/>
 

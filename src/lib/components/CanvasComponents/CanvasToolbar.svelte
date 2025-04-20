@@ -2,6 +2,9 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 
+	import CanvasZoomToolbar from '$lib/components/CanvasComponents/CanvasZoom/CanvasZoomToolbar.svelte';
+	import CanvasGrid from '$lib/components/CanvasComponents/CanvasGrid/CanvasGrid.svelte';
+
 	export let units: 'cm' | 'inches' | 'px';
 	export let enableSnap: boolean;
 	export let showGuides: boolean;
@@ -14,6 +17,8 @@
 		toggleGuides: void;
 		updatePageFormat: string;
 		resetZoom: void;
+		zoomIn: void;
+		zoomOut: void;
 		autoPosition: void;
 	}>();
 
@@ -61,19 +66,12 @@
 	</div>
 
 	<div class="flex flex-wrap items-center gap-2">
-		<button
-			class="rounded border border-gray-300 bg-white px-3 py-1 text-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-			on:click={() => dispatch('resetZoom')}
-			title="Reset zoom to 100% and center view"
-		>
-			Reset View (Zoom: {Math.round(canvasScale * 100)}%)
-		</button>
-		<button
-			class="rounded border border-gray-300 bg-white px-3 py-1 text-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-			on:click={() => dispatch('autoPosition')}
-			title="Automatically arrange components"
-		>
-			Auto Position
-		</button>
+		<CanvasZoomToolbar
+			{canvasScale}
+			on:resetZoom={() => dispatch('resetZoom')}
+			on:zoomIn={() => dispatch('zoomIn')}
+			on:zoomOut={() => dispatch('zoomOut')}
+		/>
+		<CanvasGrid on:autoPosition={() => dispatch('autoPosition')} />
 	</div>
 </div>
