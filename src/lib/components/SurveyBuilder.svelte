@@ -1,7 +1,8 @@
 <!-- src/lib/components/SurveyBuilder.svelte -->
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import SideBar from './SideBar.svelte';
+	import SideBar from '$lib/components/SideBar.svelte';
+	import SideBarRight from '$lib/components/SideBarRight.svelte';
 	import Canvas from './Canvas.svelte';
 	import type { SurveyComponent } from '$lib/types/survey.ts';
 	import { loadSurvey } from '$lib/stores/surveyStore.ts'; // Import loadSurvey
@@ -38,6 +39,13 @@
 	<main class="flex-1">
 		<Canvas bind:this={canvasComponent} bind:selectedComponent />
 	</main>
+
+	<!-- Right Sidebar -->
+	<aside
+		class="sidebar allow-input w-64 flex-shrink-0 border-l border-gray-200 md:w-72 lg:w-80 dark:border-gray-700"
+	>
+		<SideBarRight />
+	</aside>
 </div>
 
 <style>
