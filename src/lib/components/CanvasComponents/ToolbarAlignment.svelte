@@ -3,11 +3,9 @@
 	import { createEventDispatcher } from 'svelte';
 
 	type Alignment = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom';
-	type Distribution = 'horizontal' | 'vertical';
 
 	const dispatch = createEventDispatcher<{
 		align: Alignment;
-		distribute: Distribution;
 	}>();
 
 	// Get the imported SVG strings from raw imports
@@ -57,46 +55,27 @@
 		{ icon: AlignBottom, value: 'bottom', title: 'Align Bottom' }
 	];
 
-	const distributionButtons: { label: string; value: Distribution; title: string }[] = [
-		{ label: '⬌', value: 'horizontal', title: 'Distribute Horizontally' },
-		{ label: '⇳', value: 'vertical', title: 'Distribute Vertically' }
-	];
 </script>
 
-<div
-	class="flex flex-wrap items-center gap-4 border-b border-gray-300 bg-gray-100 p-2 dark:border-gray-700 dark:bg-gray-800"
->
+<div class="flex flex-wrap items-center gap-2 bg-gray-100 p-2 dark:bg-gray-800">
 	<!-- Alignment Section -->
 	<div class="flex items-center gap-1">
-		<span class="mr-1 text-sm text-gray-700 dark:text-gray-300">Align:</span>
-		<div class="flex items-center space-x-1">
-			{#each alignmentButtons as btn}
-				<button
-					class="rounded border border-gray-300 bg-white p-1.5 text-sm hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-					on:click={() => dispatch('align', btn.value)}
-					title={btn.title}
-				>
-					<span class="inline-block h-5 w-5 text-gray-700 dark:text-slate-200">
-						{@html btn.icon}
-					</span>
-				</button>
-			{/each}
+		<div class="">
+			<p class="mr-1 text-sm text-gray-700 dark:text-gray-300">Align</p>
+			<div class="flex items-center space-x-1">
+				{#each alignmentButtons as btn}
+					<button
+						class="flex items-center justify-center rounded border border-gray-300 bg-white p-2 text-sm hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+						on:click={() => dispatch('align', btn.value)}
+						title={btn.title}
+					>
+						<span class="inline-block h-5 w-5 text-gray-700 dark:text-slate-200">
+							{@html btn.icon}
+						</span>
+					</button>
+				{/each}
+			</div>
 		</div>
 	</div>
 
-	<!-- Distribution Section -->
-	<div class="flex items-center gap-1">
-		<span class="mr-1 text-sm text-gray-700 dark:text-gray-300">Distribute:</span>
-		<div class="flex items-center space-x-1">
-			{#each distributionButtons as btn}
-				<button
-					class="rounded border border-gray-300 bg-white px-2 py-1 text-sm hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-					on:click={() => dispatch('distribute', btn.value)}
-					title={btn.title}
-				>
-					<span class="text-lg">{btn.label}</span>
-				</button>
-			{/each}
-		</div>
-	</div>
 </div>
