@@ -1,17 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg id="Ebene_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 24 24">
-  <!-- Generator: Adobe Illustrator 29.4.0, SVG Export Plug-In . SVG Version: 2.1.0 Build 152)  -->
-  <defs>
-    <style>
-      .st0 {
-        fill: none;
-        stroke: #252c33;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        stroke-width: 1.5px;
-      }
-    </style>
-  </defs>
-  <path class="st0" d="M12,22h0c5.5,0,10-4.5,10-10h0c0-5.5-4.5-10-10-10h0C6.5,2,2,6.5,2,12h0c0,5.5,4.5,10,10,10Z"/>
-  <circle class="st0" cx="12" cy="12" r="2.7"/>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M11.75 21.75C17.27 21.75 21.75 17.27 21.75 11.75C21.75 6.23 17.27 1.75 11.75 1.75C6.23 1.75 1.75 6.23 1.75 11.75C1.75 17.27 6.23 21.75 11.75 21.75Z" stroke="#252C33" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11.75 14.48C13.2578 14.48 14.48 13.2577 14.48 11.75C14.48 10.2423 13.2578 9.02 11.75 9.02C10.2423 9.02 9.02002 10.2423 9.02002 11.75C9.02002 13.2577 10.2423 14.48 11.75 14.48Z" stroke="#252C33" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

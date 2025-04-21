@@ -30,6 +30,10 @@
 		{ label: '⬌', value: 'horizontal', title: 'Distribute Horizontally' },
 		{ label: '⇳', value: 'vertical', title: 'Distribute Vertically' }
 	];
+
+	function sanitizeSvg(svg: string): string {
+		return svg.replace(/stroke="[^"]*"/g, 'stroke="currentColor"');
+	}
 </script>
 
 <div
@@ -43,7 +47,11 @@
 				on:click={() => dispatch('align', btn.value)}
 				title={btn.title}
 			>
-				{@html btn.icon}
+				<span
+					class="inline-block h-5 w-5 text-gray-700 dark:text-slate-200 [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
+				>
+					{@html sanitizeSvg(btn.icon)}
+				</span>
 			</button>
 		{/each}
 	</div>

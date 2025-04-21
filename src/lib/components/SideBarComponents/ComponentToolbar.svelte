@@ -35,6 +35,10 @@
 	function handleAddComponent(type: ComponentType) {
 		addComponent(type);
 	}
+
+	function sanitizeSvg(svg: string): string {
+		return svg.replace(/stroke="[^"]*"/g, 'stroke="currentColor"');
+	}
 </script>
 
 <div class="rounded border border-gray-300 bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-800">
@@ -46,8 +50,10 @@
 				on:click={() => handleAddComponent(comp.type)}
 				title={comp.label}
 			>
-				<span class="inline-block h-6 w-6 [&>svg]:h-full [&>svg]:w-full">
-					{@html comp.icon}
+				<span
+					class="inline-block h-6 w-6 text-gray-700 dark:text-slate-200 [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
+				>
+					{@html sanitizeSvg(comp.icon)}
 				</span>
 				<span class="truncate text-sm font-medium text-gray-800 dark:text-gray-200"
 					>{comp.label}</span

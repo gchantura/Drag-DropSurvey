@@ -36,7 +36,7 @@
 </script>
 
 {#if component}
-	<div class="rounded border bg-white p-3">
+	<div class="rounded border border-gray-300 bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-800">
 		<h3 class="mb-2 text-lg font-semibold">Properties</h3>
 
 		<!-- Text/Label editor -->
@@ -45,7 +45,7 @@
 			<input
 				id="comp-label-input"
 				type="text"
-				class="w-full rounded border p-1"
+				class="w-full rounded border p-1 dark:border-gray-700 dark:bg-gray-800"
 				value={component.label}
 				on:input={(e) => handleInputChange(e, 'label')}
 			/>
@@ -57,7 +57,7 @@
 				<label for="comp-description" class="mb-1 block text-sm font-medium">Description:</label>
 				<textarea
 					id="comp-description"
-					class="w-full rounded border p-1"
+					class="w-full rounded border p-1 dark:border-gray-700 dark:bg-gray-800"
 					rows="3"
 					value={component.description || ''}
 					on:input={(e) => handleInputChange(e, 'description')}
@@ -72,7 +72,7 @@
 				<input
 					id="comp-file-src"
 					type="text"
-					class="w-full rounded border p-1"
+					class="w-full rounded border p-1 dark:border-gray-700 dark:bg-gray-800"
 					value={component.src || ''}
 					on:input={(e) => handleInputChange(e, 'src')}
 				/>
@@ -102,7 +102,7 @@
 					type="number"
 					min="1"
 					max="100"
-					class="w-full rounded border p-1"
+					class="w-full rounded border p-1 dark:border-gray-700 dark:bg-gray-800"
 					value={component.maxFileSize || 5}
 					on:input={(e) => handleInputChange(e, 'maxFileSize')}
 				/>
@@ -115,7 +115,7 @@
 				<label for="comp-font-family" class="mb-1 block text-sm font-medium">Font Family:</label>
 				<select
 					id="comp-font-family"
-					class="w-full rounded border p-1"
+					class="w-full rounded border p-1 dark:border-gray-700 dark:bg-gray-800"
 					value={component.fontFamily}
 					on:change={(e) => handleInputChange(e, 'fontFamily')}
 				>
@@ -130,7 +130,7 @@
 				<label for="comp-font-size" class="mb-1 block text-sm font-medium">Font Size:</label>
 				<select
 					id="comp-font-size"
-					class="w-full rounded border p-1"
+					class="w-full rounded border p-1 dark:border-gray-700 dark:bg-gray-800"
 					value={component.fontSize}
 					on:change={(e) => handleInputChange(e, 'fontSize')}
 				>
@@ -147,14 +147,14 @@
 					<input
 						id="comp-text-color"
 						type="color"
-						class="mr-2"
+						class="mr-2 dark:border-gray-700 dark:bg-gray-800"
 						value={component.color}
 						on:input={(e) => handleInputChange(e, 'color')}
 					/>
 					<input
 						id="comp-text-color-hex"
 						type="text"
-						class="flex-1 rounded border p-1"
+						class="flex-1 rounded border p-1 dark:border-gray-700 dark:bg-gray-800"
 						value={component.color}
 						on:input={(e) => handleInputChange(e, 'color')}
 					/>
@@ -176,6 +176,7 @@
 					/>
 				</div>
 			{/if}
+
 			<!-- Background color -->
 			<div class="mb-3">
 				<label for="comp-bg-color" class="mb-1 block text-sm font-medium">Background Color:</label>
@@ -183,14 +184,14 @@
 					<input
 						id="comp-bg-color"
 						type="color"
-						class="mr-2"
+						class="mr-2 dark:border-gray-700 dark:bg-gray-800"
 						value={component.bgColor}
 						on:input={(e) => handleInputChange(e, 'bgColor')}
 					/>
 					<input
 						id="comp-bg-color-hex"
 						type="text"
-						class="flex-1 rounded border p-1"
+						class="flex-1 rounded border p-1 dark:border-gray-700 dark:bg-gray-800"
 						value={component.bgColor}
 						on:input={(e) => handleInputChange(e, 'bgColor')}
 					/>
@@ -205,7 +206,7 @@
 					<Checkbox
 						type="checkbox"
 						id="required-field"
-						class="mr-2"
+						class="mr-2 dark:border-gray-700 dark:bg-gray-800"
 						checked={component.required}
 						on:change={(e) => handleInputChange(e, 'required')}
 					/> Required
@@ -223,7 +224,7 @@
 							<input
 								type="text"
 								id={`option-${i}-${component.id}`}
-								class="mr-2 flex-1 rounded border p-1"
+								class="mr-2 flex-1 rounded border p-1 dark:border-gray-700 dark:bg-gray-800"
 								value={option}
 								on:input={(e) =>
 									updateOption(component.id, i, (e.target as HTMLInputElement).value)}
@@ -256,7 +257,7 @@
 				<input
 					id="comp-x"
 					type="number"
-					class="w-full rounded border p-1"
+					class="w-full rounded border p-1 dark:border-gray-700 dark:bg-gray-800"
 					value={component.x}
 					on:input={(e) => handleInputChange(e, 'x')}
 				/>
@@ -266,7 +267,7 @@
 				<input
 					id="comp-y"
 					type="number"
-					class="w-full rounded border p-1"
+					class="w-full rounded border p-1 dark:border-gray-700 dark:bg-gray-800"
 					value={component.y}
 					on:input={(e) => handleInputChange(e, 'y')}
 				/>
@@ -276,7 +277,7 @@
 				<input
 					id="comp-width"
 					type="number"
-					class="w-full rounded border p-1"
+					class="w-full rounded border p-1 dark:border-gray-700 dark:bg-gray-800"
 					value={component.width}
 					on:input={(e) => handleInputChange(e, 'width')}
 				/>
@@ -286,7 +287,7 @@
 				<input
 					id="comp-height"
 					type="number"
-					class="w-full rounded border p-1"
+					class="w-full rounded border p-1 dark:border-gray-700 dark:bg-gray-800"
 					value={component.height}
 					on:input={(e) => handleInputChange(e, 'height')}
 				/>
@@ -295,7 +296,7 @@
 
 		<!-- Delete component -->
 		<button
-			class="w-full rounded bg-red-600 p-2 text-white"
+			class="w-full rounded bg-red-600 p-2 text-white dark:bg-slate-300 dark:text-slate-900"
 			on:click={() => deleteComponent(component.id)}
 		>
 			Delete Component
