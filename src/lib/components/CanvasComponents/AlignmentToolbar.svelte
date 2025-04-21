@@ -2,13 +2,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 
-	import AlignBottom from '$lib/components/icons/grid/align/align-bottom.svg?raw';
-	import AlignLeft from '$lib/components/icons/grid/align/align-left.svg?raw';
-	import AlignRight from '$lib/components/icons/grid/align/align-right.svg?raw';
-	import AlignHorizontally from '$lib/components/icons/grid/align/align-horizontally.svg?raw';
-	import AlignVertically from '$lib/components/icons/grid/align/align-vertically.svg?raw';
-	import AlignTop from '$lib/components/icons/grid/align/align-top.svg?raw';
-
 	type Alignment = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom';
 	type Distribution = 'horizontal' | 'vertical';
 
@@ -16,6 +9,44 @@
 		align: Alignment;
 		distribute: Distribution;
 	}>();
+
+	// Get the imported SVG strings from raw imports
+	// Using static SVG content since the imports are giving issues
+	const AlignLeft = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+		<line x1="5" y1="4" x2="5" y2="20"></line>
+		<rect x="7" y="8" width="10" height="4"></rect>
+		<rect x="7" y="16" width="14" height="4"></rect>
+	</svg>`;
+
+	const AlignVertically = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+		<line x1="12" y1="4" x2="12" y2="20"></line>
+		<rect x="6" y="8" width="12" height="4"></rect>
+		<rect x="4" y="16" width="16" height="4"></rect>
+	</svg>`;
+
+	const AlignRight = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+		<line x1="19" y1="4" x2="19" y2="20"></line>
+		<rect x="7" y="8" width="10" height="4"></rect>
+		<rect x="3" y="16" width="14" height="4"></rect>
+	</svg>`;
+
+	const AlignTop = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+		<line x1="4" y1="5" x2="20" y2="5"></line>
+		<rect x="8" y="7" width="4" height="10"></rect>
+		<rect x="16" y="7" width="4" height="14"></rect>
+	</svg>`;
+
+	const AlignHorizontally = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+		<line x1="4" y1="12" x2="20" y2="12"></line>
+		<rect x="8" y="6" width="4" height="12"></rect>
+		<rect x="16" y="4" width="4" height="16"></rect>
+	</svg>`;
+
+	const AlignBottom = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+		<line x1="4" y1="19" x2="20" y2="19"></line>
+		<rect x="8" y="7" width="4" height="10"></rect>
+		<rect x="16" y="3" width="4" height="14"></rect>
+	</svg>`;
 
 	const alignmentButtons: { icon: string; value: Alignment; title: string }[] = [
 		{ icon: AlignLeft, value: 'left', title: 'Align Left' },
@@ -30,42 +61,42 @@
 		{ label: '⬌', value: 'horizontal', title: 'Distribute Horizontally' },
 		{ label: '⇳', value: 'vertical', title: 'Distribute Vertically' }
 	];
-
-	function sanitizeSvg(svg: string): string {
-		return svg.replace(/stroke="[^"]*"/g, 'stroke="currentColor"');
-	}
 </script>
 
 <div
 	class="flex flex-wrap items-center gap-4 border-b border-gray-300 bg-gray-100 p-2 dark:border-gray-700 dark:bg-gray-800"
 >
+	<!-- Alignment Section -->
 	<div class="flex items-center gap-1">
-		<span class="mr-1 text-sm dark:text-gray-300">Align:</span>
-		{#each alignmentButtons as btn}
-			<button
-				class="rounded border border-gray-300 bg-white px-2 py-1 text-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-				on:click={() => dispatch('align', btn.value)}
-				title={btn.title}
-			>
-				<span
-					class="inline-block h-5 w-5 text-gray-700 dark:text-slate-200 [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
+		<span class="mr-1 text-sm text-gray-700 dark:text-gray-300">Align:</span>
+		<div class="flex items-center space-x-1">
+			{#each alignmentButtons as btn}
+				<button
+					class="rounded border border-gray-300 bg-white p-1.5 text-sm hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+					on:click={() => dispatch('align', btn.value)}
+					title={btn.title}
 				>
-					{@html sanitizeSvg(btn.icon)}
-				</span>
-			</button>
-		{/each}
+					<span class="inline-block h-5 w-5 text-gray-700 dark:text-slate-200">
+						{@html btn.icon}
+					</span>
+				</button>
+			{/each}
+		</div>
 	</div>
 
+	<!-- Distribution Section -->
 	<div class="flex items-center gap-1">
-		<span class="mr-1 text-sm dark:text-gray-300">Distribute:</span>
-		{#each distributionButtons as btn}
-			<button
-				class="rounded border border-gray-300 bg-white px-2 py-1 text-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-				on:click={() => dispatch('distribute', btn.value)}
-				title={btn.title}
-			>
-				{@html btn.label}
-			</button>
-		{/each}
+		<span class="mr-1 text-sm text-gray-700 dark:text-gray-300">Distribute:</span>
+		<div class="flex items-center space-x-1">
+			{#each distributionButtons as btn}
+				<button
+					class="rounded border border-gray-300 bg-white px-2 py-1 text-sm hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+					on:click={() => dispatch('distribute', btn.value)}
+					title={btn.title}
+				>
+					<span class="text-lg">{btn.label}</span>
+				</button>
+			{/each}
+		</div>
 	</div>
 </div>

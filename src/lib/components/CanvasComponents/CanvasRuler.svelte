@@ -74,13 +74,13 @@
 <div
 	class="ruler-container relative overflow-hidden bg-gray-100 select-none dark:bg-gray-800"
 	class:border-b={direction === 'horizontal'}
+	class:border-gray-300={true}
+	class:dark:border-gray-700={true}
 	class:h-8={direction === 'horizontal'}
 	class:w-full={direction === 'horizontal'}
 	class:border-r={direction === 'vertical'}
 	class:w-8={direction === 'vertical'}
 	class:h-full={direction === 'vertical'}
-	class:border-gray-300={true}
-	class:dark:border-gray-700={true}
 >
 	<svg
 		xmlns="http://www.w3.org/2000/svg"
@@ -92,20 +92,62 @@
 		}}
 	>
 		<style>
-            {`
-                .label { fill: ${labelColor}; font-size: 10px; }
-                .major-tick { stroke: ${tickColor}; stroke-width: 1; }
-                .minor-tick { stroke: ${minorTickColor}; stroke-width: 0.5; }
-                .indicator { stroke: ${indicatorColor}; stroke-width: 1; stroke-dasharray: 2,2; }
+			.label {
+				fill: #374151;
+				font-size: 10px;
+			}
+			.major-tick {
+				stroke: #6b7280;
+				stroke-width: 1;
+			}
+			.minor-tick {
+				stroke: #d1d5db;
+				stroke-width: 0.5;
+			}
+			.indicator {
+				stroke: #3b82f6;
+				stroke-width: 1;
+				stroke-dasharray: 2, 2;
+			}
 
-                @media (prefers-color-scheme: dark) {
-                    .label { fill: ${darkLabelColor}; }
-                    .major-tick { stroke: ${darkTickColor}; }
-                    .minor-tick { stroke: ${darkMinorTickColor}; }
-                    .indicator { stroke: ${indicatorColor}; } /* Keep indicator color */
-                }
-            `}
+			@media (prefers-color-scheme: dark) {
+				.label {
+					fill: #d1d5db;
+				}
+				.major-tick {
+					stroke: #9ca3af;
+				}
+				.minor-tick {
+					stroke: #4b5563;
+				}
+				.indicator {
+					stroke: #3b82f6;
+				} /* Keep indicator color */
+			}
 		</style>
+
+		<!-- Special origin marker at 0,0 -->
+		{#if direction === 'horizontal' && -offset / scale <= viewEnd && -offset / scale >= viewStart}
+			<line
+				class="major-tick"
+				x1={offset}
+				y1="0"
+				x2={offset}
+				y2="32"
+				stroke="#3B82F6"
+				stroke-width="1.5"
+			/>
+		{:else if direction === 'vertical' && -offset / scale <= viewEnd && -offset / scale >= viewStart}
+			<line
+				class="major-tick"
+				x1="0"
+				y1={offset}
+				x2="32"
+				y2={offset}
+				stroke="#3B82F6"
+				stroke-width="1.5"
+			/>
+		{/if}
 
 		{#each getTicks() as tick}
 			{#if direction === 'horizontal'}
