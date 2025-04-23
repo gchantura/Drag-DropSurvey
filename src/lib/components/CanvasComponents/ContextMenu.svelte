@@ -1,17 +1,13 @@
 <!-- src/lib/components/CanvasComponents/ContextMenu.svelte -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import type { SurveyComponent } from '$lib/types/survey.ts'; // Adjust path if needed
+	import type { SurveyComponent } from '$lib/types/survey.ts';
 
-	// --- Component Props ---
 	export let x: number;
 	export let y: number;
 	export let selectedComponent: SurveyComponent | null;
 	export let multiSelectedComponentIds: string[];
 	export let targetElement: EventTarget | null;
-	// export let horizontalGuides: number[]; // Removed - Unused in this component's logic
-	// export let verticalGuides: number[];   // Removed - Unused in this component's logic
-	// --- END OF PROPS ---
 
 	const dispatch = createEventDispatcher<{
 		close: void;
@@ -19,22 +15,17 @@
 		delete: void;
 		removeGuide: { direction: 'horizontal' | 'vertical'; index: number };
 		properties: void;
+		selectAll: void; // <-- Added event
+		autoPosition: void; // <-- Added event
 	}>();
 
 	// --- Helper functions to determine context ---
 	function getTargetGuideInfo(): { direction: 'horizontal' | 'vertical'; index: number } | null {
-		if (!targetElement || !(targetElement instanceof Element)) return null; // Ensure it's an Element
-
-		// Find the closest ancestor (or self) that matches the selector
-		const guideLine = targetElement.closest<Element>('.guide-line'); // Find the element first
-
-		// Check if found and cast to SVGElement (or HTMLElement if applicable) to access dataset
-		// Note: SVG elements inherit from Element, HTMLElement is specific to HTML
+		if (!targetElement || !(targetElement instanceof Element)) return null;
+		const guideLine = targetElement.closest<Element>('.guide-line');
 		if (guideLine && guideLine instanceof SVGElement) {
-			// Check if it's an SVGElement
 			const direction = guideLine.dataset.direction;
 			const indexStr = guideLine.dataset.index;
-
 			if (direction && indexStr) {
 				const index = parseInt(indexStr, 10);
 				if (!isNaN(index) && (direction === 'horizontal' || direction === 'vertical')) {
@@ -46,9 +37,7 @@
 	}
 
 	let clickedGuideInfo = getTargetGuideInfo();
-	// Determine if a component was clicked directly or is the primary selected one
-	// This might need adjustment based on how targetElement relates to components vs. guides
-	let clickedComponent: SurveyComponent | null = selectedComponent; // Simplest assumption: use the passed primary selection
+	let clickedComponent: SurveyComponent | null = selectedComponent;
 
 	// --- Event Handlers ---
 	function handleRemoveGuide() {
@@ -74,9 +63,18 @@
 
 	function handleProperties() {
 		if (selectedComponent) {
-			// Usually properties apply to the primary selection
 			dispatch('properties');
 		}
+		dispatch('close');
+	}
+
+	function handleSelectAll() {
+		dispatch('selectAll'); // <-- Dispatch the new event
+		dispatch('close');
+	}
+
+	function handleAutoPosition() {
+		dispatch('autoPosition'); // <-- Dispatch the new event
 		dispatch('close');
 	}
 
@@ -84,13 +82,12 @@
 		if (event.key === 'Escape') {
 			dispatch('close');
 		}
-		// Add potential arrow key navigation here if desired
 	}
 </script>
 
 <!-- Basic Context Menu Structure -->
 <div
-	class="fixed z-50 rounded border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800"
+	class="fixed z-50 min-w-[150px] rounded border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800"
 	style="left: {x}px; top: {y}px;"
 	role="menu"
 	tabindex="-1"
@@ -101,7 +98,7 @@
 	on:keydown={handleKeyDown}
 >
 	<div class="py-1" id="options-menu">
-		<!-- Conditional Menu Items -->
+		<!-- Component Context Menu -->
 		{#if clickedComponent}
 			<button
 				class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-200 dark:hover:bg-gray-700"
@@ -130,6 +127,7 @@
 			</button>
 		{/if}
 
+		<!-- Guide Context Menu -->
 		{#if clickedGuideInfo}
 			{#if clickedComponent}<div
 					class="my-1 border-t border-gray-200 dark:border-gray-600"
@@ -143,36 +141,33 @@
 			</button>
 		{/if}
 
+		<!-- Canvas Background Context Menu -->
 		{#if !clickedComponent && !clickedGuideInfo}
-			<!-- Default canvas context menu options -->
-			<span class="block px-4 py-2 text-sm text-gray-500 dark:text-gray-400" role="none"
-				>Canvas Menu</span
+			<span
+				class="block px-4 py-1 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400"
+				role="none">Canvas Actions</span
 			>
-			<!-- Add options like "Paste", "Select All" etc. if needed -->
 			<button
 				class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
 				role="menuitem"
-				on:click={() => {
-					/* Dispatch select all or other canvas action */ dispatch('close');
-				}}
+				on:click={handleSelectAll}
 			>
 				Select All (Ctrl+A)
 			</button>
+			<!-- Grid Button -->
+			<button
+				class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+				role="menuitem"
+				on:click={handleAutoPosition}
+				title="Automatically arrange components (Grid)"
+			>
+				<span>Grid Layout</span>
+			</button>
 		{/if}
-
-		<!-- Always show close or handle click outside -->
-		<div class="my-1 border-t border-gray-200 dark:border-gray-600"></div>
-		<button
-			class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-			role="menuitem"
-			on:click={() => dispatch('close')}
-		>
-			Close
-		</button>
 	</div>
 </div>
 
-<!-- Click outside listener -->
+<!-- Click outside listener (remains the same) -->
 <button
 	type="button"
 	class="fixed inset-0 z-40 h-full w-full cursor-default border-none bg-transparent p-0"

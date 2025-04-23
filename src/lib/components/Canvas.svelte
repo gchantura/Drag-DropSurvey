@@ -294,6 +294,16 @@
 
 	/** Handles keyboard shortcuts */
 	function handleKeydown(e: KeyboardEvent): void {
+		// Close context menu on Escape regardless of focus
+		if (e.key === 'Escape') {
+			closeContextMenu();
+			// If selection box was active, cancel it too
+			if (isSelecting) isSelecting = false;
+			if (selectionBox.active) selectionBox.active = false;
+			// Optionally clear selection on Escape, uncomment if desired:
+			// clearSelection();
+		}
+
 		// Ignore keydown if focus is inside an input element or specifically allowed area
 		if (
 			e.target instanceof HTMLInputElement ||
@@ -315,7 +325,7 @@
 				needsUpdate = true;
 				break;
 			case 'ArrowDown':
-				dy = step; // Corrected assignment
+				dy = step;
 				needsUpdate = true;
 				break;
 			case 'ArrowLeft':
@@ -357,12 +367,7 @@
 					toggleGuides();
 				}
 				break;
-			case 'Escape': // Clear selection, close context menu
-				clearSelection();
-				closeContextMenu();
-				if (isSelecting) isSelecting = false;
-				if (selectionBox.active) selectionBox.active = false;
-				break;
+			// Escape handled above
 			// Add more shortcuts as needed (e.g., zoom, save)
 			default:
 				return; // Ignore other keys
@@ -392,17 +397,23 @@
 
 	/** Handles right-click to show context menu */
 	function handleContextMenu(e: MouseEvent): void {
+		console.log('handleContextMenu triggered!', e.clientX, e.clientY); // <-- DEBUG
 		e.preventDefault(); // Prevent default browser context menu
 		showContextMenu = true;
 		contextMenuX = e.clientX;
 		contextMenuY = e.clientY;
 		contextMenuTarget = e.target; // Store the element that was clicked
+		console.log('showContextMenu set to:', showContextMenu); // <-- DEBUG
 	}
 
 	/** Closes the context menu */
 	function closeContextMenu(): void {
-		showContextMenu = false;
-		contextMenuTarget = null;
+		if (showContextMenu) {
+			// Only log if it was actually open
+			console.log('Closing context menu'); // <-- DEBUG
+			showContextMenu = false;
+			contextMenuTarget = null;
+		}
 	}
 
 	// --- Component/Guide Interaction Callbacks (from CanvasViewport/Ruler) ---
@@ -443,8 +454,11 @@
 				multiSelectedComponentIds = [component.id];
 			} else {
 				// Clicked on already selected (could be part of multi-select): Make it primary
-				selectedComponent = component;
-				// No change needed to multiSelectedComponentIds if it was already selected
+				// unless it's the *only* one selected (to allow starting drag without changing selection)
+				if (multiSelectedComponentIds.length > 1) {
+					selectedComponent = component;
+				}
+				// If clicking the only selected item, keep it selected (selectedComponent already matches)
 			}
 		}
 
@@ -497,12 +511,14 @@
 			const guideAreaThreshold_Canvas = 15 / $canvasViewStore.scale; // Threshold in canvas pixels
 			let addedGuide = false;
 			// Check if double-click is near the top edge (for vertical guide)
-			if (y < guideAreaThreshold_Canvas) {
+			if (y < guideAreaThreshold_Canvas && x > 0) {
+				// Added x>0 check to avoid corner box
 				verticalGuides = [...verticalGuides, snapToGrid(x)];
 				addedGuide = true;
 			}
 			// Check if double-click is near the left edge (for horizontal guide)
-			else if (x < guideAreaThreshold_Canvas) {
+			else if (x < guideAreaThreshold_Canvas && y > 0) {
+				// Added y>0 check to avoid corner box
 				horizontalGuides = [...horizontalGuides, snapToGrid(y)];
 				addedGuide = true;
 			}
@@ -521,17 +537,19 @@
 
 	/** Callback when a component is clicked (but not dragged/resized) */
 	function handleSelectComponent(e: CustomEvent): void {
-		// This might be redundant if onStartDrag handles selection, but can be useful
-		// if click without drag needs specific behavior.
+		// This is called *after* the component's internal click handler,
+		// but *before* potential drag starts. Useful for selection logic on simple click.
 		const component = e.detail.component as SurveyComponentType;
 		const event = e.detail.event as MouseEvent;
 
 		// Only process if not currently dragging or resizing
+		// (onStartDrag/onStartResize will handle their own selection updates)
 		if (!isDragging && !isResizing) {
 			if (event.shiftKey) {
 				// Toggle selection with shift key
 				if (multiSelectedComponentIds.includes(component.id)) {
 					multiSelectedComponentIds = multiSelectedComponentIds.filter((id) => id !== component.id);
+					// Update primary selection if the deselected one was primary
 					if (selectedComponent?.id === component.id) {
 						selectedComponent =
 							multiSelectedComponentIds.length > 0
@@ -539,24 +557,23 @@
 								: null;
 					}
 				} else {
+					// Add to selection and make primary
 					multiSelectedComponentIds = [...multiSelectedComponentIds, component.id];
 					selectedComponent = component;
 				}
 			} else {
-				// Regular click: select only this component
+				// Regular click: select only this component, unless it's already the only one selected
 				if (
 					!multiSelectedComponentIds.includes(component.id) ||
 					multiSelectedComponentIds.length > 1
 				) {
 					selectedComponent = component;
 					multiSelectedComponentIds = [component.id];
-				} else {
-					// Clicking the only selected component: keep it selected
-					selectedComponent = component;
 				}
+				// If clicking the only selected component, keep it selected
 			}
 		}
-		closeContextMenu();
+		closeContextMenu(); // Close any open menu on component click
 	}
 
 	/** Callback when starting a selection box drag on the canvas background */
@@ -596,17 +613,23 @@
 		const newlySelectedIds = $componentsStore
 			.filter(
 				(comp) =>
-					// Simple intersection check (component rect vs selection rect)
+					// Component is considered intersecting if its center point is within the box
+					// (Alternative: check for rectangle overlap like before)
+					comp.x + comp.width / 2 > minX &&
+					comp.x + comp.width / 2 < maxX &&
+					comp.y + comp.height / 2 > minY &&
+					comp.y + comp.height / 2 < maxY
+				/* Old overlap check:
 					comp.x < maxX &&
 					comp.x + comp.width > minX &&
 					comp.y < maxY &&
 					comp.y + comp.height > minY
+                    */
 			)
 			.map((comp) => comp.id);
 
 		// Update selection state
-		// Note: This replaces the selection. If additive selection (Shift+box) is needed,
-		// the logic here would need to merge newlySelectedIds with existing ones.
+		// TODO: Implement additive selection (Shift + Box) if needed
 		multiSelectedComponentIds = newlySelectedIds;
 		selectedComponent =
 			multiSelectedComponentIds.length > 0
@@ -633,7 +656,8 @@
 
 	/** Callback when a guide drag starts */
 	function onStartGuideMove(e: CustomEvent): void {
-		draggingGuide = e.detail as DraggingGuide; // Store guide info
+		const detail = e.detail as { direction: 'horizontal' | 'vertical'; index: number };
+		draggingGuide = detail; // Store guide info
 		closeContextMenu();
 	}
 
@@ -670,6 +694,7 @@
 		multiSelectedComponentIds = $componentsStore.map((comp) => comp.id);
 		// Set the first component as the primary selected one if any exist
 		selectedComponent = multiSelectedComponentIds.length > 0 ? $componentsStore[0] : null;
+		closeContextMenu(); // Close menu if open
 	}
 
 	/** Resets zoom and centers the canvas view */
@@ -752,7 +777,10 @@
 		let maxRowHeight = 0;
 		const currentCanvasWidth = $canvasViewStore.width; // Get width from store
 
-		components.forEach((component) => {
+		// Get a sorted copy if layout depends on order (optional)
+		const sortedComponents = [...components].sort((a, b) => a.y - b.y || a.x - b.x); // Example sort
+
+		sortedComponents.forEach((component) => {
 			// Check if adding the component exceeds canvas width
 			if (currentX + component.width + PADDING > currentCanvasWidth && currentX > PADDING) {
 				// Move to the next row
@@ -785,7 +813,7 @@
 		const primary =
 			selectedComponent && multiSelectedComponentIds.includes(selectedComponent.id)
 				? selectedComponent
-				: selectedComps[0];
+				: selectedComps[0]; // Fallback to the first selected
 
 		// Calculate target alignment coordinate based on the primary component
 		let targetX: number | undefined;
@@ -860,19 +888,21 @@
 			// Calculate the sum of the widths of all selected components
 			const totalWidth = selectedComps.reduce((sum, comp) => sum + comp.width, 0);
 
-			// Ensure there's more than one component to distribute between
-			if (selectedComps.length <= 1) return;
-
 			// Calculate the total space available *between* components
+			// Ensure non-negative spacing, handle potential overlap
 			const totalSpacing = Math.max(0, totalRange - totalWidth);
+
 			// Calculate the equal gap size between each component
-			const gap = totalSpacing / (selectedComps.length - 1);
+			const gap = selectedComps.length > 1 ? totalSpacing / (selectedComps.length - 1) : 0;
 
 			// Reposition components with the calculated gap
 			let currentX = first.x; // Start with the position of the first component
-			selectedComps.forEach((comp, index) => {
+			selectedComps.forEach((comp) => {
 				// Update the actual component in the store
-				updateComponent(comp.id, { x: Math.round(currentX) });
+				// Avoid updating the first component if its position is the anchor
+				if (comp.id !== first.id) {
+					updateComponent(comp.id, { x: Math.round(currentX) });
+				}
 				// Advance the position for the next component
 				currentX += comp.width + gap;
 			});
@@ -889,17 +919,18 @@
 			// Calculate the sum of the heights
 			const totalHeight = selectedComps.reduce((sum, comp) => sum + comp.height, 0);
 
-			if (selectedComps.length <= 1) return;
-
 			// Calculate total vertical space between components
 			const totalSpacing = Math.max(0, totalRange - totalHeight);
 			// Calculate equal vertical gap
-			const gap = totalSpacing / (selectedComps.length - 1);
+			const gap = selectedComps.length > 1 ? totalSpacing / (selectedComps.length - 1) : 0;
 
 			// Reposition components
 			let currentY = first.y;
 			selectedComps.forEach((comp) => {
-				updateComponent(comp.id, { y: Math.round(currentY) });
+				// Avoid updating the first component if its position is the anchor
+				if (comp.id !== first.id) {
+					updateComponent(comp.id, { y: Math.round(currentY) });
+				}
 				currentY += comp.height + gap;
 			});
 		}
@@ -927,7 +958,10 @@
 			viewportWidth = viewportRef.clientWidth;
 			viewportHeight = viewportRef.clientHeight;
 			// Initial centering after dimensions are known
-			// resetZoomAndCenter(); // Optional: Center on mount
+			// Ensure viewport dimensions are available before potentially centering
+			tick().then(() => {
+				// resetZoomAndCenter(); // Optional: Center on mount
+			});
 		}
 
 		// Add global event listeners
@@ -957,7 +991,12 @@
 			selectedComponent = comp;
 			// Ensure the externally set component is also in the multi-select list
 			if (!multiSelectedComponentIds.includes(comp.id)) {
+				// If adding to an existing multi-selection is desired, use:
+				// multiSelectedComponentIds = [...multiSelectedComponentIds, comp.id];
+				// If setting it as the *only* selection is desired:
 				multiSelectedComponentIds = [comp.id];
+			} else {
+				// If it's already selected, ensure it's primary (no change to list needed)
 			}
 		} else {
 			clearSelection();
@@ -1098,19 +1137,20 @@
 
 	<!-- Context Menu (conditional) -->
 	{#if showContextMenu}
+		{console.log('Rendering ContextMenu component...')}
 		<ContextMenu
 			x={contextMenuX}
 			y={contextMenuY}
 			{selectedComponent}
 			{multiSelectedComponentIds}
 			targetElement={contextMenuTarget}
-			{horizontalGuides}
-			{verticalGuides}
 			on:close={closeContextMenu}
 			on:duplicate={duplicateSelected}
 			on:delete={deleteSelected}
 			on:removeGuide={removeGuide}
 			on:properties={() => console.log('Properties action triggered')}
+			on:selectAll={selectAllComponents}
+			on:autoPosition={autoPosition}
 		/>
 	{/if}
 </div>
