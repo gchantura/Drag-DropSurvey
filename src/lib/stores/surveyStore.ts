@@ -1,7 +1,7 @@
 // src/lib/stores/surveyStore.ts
 import { v4 as uuid } from 'uuid';
 import { writable, get } from 'svelte/store';
-import type { ComponentType, SurveyComponent } from '../types/survey.ts'; // Adjusted path
+import type { ComponentType, SurveyComponent } from '$lib/types/survey.ts'; // Adjusted path needed if not in same dir
 
 // Create the store for survey components
 export const componentsStore = writable<SurveyComponent[]>([]);
@@ -74,9 +74,9 @@ export function duplicateComponent(id: string, positionUpdates: Partial<SurveyCo
     // Deep copy complex properties like arrays
     const newComponent = {
         ...component,
-        options: [...component.options],
-        columns: [...component.columns],
-        rows: [...component.rows],
+        options: [...(component.options ?? [])], // Handle potential undefined
+        columns: [...(component.columns ?? [])], // Handle potential undefined
+        rows: [...(component.rows ?? [])],       // Handle potential undefined
         id: newId,
         x: (component.x ?? 0) + 20, // Default offset if not provided
         y: (component.y ?? 0) + 20,
@@ -252,6 +252,7 @@ export function removeColumn(id: string, index: number) {
         });
     });
 }
+
 
 // --- Persistence ---
 const STORAGE_KEY = 'surveyBuilderData_v1'; // Use a versioned key

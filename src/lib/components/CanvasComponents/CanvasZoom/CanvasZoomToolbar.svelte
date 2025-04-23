@@ -6,8 +6,6 @@
 	import IconZoomOut from '$lib/components/icons/grid/zoom/search-zoom-out.svg?raw';
 	import IconZoomOption from '$lib/components/icons/grid/zoom/search-options.svg?raw';
 
-	export let canvasScale: number;
-
 	const dispatch = createEventDispatcher<{
 		zoomIn: void;
 		zoomOut: void;
@@ -57,7 +55,10 @@
 				>
 					{@html sanitizeSvg(IconZoomIn)}
 				</span>
-				<span class="flex items-center bg-white py-1 text-sm hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">Zoom In</span>
+				<span
+					class="flex items-center bg-white py-1 text-sm hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+					>Zoom In</span
+				>
 			</button>
 			<button
 				class="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -70,8 +71,11 @@
 					class="inline-block h-4 w-4 text-gray-700 dark:text-slate-200 [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
 				>
 					{@html sanitizeSvg(IconZoomOut)}
-				</span> 
-                <span class="flex items-center bg-white py-1 text-sm hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">Zoom Out</span>
+				</span>
+				<span
+					class="flex items-center bg-white py-1 text-sm hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+					>Zoom Out</span
+				>
 			</button>
 			<button
 				class="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -85,7 +89,10 @@
 				>
 					{@html sanitizeSvg(IconZoomNormal)}
 				</span>
-				<span class="flex items-center bg-white py-1 text-sm hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">Reset 100%</span>
+				<span
+					class="flex items-center bg-white py-1 text-sm hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+					>Reset 100%</span
+				>
 			</button>
 		</div>
 	{/if}

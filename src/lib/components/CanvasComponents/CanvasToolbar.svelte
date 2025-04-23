@@ -3,13 +3,12 @@
 	import { createEventDispatcher } from 'svelte';
 
 	import CanvasZoomToolbar from '$lib/components/CanvasComponents/CanvasZoom/CanvasZoomToolbar.svelte';
-	import CanvasGrid from '$lib/components/CanvasComponents/CanvasGrid/CanvasGrid.svelte';
+	import CanvasGrid from '$lib/components/CanvasComponents/CanvasGrid/CanvasGrid.svelte'; // Assuming this exists or remove if not used
 
 	export let units: 'cm' | 'inches' | 'px';
 	export let enableSnap: boolean;
 	export let showGuides: boolean;
-	export let pageFormat: string; // Assuming 'A4', 'Letter', 'Custom'
-	export let canvasScale: number;
+	export let pageFormat: string;
 
 	const dispatch = createEventDispatcher<{
 		toggleUnits: void;
@@ -63,11 +62,11 @@
 			<option value="Letter">Letter</option>
 			<option value="Custom">Custom</option>
 		</select>
+		<!-- Removed canvasScale display as it's better handled in StatusBar or ZoomToolbar -->
 	</div>
 
 	<div class="flex flex-wrap items-center gap-2">
 		<CanvasZoomToolbar
-			{canvasScale}
 			on:resetZoom={() => dispatch('resetZoom')}
 			on:zoomIn={() => dispatch('zoomIn')}
 			on:zoomOut={() => dispatch('zoomOut')}

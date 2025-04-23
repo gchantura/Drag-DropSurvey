@@ -43,18 +43,20 @@ export interface SurveyComponent {
     required: boolean;
 
     // Type-specific properties
-    options: string[]; // For checkbox, radio, dropdown
+    options?: string[]; // For checkbox, radio, dropdown - Made optional as not all types have it
     description?: string; // For section, introduction
     src?: string; // For fileAttachment (image source)
     maxRating?: number; // For rating
     acceptedFileTypes?: string; // For fileUpload
     maxFileSize?: number; // For fileUpload (in MB)
-    columns: string[]; // For matrix rows
-    rows: string[]; // For matrix columns
+    columns?: string[]; // For matrix columns (clarified usage)
+    rows?: string[]; // For matrix rows (clarified usage)
 
     // Internal state used during interactions (e.g., drag/resize)
-    startX?: number; // Represents starting X for multi-drag OR starting width for resize
-    startY?: number; // Represents starting Y for multi-drag OR starting height for resize
+    // Represents starting width/height for resize operations
+    // Not strictly needed for multi-drag as initial positions are stored separately
+    startX?: number;
+    startY?: number;
 }
 
 /**
