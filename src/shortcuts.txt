@@ -1,0 +1,34 @@
+<!--
+MOUSE/KEYBOARD INTERACTIONS SUMMARY:
+
+Mouse:
+- Left Click (Canvas BG): Start Selection Box / Deselect All
+- Left Click (Component): Select Component (Shift+Click for multi-select toggle)
+- Left Drag (Component): Move selected Component(s)
+- Left Drag (Resize Handle): Resize Component
+- Left Drag (Canvas BG): Draw Selection Box
+- Middle Drag / Middle Click: Pan Canvas
+- Space + Left Drag: Pan Canvas
+- Wheel: Pan Canvas Vertically
+- Shift + Wheel: Pan Canvas Horizontally
+- Ctrl/Meta + Wheel: Zoom Canvas (centered on mouse pointer)
+- Double Click (Ruler): Add Guide
+- Left Drag (Guide): Move Guide
+- Right Click (Canvas/Component/Guide): Show Context Menu
+- Right Click (Guide): (Via Context Menu) Remove Guide
+
+Keyboard:
+- Arrow Keys: Move selected Component(s) by 1px
+- Shift + Arrow Keys: Move selected Component(s) by 10px
+- Delete / Backspace: Delete selected Component(s)
+- Ctrl/Meta + D: Duplicate selected Component(s)
+- Ctrl/Meta + A: Select All Components
+- Ctrl/Meta + G: Toggle Grid Snap
+- Ctrl/Meta + H: Toggle Guides Visibility
+- Ctrl/Meta + (+/=): Zoom In
+- Ctrl/Meta + (-): Zoom Out
+- Ctrl/Meta + 0: Reset Zoom & Center View
+- Spacebar (Hold): Enable Pan mode (requires Left Drag)
+- Escape: Close Context Menu / Cancel Selection Box / Cancel Guide Drag / Deselect All
+
+-->
