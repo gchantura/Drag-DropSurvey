@@ -1,177 +1,155 @@
-<!-- src/lib/components/CanvasComponents/ContextMenu.svelte -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import type { SurveyComponent } from '$lib/types/survey.ts';
 
+	type GuideInfo = {
+		direction: 'horizontal' | 'vertical';
+		index: number;
+		position: number;
+	};
+
 	export let x: number;
 	export let y: number;
-	export let selectedComponent: SurveyComponent | null;
-	export let multiSelectedComponentIds: string[];
-	export let targetElement: EventTarget | null;
+	export let selectedComponent: SurveyComponent | null = null;
+	// Removed unused export: export let multiSelectedComponentIds: string[] = [];
+	export let targetElement: EventTarget | null = null;
+	export let contextMenuGuideInfo: GuideInfo | null = null;
 
 	const dispatch = createEventDispatcher<{
 		close: void;
 		duplicate: void;
 		delete: void;
-		removeGuide: { direction: 'horizontal' | 'vertical'; index: number };
 		properties: void;
-		selectAll: void; // <-- Added event
-		autoPosition: void; // <-- Added event
+		selectAll: void;
+		autoPosition: void;
+		removeGuide: { direction: 'horizontal' | 'vertical'; index: number };
+		deleteGuide: GuideInfo;
+		setPositionGuide: GuideInfo;
 	}>();
 
-	// --- Helper functions to determine context ---
-	function getTargetGuideInfo(): { direction: 'horizontal' | 'vertical'; index: number } | null {
-		if (!targetElement || !(targetElement instanceof Element)) return null;
-		const guideLine = targetElement.closest<Element>('.guide-line');
-		if (guideLine && guideLine instanceof SVGElement) {
-			const direction = guideLine.dataset.direction;
-			const indexStr = guideLine.dataset.index;
-			if (direction && indexStr) {
-				const index = parseInt(indexStr, 10);
-				if (!isNaN(index) && (direction === 'horizontal' || direction === 'vertical')) {
-					return { direction, index };
-				}
+	function isGuideElement(target: EventTarget | null): boolean {
+		return target instanceof Element && target.closest('.canvas-guide') !== null;
+	}
+
+	function handleGuideRemove() {
+		if (contextMenuGuideInfo) {
+			dispatch('deleteGuide', contextMenuGuideInfo);
+		} else if (isGuideElement(targetElement) && targetElement instanceof HTMLElement) {
+			const direction = targetElement.dataset.direction as 'horizontal' | 'vertical';
+			const index = parseInt(targetElement.dataset.index || '-1', 10);
+			if (index !== -1) {
+				dispatch('removeGuide', { direction, index });
 			}
 		}
-		return null;
-	}
-
-	let clickedGuideInfo = getTargetGuideInfo();
-	let clickedComponent: SurveyComponent | null = selectedComponent;
-
-	// --- Event Handlers ---
-	function handleRemoveGuide() {
-		if (clickedGuideInfo) {
-			dispatch('removeGuide', clickedGuideInfo);
-			dispatch('close');
-		}
-	}
-
-	function handleDuplicate() {
-		if (multiSelectedComponentIds.length > 0) {
-			dispatch('duplicate');
-		}
 		dispatch('close');
 	}
 
-	function handleDelete() {
-		if (multiSelectedComponentIds.length > 0) {
-			dispatch('delete');
+	function handleSetPosition() {
+		if (contextMenuGuideInfo) {
+			dispatch('setPositionGuide', contextMenuGuideInfo);
 		}
 		dispatch('close');
-	}
-
-	function handleProperties() {
-		if (selectedComponent) {
-			dispatch('properties');
-		}
-		dispatch('close');
-	}
-
-	function handleSelectAll() {
-		dispatch('selectAll'); // <-- Dispatch the new event
-		dispatch('close');
-	}
-
-	function handleAutoPosition() {
-		dispatch('autoPosition'); // <-- Dispatch the new event
-		dispatch('close');
-	}
-
-	function handleKeyDown(event: KeyboardEvent) {
-		if (event.key === 'Escape') {
-			dispatch('close');
-		}
 	}
 </script>
 
-<!-- Basic Context Menu Structure -->
 <div
-	class="fixed z-50 min-w-[150px] rounded border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800"
+	class="context-menu fixed z-50 rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800"
 	style="left: {x}px; top: {y}px;"
 	role="menu"
-	tabindex="-1"
 	aria-orientation="vertical"
-	aria-labelledby="options-menu"
-	on:click|stopPropagation={() => {}}
+	aria-labelledby="menu-button"
+	tabindex="-1"
 	on:contextmenu|preventDefault|stopPropagation
-	on:keydown={handleKeyDown}
 >
-	<div class="py-1" id="options-menu">
-		<!-- Component Context Menu -->
-		{#if clickedComponent}
+	<div class="py-1" role="none">
+		{#if contextMenuGuideInfo}
 			<button
-				class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-200 dark:hover:bg-gray-700"
+				class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-white"
 				role="menuitem"
-				on:click={handleDuplicate}
-				disabled={multiSelectedComponentIds.length === 0}
+				tabindex="-1"
+				on:click={handleGuideRemove}
 			>
-				Duplicate{#if multiSelectedComponentIds.length > 1}
-					({multiSelectedComponentIds.length}){/if}
+				Delete Guide
 			</button>
 			<button
-				class="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100 disabled:opacity-50 dark:text-red-400 dark:hover:bg-gray-700"
+				class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-white"
 				role="menuitem"
-				on:click={handleDelete}
-				disabled={multiSelectedComponentIds.length === 0}
+				tabindex="-1"
+				on:click={handleSetPosition}
 			>
-				Delete{#if multiSelectedComponentIds.length > 1}
-					({multiSelectedComponentIds.length}){/if}
+				Set Position...
+			</button>
+			<div class="my-1 border-t border-gray-200 dark:border-gray-600"></div>
+		{:else if isGuideElement(targetElement)}
+			<button
+				class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-white"
+				role="menuitem"
+				tabindex="-1"
+				on:click={handleGuideRemove}
+			>
+				Remove Guide
+			</button>
+			<div class="my-1 border-t border-gray-200 dark:border-gray-600"></div>
+		{/if}
+
+		{#if selectedComponent}
+			<button
+				class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-50 dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-white dark:disabled:opacity-60"
+				role="menuitem"
+				tabindex="-1"
+				on:click={() => {
+					dispatch('duplicate');
+					dispatch('close');
+				}}
+			>
+				Duplicate
 			</button>
 			<button
-				class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+				class="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
 				role="menuitem"
-				on:click={handleProperties}
+				tabindex="-1"
+				on:click={() => {
+					dispatch('delete');
+					dispatch('close');
+				}}
+			>
+				Delete
+			</button>
+			<button
+				class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-white"
+				role="menuitem"
+				tabindex="-1"
+				on:click={() => {
+					dispatch('properties');
+					dispatch('close');
+				}}
 			>
 				Properties
 			</button>
+			<div class="my-1 border-t border-gray-200 dark:border-gray-600"></div>
 		{/if}
 
-		<!-- Guide Context Menu -->
-		{#if clickedGuideInfo}
-			{#if clickedComponent}<div
-					class="my-1 border-t border-gray-200 dark:border-gray-600"
-				></div>{/if}
-			<button
-				class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-				role="menuitem"
-				on:click={handleRemoveGuide}
-			>
-				Remove Guide ({clickedGuideInfo.direction === 'horizontal' ? 'H' : 'V'})
-			</button>
-		{/if}
-
-		<!-- Canvas Background Context Menu -->
-		{#if !clickedComponent && !clickedGuideInfo}
-			<span
-				class="block px-4 py-1 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400"
-				role="none">Canvas Actions</span
-			>
-			<button
-				class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-				role="menuitem"
-				on:click={handleSelectAll}
-			>
-				Select All (Ctrl+A)
-			</button>
-			<!-- Grid Button -->
-			<button
-				class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-				role="menuitem"
-				on:click={handleAutoPosition}
-				title="Automatically arrange components (Grid)"
-			>
-				<span>Grid Layout</span>
-			</button>
-		{/if}
+		<button
+			class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-white"
+			role="menuitem"
+			tabindex="-1"
+			on:click={() => {
+				dispatch('selectAll');
+				dispatch('close');
+			}}
+		>
+			Select All
+		</button>
+		<button
+			class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-white"
+			role="menuitem"
+			tabindex="-1"
+			on:click={() => {
+				dispatch('autoPosition');
+				dispatch('close');
+			}}
+		>
+			Auto Position
+		</button>
 	</div>
 </div>
-
-<!-- Click outside listener (remains the same) -->
-<button
-	type="button"
-	class="fixed inset-0 z-40 h-full w-full cursor-default border-none bg-transparent p-0"
-	aria-label="Dismiss context menu"
-	on:click={() => dispatch('close')}
-	on:contextmenu|preventDefault={() => dispatch('close')}
-></button>

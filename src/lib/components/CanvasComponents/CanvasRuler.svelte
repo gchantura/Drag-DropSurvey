@@ -1,4 +1,3 @@
-<!-- src/lib/components/CanvasComponents/CanvasRuler.svelte -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 
@@ -7,30 +6,22 @@
 	export let offset: number = 0;
 	export let viewLength: number;
 	export let units: 'cm' | 'inches' | 'px';
-	export let mousePos: number = 0; // Relative to viewport edge
-	// Removed showGuides/guides props as they are not directly used for drawing here
-	// Guide interaction (creation) is handled by dblclick
+	export let mousePos: number = 0;
 
 	const dispatch = createEventDispatcher<{
-		// Changed events slightly for clarity
-		addGuide: { direction: 'horizontal' | 'vertical'; position: number }; // Position is in CANVAS coords
-		// Keeping these for potential future use if guides were rendered ON the ruler
-		// startGuideMove: { direction: 'horizontal' | 'vertical'; index: number };
-		// removeGuide: { direction: 'horizontal' | 'vertical'; index: number };
+		addGuide: { direction: 'horizontal' | 'vertical'; position: number };
+		rulerContextMenu: { direction: 'horizontal' | 'vertical'; position: number; event: MouseEvent };
 	}>();
 
-	// Constants for unit conversion
 	const DPI = 96;
 	const CM_PER_INCH = 2.54;
 	const PIXEL_PER_CM = DPI / CM_PER_INCH;
 	const PIXEL_PER_INCH = DPI;
 
-	// --- Calculations ---
-	let majorTickCanvasInterval = 100; // Default, will be calculated reactively
+	let majorTickCanvasInterval = 100;
 	let minorTicksCount = 10;
 	let labelMultiplier = 1;
 
-	// Function to find "nice" intervals for px rulers
 	function findNicePixelInterval(targetScreenSpacing: number, currentScale: number): number {
 		const desiredCanvasSpacing = targetScreenSpacing / currentScale;
 		const intervals = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000, 10000];
@@ -43,18 +34,15 @@
 				minDiff = diff;
 				bestInterval = interval;
 			}
-			// Optimization: if interval is already much larger than desired, stop checking larger ones
-			if (interval > desiredCanvasSpacing * 2 && interval > 20) {
+			if (interval > desiredCanvasSpacing * 2 && interval > 10) {
 				break;
 			}
 		}
-		// Ensure minimum interval to prevent excessive ticks at high zoom
 		return Math.max(1, bestInterval);
 	}
 
-	// Reactive calculation of tick properties based on units and scale
 	$: {
-		const MIN_PX_MAJOR_TICK_SCREEN_SPACING = 50; // Min screen pixels between major ticks
+		const MIN_PX_MAJOR_TICK_SCREEN_SPACING = 50;
 
 		if (units === 'px') {
 			majorTickCanvasInterval = findNicePixelInterval(MIN_PX_MAJOR_TICK_SCREEN_SPACING, scale);
@@ -66,44 +54,39 @@
 						: majorTickCanvasInterval % 2 === 0
 							? 2
 							: 1;
-			if (majorTickCanvasInterval === 1 && scale > 10) minorTicksCount = 0; // Hide minor if major is every pixel and zoomed in
-			labelMultiplier = 1; // Labels show actual pixel values
+			if (majorTickCanvasInterval === 1 && scale > 10) minorTicksCount = 0;
+			labelMultiplier = 1;
 		} else if (units === 'cm') {
 			majorTickCanvasInterval = PIXEL_PER_CM;
 			minorTicksCount = 10;
 			labelMultiplier = 1;
 		} else {
-			// inches
 			majorTickCanvasInterval = PIXEL_PER_INCH;
-			minorTicksCount = 8; // Often 8 or 16 for inches
+			minorTicksCount = 8;
 			labelMultiplier = 1;
 		}
 	}
 
-	$: viewStart = -offset / scale; // Where the ruler starts in canvas coords
-	$: viewEnd = (-offset + viewLength) / scale; // Where the ruler ends in canvas coords
-	$: indicatorPosition = mousePos; // Already relative to viewport edge
+	$: viewStart = -offset / scale;
+	$: viewEnd = (-offset + viewLength) / scale;
+	$: indicatorPosition = mousePos;
 
 	function formatLabel(canvasValue: number): string {
-		// Avoid -0 label
 		const rawDisplayValue = canvasValue === 0 ? 0 : canvasValue * labelMultiplier;
-		// Round the displayed value to the nearest integer for all units for major ticks
 		const displayValue = Math.round(rawDisplayValue);
 		return `${displayValue}`;
 	}
 
 	function getTicks() {
 		const ticks = [];
-		const minTickThreshold = 4; // Minimum screen pixels between minor ticks to draw them
+		const minTickThreshold = 4;
 		const majorTickScreenSize = majorTickCanvasInterval * scale;
 		const minorTickScreenSize = minorTicksCount > 0 ? majorTickScreenSize / minorTicksCount : 0;
 		const drawMinorTicks = minorTickScreenSize > minTickThreshold && minorTicksCount > 0;
 
-		// Calculate start and end values for the loop based on the major interval
 		const startValue = Math.floor(viewStart / majorTickCanvasInterval) * majorTickCanvasInterval;
 		const endValue = Math.ceil(viewEnd / majorTickCanvasInterval) * majorTickCanvasInterval;
 
-		// Limit iteration count to prevent performance issues at extreme zooms/pans
 		const maxIterations = 1000;
 		let iterations = 0;
 
@@ -113,25 +96,20 @@
 			value += majorTickCanvasInterval
 		) {
 			iterations++;
-			const screenPos = value * scale + offset; // Position on screen (ruler)
+			const screenPos = value * scale + offset;
 
-			// Only render if within reasonable bounds of the view
 			if (screenPos >= -majorTickScreenSize && screenPos <= viewLength + majorTickScreenSize) {
-				// Major Tick
 				ticks.push({
 					type: 'major',
 					pos: screenPos,
 					label: formatLabel(value)
 				});
 
-				// Minor Ticks
 				if (drawMinorTicks && iterations < maxIterations) {
-					// Check iteration count again
 					const minorCanvasInterval = majorTickCanvasInterval / minorTicksCount;
 					for (let j = 1; j < minorTicksCount; j++) {
 						const minorValue = value + j * minorCanvasInterval;
 						const minorScreenPos = minorValue * scale + offset;
-						// Only draw if within view bounds (approx) and check iterations
 						if (
 							minorScreenPos > -10 &&
 							minorScreenPos < viewLength + 10 &&
@@ -139,35 +117,40 @@
 						) {
 							ticks.push({ type: 'minor', pos: minorScreenPos });
 						} else if (minorScreenPos >= viewLength + 10) {
-							// Optimization: if minor ticks go off screen, stop drawing them for this major tick
 							break;
 						}
-						iterations++; // Increment even if not drawn? Maybe not needed here.
+						iterations++;
 					}
 				}
 			} else if (screenPos > viewLength + majorTickScreenSize && value > viewStart) {
-				// Optimization: if major ticks go off screen, stop iterating further
 				break;
 			}
 		}
-		// console.log("Ticks:", ticks.length, " Iterations:", iterations); // For debugging
 		return ticks;
 	}
 
-	// --- Guide Creation Handler ---
 	function handleDoubleClick(event: MouseEvent) {
 		let clickPos: number;
 		if (direction === 'horizontal') {
-			// event.offsetX is relative to the padding edge of the target element (the div)
 			clickPos = event.offsetX;
 		} else {
 			clickPos = event.offsetY;
 		}
-
-		// Convert screen position (relative to ruler) to canvas coordinate
 		const canvasPosition = (clickPos - offset) / scale;
-
 		dispatch('addGuide', { direction, position: canvasPosition });
+		event.stopPropagation();
+	}
+
+	function handleContextMenu(event: MouseEvent) {
+		event.preventDefault();
+		let clickPos: number;
+		if (direction === 'horizontal') {
+			clickPos = event.offsetX;
+		} else {
+			clickPos = event.offsetY;
+		}
+		const canvasPosition = (clickPos - offset) / scale;
+		dispatch('rulerContextMenu', { direction, position: canvasPosition, event });
 		event.stopPropagation();
 	}
 </script>
@@ -184,6 +167,7 @@
 	class:w-8={direction === 'vertical'}
 	class:h-full={direction === 'vertical'}
 	on:dblclick={handleDoubleClick}
+	on:contextmenu={handleContextMenu}
 >
 	<svg
 		xmlns="http://www.w3.org/2000/svg"
@@ -192,7 +176,6 @@
 		width={direction === 'horizontal' ? '100%' : '32px'}
 		height={direction === 'vertical' ? '100%' : '32px'}
 	>
-		<!-- Ruler Ticks -->
 		{#each getTicks() as tick}
 			{#if direction === 'horizontal'}
 				{#if tick.type === 'major'}
@@ -213,7 +196,6 @@
 			{/if}
 		{/each}
 
-		<!-- Mouse position indicator -->
 		{#if indicatorPosition >= 0 && indicatorPosition <= viewLength}
 			{#if direction === 'horizontal'}
 				<line class="indicator" x1={indicatorPosition} y1="0" x2={indicatorPosition} y2="32" />
@@ -225,7 +207,6 @@
 </div>
 
 <style>
-	/* Styles are unchanged, ensure they match your previous setup */
 	.label {
 		fill: #374151;
 		font-size: 10px;
@@ -247,7 +228,6 @@
 		stroke-dasharray: 2, 2;
 		pointer-events: none;
 	}
-
 	@media (prefers-color-scheme: dark) {
 		.label {
 			fill: #d1d5db;

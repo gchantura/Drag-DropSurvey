@@ -2,8 +2,6 @@
 import { writable } from 'svelte/store';
 
 // --- Constants ---
-// These are configuration values related to rendering, units, and interactions.
-// Exporting them allows consistent use across the application if needed.
 export const DPI = 96;
 export const CM_PER_INCH = 2.54;
 export const PIXEL_PER_CM = DPI / CM_PER_INCH;
@@ -11,26 +9,24 @@ export const PIXEL_PER_INCH = DPI;
 export const MIN_ZOOM = 0.1;
 export const MAX_ZOOM = 5;
 export const ZOOM_SENSITIVITY = 0.001;
-export const RULER_SIZE = 32; // px - Visual constant for the canvas UI
-export const SNAP_THRESHOLD = 5; // px - Interaction constant for snapping behavior
+export const RULER_SIZE = 32; // px
+export const SNAP_THRESHOLD = 5; // px
 
 // --- Page Size Definitions ---
-// Central place to define standard page sizes in pixels.
 export const pageSizes = {
     A4: { width: (210 * PIXEL_PER_CM) / 10, height: (297 * PIXEL_PER_CM) / 10 },
     Letter: { width: 8.5 * PIXEL_PER_INCH, height: 11 * PIXEL_PER_INCH },
-    Custom: { width: 800, height: 1100 } // Default custom size, might be updated
+    Custom: { width: 800, height: 1100 } // Default custom size
 };
 
 // --- Store State Interface ---
-// Defines the shape of the reactive state managed by this store.
 interface CanvasViewState {
-    width: number; // Current canvas width in pixels
-    height: number; // Current canvas height in pixels
-    scale: number; // Current zoom level (1 = 100%)
-    offsetX: number; // Horizontal pan offset in viewport pixels
-    offsetY: number; // Vertical pan offset in viewport pixels
-    pageFormat: string; // Identifier for the current page size ('A4', 'Letter', 'Custom')
+    width: number;
+    height: number;
+    scale: number;
+    offsetX: number;
+    offsetY: number;
+    pageFormat: string;
 }
 
 // --- Store Initialization ---
@@ -38,7 +34,7 @@ const initialFormat = 'A4';
 const initialWidth = pageSizes[initialFormat as keyof typeof pageSizes]?.width ?? pageSizes.Custom.width;
 const initialHeight = pageSizes[initialFormat as keyof typeof pageSizes]?.height ?? pageSizes.Custom.height;
 
-// Initialize the 'Custom' page size definition to match the initial state
+// Initialize Custom page size
 pageSizes.Custom.width = initialWidth;
 pageSizes.Custom.height = initialHeight;
 
@@ -47,117 +43,94 @@ const { subscribe, update, set } = writable<CanvasViewState>({
     width: initialWidth,
     height: initialHeight,
     scale: 1,
-    offsetX: 0, // Start centered or at top-left (0,0 is common)
+    offsetX: 0,
     offsetY: 0,
     pageFormat: initialFormat
 });
 
-// --- Store Actions (Functions to modify the state) ---
+// --- Helper Functions ---
+function clampZoom(scale: number): number {
+    return Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, scale));
+}
 
-/** Updates the canvas dimensions directly. Used for 'Custom' size changes. */
+function calculateOffsets(scale: number, contentWidth: number, contentHeight: number, viewportWidth: number, viewportHeight: number): { offsetX: number, offsetY: number } {
+    const newOffsetX = Math.max(0, (viewportWidth - RULER_SIZE - contentWidth) / 2);
+    const newOffsetY = Math.max(0, (viewportHeight - RULER_SIZE - contentHeight) / 2);
+    return { offsetX: newOffsetX, offsetY: newOffsetY };
+}
+
+// --- Store Actions ---
 function setCanvasSize(width: number, height: number) {
     update((state) => {
-        // Update the 'Custom' definition whenever size is set directly
         pageSizes.Custom.width = width;
         pageSizes.Custom.height = height;
-        return { ...state, width, height, pageFormat: 'Custom' }; // Assume setting size directly means 'Custom'
+        return { ...state, width, height, pageFormat: 'Custom' };
     });
 }
 
-/** Sets the page format and updates canvas dimensions accordingly. */
 function setPageFormat(format: string) {
     update((state) => {
-        let newWidth = state.width;
-        let newHeight = state.height;
         const validFormat = format as keyof typeof pageSizes;
-
-        if (format !== 'Custom' && pageSizes[validFormat]) {
-            newWidth = pageSizes[validFormat].width;
-            newHeight = pageSizes[validFormat].height;
-        } else {
-            // If switching to 'Custom', use the stored 'Custom' dimensions
-            newWidth = pageSizes.Custom.width;
-            newHeight = pageSizes.Custom.height;
-        }
-        return { ...state, pageFormat: format, width: newWidth, height: newHeight };
+        const { width, height } = pageSizes[validFormat] ?? pageSizes.Custom;
+        return { ...state, pageFormat: format, width, height };
     });
 }
 
-/** Sets the entire canvas transform (scale and offset), clamping the scale. */
 function setCanvasTransform(scale: number, offsetX: number, offsetY: number) {
     update((state) => ({
         ...state,
-        scale: Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, scale)),
+        scale: clampZoom(scale),
         offsetX,
         offsetY
     }));
 }
 
-/** Updates only the canvas offset (used for panning). */
 function setCanvasOffset(offsetX: number, offsetY: number) {
     update((state) => ({ ...state, offsetX, offsetY }));
 }
 
-/** Updates only the canvas scale, clamping the value (used for simple zoom buttons). */
 function setCanvasScale(newScale: number) {
     update((state) => ({
         ...state,
-        scale: Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newScale))
+        scale: clampZoom(newScale)
     }));
 }
 
-/** Resets zoom to 100% and centers the canvas within the given viewport dimensions. */
 function resetZoom(viewportWidth: number, viewportHeight: number) {
     update((state) => {
         const newScale = 1;
-        // Use the current state's width/height for centering calculation
         const contentWidth = state.width * newScale;
         const contentHeight = state.height * newScale;
-        // Calculate offsets to center the content, ensuring offset is not negative
-        const newOffsetX = Math.max(0, (viewportWidth - RULER_SIZE - contentWidth) / 2);
-        const newOffsetY = Math.max(0, (viewportHeight - RULER_SIZE - contentHeight) / 2);
-        return {
-            ...state,
-            scale: newScale,
-            offsetX: newOffsetX,
-            offsetY: newOffsetY
-        };
+        const { offsetX, offsetY } = calculateOffsets(newScale, contentWidth, contentHeight, viewportWidth, viewportHeight);
+        return { ...state, scale: newScale, offsetX, offsetY };
     });
 }
 
-/** Increases the zoom level by a fixed step. */
-function zoomIn(p0?: number, p1?: number) {
-    update((state) => {
-        const newScale = Math.min(state.scale + 0.1, MAX_ZOOM);
-        // Note: Simple zoom doesn't center on mouse - adjustZoom is needed for that
-        return { ...state, scale: newScale };
-    });
+function zoomIn() {
+    update((state) => ({
+        ...state,
+        scale: clampZoom(state.scale + 0.1)
+    }));
 }
 
-/** Decreases the zoom level by a fixed step. */
-function zoomOut(p0?: number, p1?: number) {
-    update((state) => {
-        const newScale = Math.max(state.scale - 0.1, MIN_ZOOM);
-        return { ...state, scale: newScale };
-    });
+function zoomOut() {
+    update((state) => ({
+        ...state,
+        scale: clampZoom(state.scale - 0.1)
+    }));
 }
 
-/** Adjusts zoom based on a delta (e.g., from wheel event) and centers on a specific point (viewport coordinates). */
 function adjustZoom(delta: number, centerX: number, centerY: number) {
     update((state) => {
         const zoomFactor = Math.exp(delta);
-        const newScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, state.scale * zoomFactor));
+        const newScale = clampZoom(state.scale * zoomFactor);
 
         if (newScale === state.scale) {
-            return state; // No change in scale
+            return state; // No change
         }
 
-        // Calculate mouse position in canvas coordinates *before* the zoom
         const mouseX_Canvas_PreZoom = (centerX - state.offsetX) / state.scale;
         const mouseY_Canvas_PreZoom = (centerY - state.offsetY) / state.scale;
-
-        // Calculate the new offset required to keep the pre-zoom canvas point
-        // under the mouse cursor (centerX, centerY) *after* the zoom
         const newOffsetX = centerX - mouseX_Canvas_PreZoom * newScale;
         const newOffsetY = centerY - mouseY_Canvas_PreZoom * newScale;
 
@@ -166,16 +139,15 @@ function adjustZoom(delta: number, centerX: number, centerY: number) {
 }
 
 // --- Export Store and Actions ---
-// Make the store subscription and the actions available for import.
 export const canvasViewStore = {
-    subscribe, // Allows components to react to state changes ($canvasViewStore)
+    subscribe,
     setCanvasSize,
     setPageFormat,
     setCanvasTransform,
     setCanvasOffset,
     setCanvasScale,
-    resetZoom, // Requires viewport size from component
+    resetZoom,
     zoomIn,
     zoomOut,
-    adjustZoom // Requires mouse coords from component
+    adjustZoom
 };

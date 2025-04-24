@@ -8,8 +8,6 @@
 		clearSelectionState,
 		selectAllComponentsState
 	} from '$lib/stores/alignmentStore.ts';
-
-	// Import distribution logic from distributionStore
 	import { canDistribute, distributeSelectedComponents } from '$lib/stores/distributionStore.ts';
 	import {
 		componentsStore,
@@ -32,6 +30,7 @@
 		SelectionBox,
 		DraggingGuide
 	} from '$lib/types/survey.ts';
+	// Removed incorrect import: import type { MouseEvent as SvelteMouseEvent } from 'svelte/elements';
 
 	import CanvasToolbar from '$lib/components/CanvasComponents/CanvasToolbar.svelte';
 	import ToolbarAlign from '$lib/components/CanvasComponents/ToolbarAlignment.svelte';
@@ -40,6 +39,12 @@
 	import CanvasViewport from '$lib/components/CanvasComponents/CanvasViewport.svelte';
 	import ContextMenu from '$lib/components/CanvasComponents/ContextMenu.svelte';
 	import StatusBar from '$lib/components/CanvasComponents/StatusBar.svelte';
+
+	type GuideInfo = {
+		direction: 'horizontal' | 'vertical';
+		index: number;
+		position: number;
+	};
 
 	export let selectedComponent: SurveyComponentType | null = null;
 	export let units: 'cm' | 'inches' | 'px' = 'cm';
@@ -80,6 +85,7 @@
 	let contextMenuX = 0;
 	let contextMenuY = 0;
 	let contextMenuTarget: EventTarget | null = null;
+	let contextMenuGuideInfo: GuideInfo | null = null;
 
 	$: selectedComponentId = $primarySelectedComponentId;
 
@@ -408,19 +414,121 @@
 		}
 	}
 
-	function handleContextMenu(e: MouseEvent): void {
-		if (isDragging || isPanning || isResizing || isSelecting || draggingGuide) return;
-		e.preventDefault();
+	function handleContextMenu(event: MouseEvent): void {
+		// Use standard MouseEvent
+		const targetElement = event.target as Element;
+		if (
+			isDragging ||
+			isPanning ||
+			isResizing ||
+			isSelecting ||
+			draggingGuide ||
+			targetElement.closest('.ruler-container')
+		) {
+			return;
+		}
+
+		event.preventDefault();
+		contextMenuGuideInfo = null;
 		showContextMenu = true;
-		contextMenuX = e.clientX;
-		contextMenuY = e.clientY;
-		contextMenuTarget = e.target;
+		contextMenuX = event.clientX;
+		contextMenuY = event.clientY;
+		contextMenuTarget = event.target;
+	}
+
+	function handleRulerContextMenu(
+		e: CustomEvent<{ direction: 'horizontal' | 'vertical'; position: number; event: MouseEvent }>
+	) {
+		const { direction: rulerDirection, position: canvasClickPos, event } = e.detail;
+		event.preventDefault();
+
+		const GUIDE_CLICK_THRESHOLD_PX = 5;
+		const { scale, offsetX, offsetY } = $canvasViewStore;
+
+		let closestGuideInfo: GuideInfo | null = null;
+		let minDistance = GUIDE_CLICK_THRESHOLD_PX;
+
+		if (rulerDirection === 'horizontal') {
+			const screenClickX = event.offsetX;
+			verticalGuides.forEach((guidePos, index) => {
+				const guideScreenX = guidePos * scale + offsetX;
+				const distance = Math.abs(guideScreenX - screenClickX);
+				if (distance < minDistance) {
+					minDistance = distance;
+					closestGuideInfo = { direction: 'vertical', index, position: guidePos };
+				}
+			});
+		} else {
+			const screenClickY = event.offsetY;
+			horizontalGuides.forEach((guidePos, index) => {
+				const guideScreenY = guidePos * scale + offsetY;
+				const distance = Math.abs(guideScreenY - screenClickY);
+				if (distance < minDistance) {
+					minDistance = distance;
+					closestGuideInfo = { direction: 'horizontal', index, position: guidePos };
+				}
+			});
+		}
+
+		contextMenuGuideInfo = closestGuideInfo;
+		showContextMenu = true;
+		contextMenuX = event.clientX;
+		contextMenuY = event.clientY;
+		contextMenuTarget = event.target as EventTarget;
+		closeContextMenu();
+		tick().then(() => {
+			showContextMenu = true;
+			contextMenuX = event.clientX;
+			contextMenuY = event.clientY;
+			contextMenuTarget = event.target as EventTarget;
+		});
 	}
 
 	function closeContextMenu(): void {
 		if (showContextMenu) {
 			showContextMenu = false;
 			contextMenuTarget = null;
+			contextMenuGuideInfo = null;
+		}
+	}
+
+	function handleDeleteGuide(e: CustomEvent<GuideInfo>) {
+		const { direction, index } = e.detail;
+		handleRemoveGuide(e);
+		closeContextMenu();
+	}
+
+	function handleSetGuidePosition(e: CustomEvent<GuideInfo>) {
+		const { direction, index, position } = e.detail;
+		const currentPos = position.toFixed(1);
+
+		const newPositionStr = prompt(
+			`Set new position for ${direction} guide (current: ${currentPos}):`,
+			`${currentPos}`
+		);
+		closeContextMenu();
+
+		if (newPositionStr !== null) {
+			const newPosition = parseFloat(newPositionStr);
+			if (!isNaN(newPosition)) {
+				const snappedNewPosition = snapToGrid(newPosition);
+
+				if (direction === 'horizontal') {
+					if (index >= 0 && index < horizontalGuides.length) {
+						horizontalGuides[index] = snappedNewPosition;
+						horizontalGuides.sort((a, b) => a - b);
+						horizontalGuides = [...horizontalGuides];
+					}
+				} else {
+					if (index >= 0 && index < verticalGuides.length) {
+						verticalGuides[index] = snappedNewPosition;
+						verticalGuides.sort((a, b) => a - b);
+						verticalGuides = [...verticalGuides];
+					}
+				}
+			} else {
+				alert('Invalid position entered. Please enter a number.');
+			}
 		}
 	}
 
@@ -743,6 +851,7 @@
 		window.addEventListener('mouseleave', handleMouseLeave);
 		window.addEventListener('keydown', handleKeydown);
 		window.addEventListener('keyup', handleKeyUp);
+		window.addEventListener('click', closeContextMenu, { capture: true });
 		loadSurvey();
 		return () => {
 			resizeObserver.disconnect();
@@ -751,6 +860,7 @@
 			window.removeEventListener('mouseleave', handleMouseLeave);
 			window.removeEventListener('keydown', handleKeydown);
 			window.removeEventListener('keyup', handleKeyUp);
+			window.removeEventListener('click', closeContextMenu, { capture: true });
 			document.body.classList.remove('panning', 'space-panning-possible');
 		};
 	});
@@ -811,6 +921,7 @@
 				{units}
 				mousePos={mouseX_Viewport}
 				on:addGuide={handleAddGuide}
+				on:rulerContextMenu={handleRulerContextMenu}
 			/>
 		</div>
 		<div
@@ -826,6 +937,7 @@
 				{units}
 				mousePos={mouseY_Viewport}
 				on:addGuide={handleAddGuide}
+				on:rulerContextMenu={handleRulerContextMenu}
 			/>
 		</div>
 		<div
@@ -834,6 +946,7 @@
 			aria-hidden="true"
 		></div>
 
+		<!-- Ensure a11y ignore comment is present before the element -->
 		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 		<div
 			bind:this={viewportWrapperRef}
@@ -885,12 +998,14 @@
 			x={contextMenuX}
 			y={contextMenuY}
 			{selectedComponent}
-			multiSelectedComponentIds={$selectedComponentIds}
 			targetElement={contextMenuTarget}
+			{contextMenuGuideInfo}
 			on:close={closeContextMenu}
 			on:duplicate={duplicateSelected}
 			on:delete={deleteSelected}
 			on:removeGuide={handleRemoveGuide}
+			on:deleteGuide={handleDeleteGuide}
+			on:setPositionGuide={handleSetGuidePosition}
 			on:properties={() => console.log('Properties action triggered')}
 			on:selectAll={selectAllComponents}
 			on:autoPosition={autoPosition}
