@@ -6,23 +6,23 @@
 		deleteComponent,
 		duplicateComponent,
 		loadSurvey
-	} from '$lib/stores/surveyStore.ts'; // Use $lib alias for survey store
+	} from '$lib/stores/surveyStore.ts';
 	import {
-		canvasViewStore, // Import the new canvas view store
-		PIXEL_PER_CM, // Import necessary constants from the store file
+		canvasViewStore,
+		PIXEL_PER_CM,
 		PIXEL_PER_INCH,
 		RULER_SIZE,
 		SNAP_THRESHOLD,
 		ZOOM_SENSITIVITY
-	} from '$lib/stores/canvasStore.ts'; // Use $lib alias for canvas store
+	} from '$lib/stores/canvasStore.ts';
 	import { onMount, tick, onDestroy } from 'svelte';
 	import type {
 		SurveyComponent as SurveyComponentType,
 		SelectionBox,
 		DraggingGuide
-	} from '$lib/types/survey.ts'; // Use $lib alias for types
+	} from '$lib/types/survey.ts';
 
-	// Child Components (Ensure paths are correct for your project structure)
+	// Child Components
 	import CanvasToolbar from '$lib/components/CanvasComponents/CanvasToolbar.svelte';
 	import ToolbarAlignment from '$lib/components/CanvasComponents/ToolbarAlignment.svelte';
 	import CanvasRuler from '$lib/components/CanvasComponents/CanvasRuler.svelte';
@@ -30,100 +30,82 @@
 	import ContextMenu from '$lib/components/CanvasComponents/ContextMenu.svelte';
 	import StatusBar from '$lib/components/CanvasComponents/StatusBar.svelte';
 
-	// Type needed for the component instance reference
-	import type { SvelteComponent } from 'svelte';
-
 	// --- Component Props ---
-	export let selectedComponent: SurveyComponentType | null = null; // Controlled externally or via selection
-	export let units: 'cm' | 'inches' | 'px' = 'cm'; // Local UI preference
+	export let selectedComponent: SurveyComponentType | null = null;
+	export let units: 'cm' | 'inches' | 'px' = 'cm';
 
-	// --- LOCAL State (Not suitable for global store) ---
-
-	// Viewport dimensions derived from DOM element size
+	// --- LOCAL State ---
 	let viewportWidth = 0;
 	let viewportHeight = 0;
-	let containerRef: HTMLDivElement; // Ref for overall container
-	let viewportRef: HTMLDivElement; // Ref to the scrollable div element
-	let canvasViewportInstance: CanvasViewport | undefined = undefined; // Specific type if known methods are called
+	let containerRef: HTMLDivElement;
+	let viewportWrapperRef: HTMLDivElement; // Ref to the div containing CanvasViewport
 
-	// Interaction state (transient, tied to mouse/keyboard events)
-	let mouseX_Viewport = 0; // Mouse X relative to viewport top-left
-	let mouseY_Viewport = 0; // Mouse Y relative to viewport top-left
-	let mouseX_Canvas = 0; // Mouse X relative to canvas top-left (unscaled)
-	let mouseY_Canvas = 0; // Mouse Y relative to canvas top-left (unscaled)
-	let isDragging = false; // Flag: component drag in progress
-	let isResizing = false; // Flag: component resize in progress
-	let isPanning = false; // Flag: canvas pan in progress (middle mouse or space+drag)
-	let isSelecting = false; // Flag: selection box drag in progress
-	let startX = 0; // Initial clientX for drag/pan/resize
-	let startY = 0; // Initial clientY for drag/pan/resize
-	let startOffsetX_Interaction = 0; // Canvas offsetX at the start of a pan
-	let startOffsetY_Interaction = 0; // Canvas offsetY at the start of a pan
-	let activeComponentId: string | null = null; // ID of component being dragged/resized
-	let lastClickTime = 0; // For double-click detection
-	let dragInitialPositions = new Map<string, { x: number; y: number }>(); // Store start pos for multi-drag
+	let mouseX_Viewport = 0;
+	let mouseY_Viewport = 0;
+	let mouseX_Canvas = 0;
+	let mouseY_Canvas = 0;
+	let isDragging = false;
+	let isResizing = false;
+	let isPanning = false;
+	let isSelecting = false;
+	let spacebarHeld = false; // NEW: For spacebar panning
+	let startX = 0;
+	let startY = 0;
+	let startOffsetX_Interaction = 0;
+	let startOffsetY_Interaction = 0;
+	let activeComponentId: string | null = null;
+	let lastClickTime = 0;
+	let dragInitialPositions = new Map<string, { x: number; y: number }>();
 
-	// Selection state (local to this canvas instance)
-	let multiSelectedComponentIds: string[] = []; // IDs of currently selected components
-	let selectionBox: SelectionBox = { active: false, startX: 0, startY: 0, endX: 0, endY: 0 }; // Selection rectangle state
+	let multiSelectedComponentIds: string[] = [];
+	let selectionBox: SelectionBox = { active: false, startX: 0, startY: 0, endX: 0, endY: 0 };
 
-	// Guides state (visual aids, local to this canvas)
-	let horizontalGuides: number[] = [100, 200]; // Y-coordinates of horizontal guides
-	let verticalGuides: number[] = [100, 300]; // X-coordinates of vertical guides
-	let showGuides = true; // Toggle visibility
-	let draggingGuide: DraggingGuide = null; // State for guide dragging
+	let horizontalGuides: number[] = [100, 200];
+	let verticalGuides: number[] = [100, 300];
+	let showGuides = true;
+	let draggingGuide: DraggingGuide = null;
 
-	// Snapping state (local interaction modifier)
-	let enableSnap = true; // Toggle snapping
-	let gridSize = getGridSize(); // Calculated based on units
+	let enableSnap = true;
+	let gridSize = getGridSize();
 
-	// Context Menu state (local UI element state)
 	let showContextMenu = false;
 	let contextMenuX = 0;
 	let contextMenuY = 0;
 	let contextMenuTarget: EventTarget | null = null;
 
 	// --- Computed Values ---
-	$: selectedComponentId = selectedComponent ? selectedComponent.id : null; // Reactive derived value
+	$: selectedComponentId = selectedComponent ? selectedComponent.id : null;
 
 	// --- Functions ---
 
-	/** Calculates grid size in pixels based on current units */
 	function getGridSize(): number {
 		switch (units) {
 			case 'cm':
-				return PIXEL_PER_CM / 2; // e.g., snap every 0.5 cm
+				return PIXEL_PER_CM / 2;
 			case 'inches':
-				return PIXEL_PER_INCH / 4; // e.g., snap every 0.25 inch
+				return PIXEL_PER_INCH / 4;
 			case 'px':
-				return 10; // Snap every 10 pixels
+				return 10;
 			default:
 				return PIXEL_PER_CM / 2;
 		}
 	}
 
-	/** Updates page format and dimensions via the store */
 	function updatePageFormat(newFormat: string): void {
 		canvasViewStore.setPageFormat(newFormat);
-		// Grid size depends on units, which might change independently or be tied to format implicitly
 		gridSize = getGridSize();
-		// Recenter view after format change? Optional.
-		// tick().then(() => resetZoomAndCenter());
 	}
 
-	/** Snaps a value to the nearest grid line */
 	function snapToGrid(value: number): number {
-		if (!enableSnap || gridSize <= 0) return value;
+		if (!enableSnap || gridSize <= 0 || isNaN(value)) return value;
 		return Math.round(value / gridSize) * gridSize;
 	}
 
-	/** Snaps a value to the nearest guide if within threshold */
 	function snapToGuides(value: number, direction: 'horizontal' | 'vertical'): number {
-		if (!enableSnap || !showGuides) return value;
+		if (!enableSnap || !showGuides || isNaN(value)) return value;
 		const guides = direction === 'horizontal' ? verticalGuides : horizontalGuides;
-		const currentScale = $canvasViewStore.scale; // Read from store
+		const currentScale = $canvasViewStore.scale;
 		for (const guide of guides) {
-			// Threshold is in screen pixels, adjust check based on scale
 			if (Math.abs(value - guide) * currentScale < SNAP_THRESHOLD) {
 				return guide;
 			}
@@ -131,58 +113,85 @@
 		return value;
 	}
 
-	/** Calculates mouse coordinates relative to the unscaled canvas origin */
+	function calculateViewportMousePos(clientX: number, clientY: number): { x: number; y: number } {
+		if (!viewportWrapperRef) return { x: 0, y: 0 };
+		const viewportRect = viewportWrapperRef.getBoundingClientRect();
+		return {
+			x: clientX - viewportRect.left,
+			y: clientY - viewportRect.top
+		};
+	}
+
 	function calculateCanvasMousePos(clientX: number, clientY: number): { x: number; y: number } {
-		if (!viewportRef) return { x: 0, y: 0 };
-		const viewportRect = viewportRef.getBoundingClientRect();
-		// Mouse position relative to the viewport div's top-left corner
-		const mouseX_VP = clientX - viewportRect.left;
-		const mouseY_VP = clientY - viewportRect.top;
-		// Read current transform from the store
+		if (!viewportWrapperRef) return { x: 0, y: 0 };
+		const { x: mouseX_VP, y: mouseY_VP } = calculateViewportMousePos(clientX, clientY);
 		const { offsetX, offsetY, scale } = $canvasViewStore;
-		// Convert viewport coordinates to canvas coordinates
 		return {
 			x: (mouseX_VP - offsetX) / scale,
 			y: (mouseY_VP - offsetY) / scale
 		};
 	}
 
+	// --- Interaction Logic ---
+
+	/** Starts panning interaction */
+	function startPanInteraction(event: MouseEvent) {
+		if (isPanning) return; // Already panning
+		isPanning = true;
+		startX = event.clientX;
+		startY = event.clientY;
+		startOffsetX_Interaction = $canvasViewStore.offsetX;
+		startOffsetY_Interaction = $canvasViewStore.offsetY;
+		document.body.classList.add('panning');
+		closeContextMenu();
+	}
+
+	/** Starts selection box interaction */
+	function startSelectionInteraction(event: MouseEvent) {
+		if (isSelecting || spacebarHeld) return; // Don't start if already selecting or space panning
+		const { x, y } = calculateCanvasMousePos(event.clientX, event.clientY);
+		isSelecting = true;
+		selectionBox = { active: true, startX: x, startY: y, endX: x, endY: y };
+
+		if (!event.shiftKey) {
+			clearSelection();
+		}
+		closeContextMenu();
+	}
+
 	// --- Event Handlers ---
 
-	/** Handles mouse movement over the window (for dragging, panning, etc.) */
 	function handleMouseMove(e: MouseEvent): void {
-		const currentScale = $canvasViewStore.scale; // Get current scale from store
-
-		// Update viewport-relative mouse coordinates
-		if (viewportRef) {
-			const viewportRect = viewportRef.getBoundingClientRect();
-			mouseX_Viewport = e.clientX - viewportRect.left;
-			mouseY_Viewport = e.clientY - viewportRect.top;
-		}
-
-		// Update canvas-relative mouse coordinates
+		const currentScale = $canvasViewStore.scale;
+		const { x: vpX, y: vpY } = calculateViewportMousePos(e.clientX, e.clientY);
+		mouseX_Viewport = vpX;
+		mouseY_Viewport = vpY;
 		const { x: currentCanvasX, y: currentCanvasY } = calculateCanvasMousePos(e.clientX, e.clientY);
 		mouseX_Canvas = currentCanvasX;
 		mouseY_Canvas = currentCanvasY;
 
-		// --- Handle Active Interactions ---
-
+		// Panning Canvas (Middle mouse OR Space + Left Drag)
+		if (isPanning) {
+			const dx_viewport = e.clientX - startX;
+			const dy_viewport = e.clientY - startY;
+			canvasViewStore.setCanvasOffset(
+				startOffsetX_Interaction + dx_viewport,
+				startOffsetY_Interaction + dy_viewport
+			);
+		}
 		// Dragging Components
-		if (isDragging && activeComponentId) {
-			const dx_canvas = (e.clientX - startX) / currentScale; // Delta in canvas coords
+		else if (isDragging && activeComponentId) {
+			const dx_canvas = (e.clientX - startX) / currentScale;
 			const dy_canvas = (e.clientY - startY) / currentScale;
 			multiSelectedComponentIds.forEach((id) => {
 				const initialPos = dragInitialPositions.get(id);
 				if (initialPos) {
-					// Calculate potential new position
 					let newX = initialPos.x + dx_canvas;
 					let newY = initialPos.y + dy_canvas;
-					// Apply snapping
 					newX = snapToGuides(newX, 'horizontal');
 					newY = snapToGuides(newY, 'vertical');
 					newX = snapToGrid(newX);
 					newY = snapToGrid(newY);
-					// Update component via surveyStore
 					updateComponent(id, { x: newX, y: newY });
 				}
 			});
@@ -190,12 +199,11 @@
 		// Resizing Component
 		else if (isResizing && activeComponentId) {
 			const component = $componentsStore.find((c) => c.id === activeComponentId);
-			// Ensure component and its starting dimensions (stored during onStartResize) exist
 			if (!component || component.startX === undefined || component.startY === undefined) return;
 
-			const dx_canvas = (e.clientX - startX) / currentScale; // Delta in canvas coords
+			const dx_canvas = (e.clientX - startX) / currentScale;
 			const dy_canvas = (e.clientY - startY) / currentScale;
-			const minWidth = 20; // Minimum component size
+			const minWidth = 20;
 			const minHeight = 20;
 
 			// Calculate potential new dimensions based on stored start size + delta
@@ -205,119 +213,141 @@
 			// Apply snapping and minimum size constraints
 			newWidth = snapToGrid(Math.max(minWidth, newWidth));
 			newHeight = snapToGrid(Math.max(minHeight, newHeight));
-			// Note: Snapping resize to guides is less common, could be added here
 
-			// Update component via surveyStore
 			updateComponent(activeComponentId, { width: newWidth, height: newHeight });
-		}
-		// Panning Canvas
-		else if (isPanning) {
-			const dx_viewport = e.clientX - startX; // Delta in viewport coords
-			const dy_viewport = e.clientY - startY;
-			// Update canvas offset in the store based on initial offset + delta
-			canvasViewStore.setCanvasOffset(
-				startOffsetX_Interaction + dx_viewport,
-				startOffsetY_Interaction + dy_viewport
-			);
 		}
 		// Dragging Guide
 		else if (draggingGuide) {
+			const { scale, offsetX, offsetY } = $canvasViewStore;
+			const guideCanvasPos =
+				draggingGuide.direction === 'horizontal'
+					? (mouseY_Viewport - offsetY) / scale
+					: (mouseX_Viewport - offsetX) / scale;
+
 			if (draggingGuide.direction === 'horizontal') {
-				// Snap guide position to grid
-				horizontalGuides[draggingGuide.index] = snapToGrid(mouseY_Canvas);
-				horizontalGuides = [...horizontalGuides]; // Trigger reactivity
+				horizontalGuides[draggingGuide.index] = snapToGrid(
+					snapToGuides(guideCanvasPos, 'vertical')
+				); // Snap guide to grid and other guides
+				horizontalGuides = [...horizontalGuides];
 			} else {
-				verticalGuides[draggingGuide.index] = snapToGrid(mouseX_Canvas);
-				verticalGuides = [...verticalGuides]; // Trigger reactivity
+				verticalGuides[draggingGuide.index] = snapToGrid(
+					snapToGuides(guideCanvasPos, 'horizontal')
+				); // Snap guide to grid and other guides
+				verticalGuides = [...verticalGuides];
 			}
 		}
 		// Dragging Selection Box
 		else if (selectionBox.active) {
-			isSelecting = true; // Mark selecting as active
-			selectionBox.endX = mouseX_Canvas;
-			selectionBox.endY = mouseY_Canvas;
-			selectionBox = { ...selectionBox }; // Trigger reactivity
-			updateSelectionFromBox(); // Update selected components based on box
+			selectionBox.endX = currentCanvasX;
+			selectionBox.endY = currentCanvasY;
+			selectionBox = { ...selectionBox };
+			updateSelectionFromBox();
 		}
 	}
 
-	/** Handles mouse button release */
 	function handleMouseUp(e: MouseEvent): void {
-		// Reset all interaction flags and related state
-		if (isDragging) isDragging = false;
-		if (isResizing) isResizing = false;
 		if (isPanning) {
 			isPanning = false;
-			document.body.classList.remove('panning'); // Remove cursor style class
+			document.body.classList.remove('panning');
 		}
-		if (isSelecting) isSelecting = false; // Reset selecting flag (box might still be visible briefly)
+		if (isDragging) isDragging = false;
+		if (isResizing) isResizing = false;
+		if (isSelecting) isSelecting = false; // Reset flag
 		if (draggingGuide) draggingGuide = null;
-		if (selectionBox.active) {
-			selectionBox.active = false; // Deactivate selection box
-			// Optionally clear the visual box immediately:
-			// selectionBox = { active: false, startX: 0, startY: 0, endX: 0, endY: 0 };
+
+		// Selection box remains visible until next click/action, but interaction stops
+		if (selectionBox.active && e.button === 0) {
+			// Finalize selection on mouse up if we were dragging a box
+			updateSelectionFromBox(); // Ensure final update
+			// Keep box active=true conceptually, but isSelecting=false prevents further updates on move
+			// selectionBox.active = false; // Deactivate immediately if preferred
 		}
 
 		activeComponentId = null;
 		dragInitialPositions.clear();
 	}
 
-	/** Handles mouse leaving the window, treated like mouse up if interaction was active */
 	function handleMouseLeave(e: MouseEvent): void {
-		// If the mouse leaves the window entirely while an interaction is happening
 		if (
 			e.relatedTarget === null &&
-			(isDragging || isResizing || isPanning || selectionBox.active || draggingGuide)
+			(isDragging || isResizing || isPanning || isSelecting || draggingGuide)
 		) {
-			handleMouseUp(e); // End the interaction
+			handleMouseUp(e);
 		}
 	}
 
-	/** Handles mouse wheel events for zooming */
 	function handleWheel(e: WheelEvent): void {
-		// Zoom on Ctrl+Wheel or Pinch-to-Zoom (Cmd+Wheel on Mac)
-		if (e.ctrlKey || e.metaKey) {
-			e.preventDefault(); // Prevent page scroll
-			const delta = -e.deltaY * ZOOM_SENSITIVITY; // Calculate zoom delta
+		// Prevent wheel handling if context menu is open
+		if (showContextMenu) {
+			return;
+		}
 
-			if (viewportRef) {
-				// Get mouse position relative to viewport for zoom centering
-				const viewportRect = viewportRef.getBoundingClientRect();
-				const mouseX_VP = e.clientX - viewportRect.left;
-				const mouseY_VP = e.clientY - viewportRect.top;
-				// Call store action to adjust zoom, centered on mouse position
+		// Zoom (Ctrl/Meta + Wheel)
+		if (e.ctrlKey || e.metaKey) {
+			e.preventDefault();
+			const delta = -e.deltaY * ZOOM_SENSITIVITY;
+			if (viewportWrapperRef) {
+				const { x: mouseX_VP, y: mouseY_VP } = calculateViewportMousePos(e.clientX, e.clientY);
 				canvasViewStore.adjustZoom(delta, mouseX_VP, mouseY_VP);
 			}
 		}
-		// Allow natural scrolling if Ctrl/Meta not pressed (Shift+Wheel often scrolls horizontally)
+		// Pan (Default Wheel or Shift + Wheel)
+		else if (viewportWrapperRef) {
+			e.preventDefault(); // Prevent page scroll only when panning canvas
+			// Read current transform from the store
+			const { offsetX, offsetY } = $canvasViewStore;
+			// Pan amount - adjust sensitivity if needed
+			const panX = e.shiftKey ? -e.deltaY : -e.deltaX; // Shift+Wheel pans X, normal wheel pans Y
+			const panY = e.shiftKey ? -e.deltaX : -e.deltaY; // (adjust if browser behaves differently)
+
+			// Use requestAnimationFrame for smoother panning updates? Optional.
+			canvasViewStore.setCanvasOffset(offsetX + panX, offsetY + panY);
+		}
 	}
 
-	/** Handles keyboard shortcuts */
 	function handleKeydown(e: KeyboardEvent): void {
-		// Close context menu on Escape regardless of focus
 		if (e.key === 'Escape') {
 			closeContextMenu();
-			// If selection box was active, cancel it too
 			if (isSelecting) isSelecting = false;
-			if (selectionBox.active) selectionBox.active = false;
-			// Optionally clear selection on Escape, uncomment if desired:
-			// clearSelection();
+			if (selectionBox.active) selectionBox = { ...selectionBox, active: false };
+			if (draggingGuide) draggingGuide = null; // Cancel guide drag
+			// clearSelection(); // Optional: Clear selection on Escape
 		}
 
-		// Ignore keydown if focus is inside an input element or specifically allowed area
+		// Handle Spacebar for panning activation
+		if (e.key === ' ' && !spacebarHeld) {
+			// Prevent spacebar triggering buttons/etc. if focus is on them
+			if (
+				!(
+					e.target instanceof HTMLButtonElement ||
+					e.target instanceof HTMLInputElement ||
+					e.target instanceof HTMLSelectElement ||
+					e.target instanceof HTMLTextAreaElement
+				)
+			) {
+				e.preventDefault(); // Prevent page scroll down
+			}
+			spacebarHeld = true;
+			document.body.classList.add('space-panning-possible');
+			return; // Don't process other shortcuts while holding space
+		}
+
 		if (
 			e.target instanceof HTMLInputElement ||
 			e.target instanceof HTMLTextAreaElement ||
 			e.target instanceof HTMLSelectElement ||
-			(e.target as HTMLElement).closest('.allow-input') // Check for a parent with this class
+			(e.target as HTMLElement).closest('.allow-input')
 		) {
 			return; // Don't interfere with typing
 		}
 
-		let dx = 0;
-		let dy = 0; // Initialize dy here
-		const step = e.shiftKey ? 10 : 1; // Movement step size
-		let needsUpdate = false; // Flag to trigger component update
+		// --- Other Shortcuts (only if spacebar not held) ---
+		if (spacebarHeld) return;
+
+		let dx = 0,
+			dy = 0;
+		const step = e.shiftKey ? 10 : 1;
+		let needsUpdate = false;
 
 		switch (e.key) {
 			case 'ArrowUp':
@@ -339,217 +369,206 @@
 			case 'Delete':
 			case 'Backspace':
 				if (multiSelectedComponentIds.length > 0) {
-					e.preventDefault(); // Prevent browser back navigation on Backspace
+					e.preventDefault();
 					deleteSelected();
 				}
 				break;
-			case 'd': // Ctrl+D or Cmd+D for Duplicate
+			case 'd':
 				if (e.ctrlKey || e.metaKey) {
 					e.preventDefault();
 					duplicateSelected();
 				}
 				break;
-			case 'a': // Ctrl+A or Cmd+A for Select All
+			case 'a':
 				if (e.ctrlKey || e.metaKey) {
 					e.preventDefault();
 					selectAllComponents();
 				}
 				break;
-			case 'g': // Ctrl+G or Cmd+G to toggle grid snap
+			case 'g':
 				if (e.ctrlKey || e.metaKey) {
 					e.preventDefault();
 					toggleSnap();
 				}
 				break;
-			case 'h': // Ctrl+H or Cmd+H to toggle guides (H for Hide/Show)
+			case 'h':
 				if (e.ctrlKey || e.metaKey) {
 					e.preventDefault();
 					toggleGuides();
 				}
 				break;
-			// Escape handled above
-			// Add more shortcuts as needed (e.g., zoom, save)
+			case '=':
+			case '+':
+				if (e.ctrlKey || e.metaKey) {
+					e.preventDefault();
+					handleZoomIn();
+				}
+				break; // Zoom In
+			case '-':
+				if (e.ctrlKey || e.metaKey) {
+					e.preventDefault();
+					handleZoomOut();
+				}
+				break; // Zoom Out
+			case '0':
+				if (e.ctrlKey || e.metaKey) {
+					e.preventDefault();
+					resetZoomAndCenter();
+				}
+				break; // Reset Zoom (Ctrl+0)
 			default:
-				return; // Ignore other keys
+				return;
 		}
 
-		// If an arrow key was pressed and components are selected, move them
 		if (needsUpdate && multiSelectedComponentIds.length > 0) {
-			e.preventDefault(); // Prevent default arrow key behavior (scrolling)
+			e.preventDefault();
 			multiSelectedComponentIds.forEach((id) => {
 				const comp = $componentsStore.find((c) => c.id === id);
 				if (comp) {
-					// Calculate new position (consider snapping?)
 					let newX = comp.x + dx;
 					let newY = comp.y + dy;
-					// Optional: Snap position after keyboard move
-					// newX = snapToGrid(newX);
-					// newY = snapToGrid(newY);
+					// Optional: Snap after keyboard move
+					// newX = snapToGrid(newX); newY = snapToGrid(newY);
 					updateComponent(id, { x: newX, y: newY });
 				}
 			});
-			// Update the exported selectedComponent if it was moved
 			if (selectedComponent && multiSelectedComponentIds.includes(selectedComponent.id)) {
 				selectedComponent = $componentsStore.find((c) => c.id === selectedComponent?.id) || null;
 			}
 		}
 	}
 
-	/** Handles right-click to show context menu */
+	// Add Key Up handler for Spacebar
+	function handleKeyUp(e: KeyboardEvent): void {
+		if (e.key === ' ') {
+			spacebarHeld = false;
+			document.body.classList.remove('space-panning-possible');
+			// If panning was active via spacebar, stop it on key release
+			if (isPanning && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+				// Check no modifiers held
+				isPanning = false;
+				document.body.classList.remove('panning');
+			}
+		}
+	}
+
 	function handleContextMenu(e: MouseEvent): void {
-		console.log('handleContextMenu triggered!', e.clientX, e.clientY); // <-- DEBUG
-		e.preventDefault(); // Prevent default browser context menu
+		// Prevent context menu during active interactions like drag/pan/resize/select
+		if (isDragging || isPanning || isResizing || isSelecting || draggingGuide) {
+			return;
+		}
+		e.preventDefault();
 		showContextMenu = true;
 		contextMenuX = e.clientX;
 		contextMenuY = e.clientY;
-		contextMenuTarget = e.target; // Store the element that was clicked
-		console.log('showContextMenu set to:', showContextMenu); // <-- DEBUG
+		contextMenuTarget = e.target;
 	}
 
-	/** Closes the context menu */
 	function closeContextMenu(): void {
 		if (showContextMenu) {
-			// Only log if it was actually open
-			console.log('Closing context menu'); // <-- DEBUG
 			showContextMenu = false;
 			contextMenuTarget = null;
 		}
 	}
 
-	// --- Component/Guide Interaction Callbacks (from CanvasViewport/Ruler) ---
+	// --- Component/Guide Interaction Callbacks ---
 
-	/** Callback when component drag starts */
 	function onStartDrag(e: CustomEvent): void {
 		const detail = e.detail as { event: MouseEvent; component: SurveyComponentType };
-		const { event, component } = detail;
-		if (event.button !== 0) return; // Only react to left-click drags
-
-		isDragging = true; // Set local flag
-		activeComponentId = component.id; // Track the main component interacted with
-		startX = event.clientX; // Record starting mouse position
-		startY = event.clientY;
-
-		// Handle selection logic (Shift key for multi-select toggle)
-		if (event.shiftKey) {
-			if (multiSelectedComponentIds.includes(component.id)) {
-				// Shift+Click on selected: Deselect it
-				multiSelectedComponentIds = multiSelectedComponentIds.filter((id) => id !== component.id);
-				// If the primary selected component was deselected, pick a new primary or null
-				if (selectedComponent?.id === component.id) {
+		// If spacebar held, initiate panning instead of dragging
+		if (spacebarHeld) {
+			startPanInteraction(detail.event);
+			detail.event.stopPropagation(); // Prevent component drag logic
+			detail.event.preventDefault();
+			return;
+		}
+		// --- Original Drag Logic ---
+		if (detail.event.button !== 0) return;
+		isDragging = true;
+		activeComponentId = detail.component.id;
+		startX = detail.event.clientX;
+		startY = detail.event.clientY;
+		// Selection logic (unchanged)
+		if (detail.event.shiftKey) {
+			if (multiSelectedComponentIds.includes(detail.component.id)) {
+				multiSelectedComponentIds = multiSelectedComponentIds.filter(
+					(id) => id !== detail.component.id
+				);
+				if (selectedComponent?.id === detail.component.id) {
 					selectedComponent =
 						multiSelectedComponentIds.length > 0
 							? $componentsStore.find((c) => c.id === multiSelectedComponentIds[0]) || null
 							: null;
 				}
 			} else {
-				// Shift+Click on unselected: Add to selection, make it primary
-				multiSelectedComponentIds = [...multiSelectedComponentIds, component.id];
-				selectedComponent = component;
+				multiSelectedComponentIds = [...multiSelectedComponentIds, detail.component.id];
+				selectedComponent = detail.component;
 			}
 		} else {
-			// Click without Shift
-			if (!multiSelectedComponentIds.includes(component.id)) {
-				// Clicked on unselected: Select only this one
-				selectedComponent = component;
-				multiSelectedComponentIds = [component.id];
-			} else {
-				// Clicked on already selected (could be part of multi-select): Make it primary
-				// unless it's the *only* one selected (to allow starting drag without changing selection)
-				if (multiSelectedComponentIds.length > 1) {
-					selectedComponent = component;
-				}
-				// If clicking the only selected item, keep it selected (selectedComponent already matches)
+			if (!multiSelectedComponentIds.includes(detail.component.id)) {
+				selectedComponent = detail.component;
+				multiSelectedComponentIds = [detail.component.id];
+			} else if (multiSelectedComponentIds.length > 1) {
+				selectedComponent = detail.component;
 			}
 		}
-
-		// Store initial positions for *all* currently selected components for multi-drag
 		dragInitialPositions.clear();
 		multiSelectedComponentIds.forEach((id) => {
 			const comp = $componentsStore.find((c) => c.id === id);
-			if (comp) {
-				dragInitialPositions.set(id, { x: comp.x, y: comp.y });
-			}
+			if (comp) dragInitialPositions.set(id, { x: comp.x, y: comp.y });
 		});
-
-		event.preventDefault(); // Prevent text selection during drag
-		closeContextMenu(); // Close context menu if open
+		detail.event.preventDefault();
+		closeContextMenu();
 	}
 
-	/** Callback when component resize starts */
 	function onStartResize(e: CustomEvent): void {
 		const detail = e.detail as { event: MouseEvent; component: SurveyComponentType };
-		const { event, component } = detail;
-		if (event.button !== 0) return; // Only react to left-click drags
+		// Prevent resize if spacebar held (should trigger pan instead)
+		if (spacebarHeld || detail.event.button !== 0) return;
 
-		isResizing = true; // Set local flag
-		activeComponentId = component.id; // Track the component being resized
-		startX = event.clientX; // Record starting mouse position
-		startY = event.clientY;
-
-		// Store the component's size *at the start of the resize* onto the component's data.
-		// This is used in handleMouseMove to calculate the new size based on the delta.
-		updateComponent(component.id, { startX: component.width, startY: component.height });
-
-		// Select only the component being resized
-		selectedComponent = component;
-		multiSelectedComponentIds = [component.id];
-
-		event.stopPropagation(); // Prevent triggering canvas click/pan
-		event.preventDefault(); // Prevent text selection
-		closeContextMenu(); // Close context menu if open
+		isResizing = true;
+		activeComponentId = detail.component.id;
+		startX = detail.event.clientX;
+		startY = detail.event.clientY;
+		updateComponent(detail.component.id, {
+			startX: detail.component.width,
+			startY: detail.component.height
+		});
+		selectedComponent = detail.component;
+		multiSelectedComponentIds = [detail.component.id];
+		detail.event.stopPropagation();
+		detail.event.preventDefault();
+		closeContextMenu();
 	}
 
-	/** Callback when the canvas background is clicked */
 	function handleCanvasClick(e: CustomEvent): void {
-		const detail = e.detail as { event: MouseEvent; x: number; y: number };
-		const { event, x, y } = detail; // x, y are canvas coordinates
+		const detail = e.detail as { event: MouseEvent }; // Don't need x/y from event now
 		const currentTime = Date.now();
 
-		// Double-click detection on canvas background (e.g., near rulers to add guides)
-		if (currentTime - lastClickTime < 300) {
-			// 300ms threshold for double-click
-			const guideAreaThreshold_Canvas = 15 / $canvasViewStore.scale; // Threshold in canvas pixels
-			let addedGuide = false;
-			// Check if double-click is near the top edge (for vertical guide)
-			if (y < guideAreaThreshold_Canvas && x > 0) {
-				// Added x>0 check to avoid corner box
-				verticalGuides = [...verticalGuides, snapToGrid(x)];
-				addedGuide = true;
-			}
-			// Check if double-click is near the left edge (for horizontal guide)
-			else if (x < guideAreaThreshold_Canvas && y > 0) {
-				// Added y>0 check to avoid corner box
-				horizontalGuides = [...horizontalGuides, snapToGrid(y)];
-				addedGuide = true;
-			}
-			if (addedGuide) {
-				event.stopPropagation(); // Prevent triggering other actions if guide added
-			}
-		}
-		lastClickTime = currentTime; // Store time for next click check
+		// Double-click detection removed (now handled by ruler)
+		// if (currentTime - lastClickTime < 300) { ... }
+		lastClickTime = currentTime;
 
-		// Click on canvas background usually clears selection, unless Shift is held
-		if (!isDragging && !isResizing && !isSelecting && !event.shiftKey) {
+		if (!isDragging && !isResizing && !isSelecting && !detail.event.shiftKey && !spacebarHeld) {
 			clearSelection();
+			// Also clear selection box visually if it was left over
+			if (selectionBox.active) {
+				selectionBox = { active: false, startX: 0, startY: 0, endX: 0, endY: 0 };
+			}
 		}
-		closeContextMenu(); // Close context menu on any canvas click
+		closeContextMenu();
 	}
 
-	/** Callback when a component is clicked (but not dragged/resized) */
 	function handleSelectComponent(e: CustomEvent): void {
-		// This is called *after* the component's internal click handler,
-		// but *before* potential drag starts. Useful for selection logic on simple click.
+		// Prevent selection changes if spacebar is held (pan is active)
+		if (spacebarHeld) return;
+
 		const component = e.detail.component as SurveyComponentType;
 		const event = e.detail.event as MouseEvent;
-
-		// Only process if not currently dragging or resizing
-		// (onStartDrag/onStartResize will handle their own selection updates)
 		if (!isDragging && !isResizing) {
 			if (event.shiftKey) {
-				// Toggle selection with shift key
 				if (multiSelectedComponentIds.includes(component.id)) {
 					multiSelectedComponentIds = multiSelectedComponentIds.filter((id) => id !== component.id);
-					// Update primary selection if the deselected one was primary
 					if (selectedComponent?.id === component.id) {
 						selectedComponent =
 							multiSelectedComponentIds.length > 0
@@ -557,12 +576,10 @@
 								: null;
 					}
 				} else {
-					// Add to selection and make primary
 					multiSelectedComponentIds = [...multiSelectedComponentIds, component.id];
 					selectedComponent = component;
 				}
 			} else {
-				// Regular click: select only this component, unless it's already the only one selected
 				if (
 					!multiSelectedComponentIds.includes(component.id) ||
 					multiSelectedComponentIds.length > 1
@@ -570,167 +587,153 @@
 					selectedComponent = component;
 					multiSelectedComponentIds = [component.id];
 				}
-				// If clicking the only selected component, keep it selected
 			}
-		}
-		closeContextMenu(); // Close any open menu on component click
-	}
-
-	/** Callback when starting a selection box drag on the canvas background */
-	function onStartSelectionBox(e: CustomEvent): void {
-		const detail = e.detail as { event: MouseEvent; x: number; y: number };
-		const { event, x, y } = detail; // x, y are canvas coordinates
-
-		// Only start if left button pressed and not interacting with components/guides
-		if (event.button !== 0 || isDragging || isResizing || draggingGuide) return;
-
-		isSelecting = true; // Set local flag
-		selectionBox.active = true; // Activate the visual box
-		selectionBox.startX = x;
-		selectionBox.startY = y;
-		selectionBox.endX = x; // Start and end at same point initially
-		selectionBox.endY = y;
-		selectionBox = { ...selectionBox }; // Trigger reactivity
-
-		// If Shift key is not held, clear existing selection before starting new box
-		if (!event.shiftKey) {
-			clearSelection();
 		}
 		closeContextMenu();
 	}
 
-	/** Updates the list of selected components based on the current selection box */
+	function onStartSelectionBox(e: CustomEvent): void {
+		const detail = e.detail as { event: MouseEvent }; // Don't need x/y
+		// Check spacebar held handled in CanvasViewport now
+		startSelectionInteraction(detail.event);
+	}
+
 	function updateSelectionFromBox(): void {
 		if (!selectionBox.active) return;
-
-		// Determine box boundaries
 		const minX = Math.min(selectionBox.startX, selectionBox.endX);
 		const maxX = Math.max(selectionBox.startX, selectionBox.endX);
 		const minY = Math.min(selectionBox.startY, selectionBox.endY);
 		const maxY = Math.max(selectionBox.startY, selectionBox.endY);
 
-		// Find components intersecting the box
 		const newlySelectedIds = $componentsStore
 			.filter(
 				(comp) =>
-					// Component is considered intersecting if its center point is within the box
-					// (Alternative: check for rectangle overlap like before)
 					comp.x + comp.width / 2 > minX &&
 					comp.x + comp.width / 2 < maxX &&
 					comp.y + comp.height / 2 > minY &&
 					comp.y + comp.height / 2 < maxY
-				/* Old overlap check:
-					comp.x < maxX &&
-					comp.x + comp.width > minX &&
-					comp.y < maxY &&
-					comp.y + comp.height > minY
-                    */
 			)
 			.map((comp) => comp.id);
 
-		// Update selection state
-		// TODO: Implement additive selection (Shift + Box) if needed
+		// Simple override selection, add shiftKey logic if additive box selection is needed
 		multiSelectedComponentIds = newlySelectedIds;
 		selectedComponent =
 			multiSelectedComponentIds.length > 0
-				? $componentsStore.find((c) => c.id === multiSelectedComponentIds[0]) || null // Select first found as primary
+				? $componentsStore.find((c) => c.id === multiSelectedComponentIds[0]) || null
 				: null;
 	}
 
-	/** Callback when canvas panning starts (e.g., middle mouse down) */
 	function onStartPan(e: CustomEvent): void {
+		// Middle mouse pan OR space+drag pan now calls startPanInteraction directly
 		const event = e.detail as MouseEvent;
-		// Could check event.button === 1 for middle mouse specifically if needed
-
-		isPanning = true; // Set local flag
-		startX = event.clientX; // Record starting mouse position
-		startY = event.clientY;
-		// Store the canvas offset *at the start of the pan* from the global store
-		startOffsetX_Interaction = $canvasViewStore.offsetX;
-		startOffsetY_Interaction = $canvasViewStore.offsetY;
-
-		event.preventDefault(); // Prevent default middle-mouse scroll behavior
-		document.body.classList.add('panning'); // Add class for grab cursor
-		closeContextMenu();
+		startPanInteraction(event);
+		event.preventDefault(); // Prevent default middle-mouse scroll or space+drag scroll
 	}
 
-	/** Callback when a guide drag starts */
 	function onStartGuideMove(e: CustomEvent): void {
-		const detail = e.detail as { direction: 'horizontal' | 'vertical'; index: number };
-		draggingGuide = detail; // Store guide info
+		// Prevent guide move if spacebar held (should pan instead)
+		if (spacebarHeld) {
+			// Cast needed if type inference isn't perfect
+			const detail = e.detail as { event: MouseEvent };
+			startPanInteraction(detail.event);
+			detail.event?.stopPropagation(); // Use optional chaining if event might be missing
+			detail.event?.preventDefault();
+			return;
+		}
+		const detail = e.detail as {
+			direction: 'horizontal' | 'vertical';
+			index: number;
+			event: MouseEvent;
+		};
+		draggingGuide = { direction: detail.direction, index: detail.index }; // Store guide info
+		// startX/Y not strictly needed here if mouse move calculation is absolute based on current mouse pos
 		closeContextMenu();
 	}
 
-	/** Callback to remove a guide (e.g., from context menu or drag off canvas) */
-	function removeGuide(e: CustomEvent): void {
-		const detail = e.detail as { direction: 'horizontal' | 'vertical'; index: number };
-		const { direction, index } = detail;
+	// NEW Handler for guide creation from ruler dblclick
+	function handleAddGuide(
+		e: CustomEvent<{ direction: 'horizontal' | 'vertical'; position: number }>
+	) {
+		const { direction: rulerDirection, position } = e.detail; // Rename to avoid confusion
+		const snappedPosition = snapToGrid(position); // Snap new guide to grid
 
+		// --- UPDATED LOGIC ---
+		if (rulerDirection === 'horizontal') {
+			// Horizontal Ruler Clicked -> Create VERTICAL Guide at this X position
+			if (!verticalGuides.includes(snappedPosition)) {
+				// Optional: Prevent duplicates
+				verticalGuides = [...verticalGuides, snappedPosition].sort((a, b) => a - b);
+			}
+		} else {
+			// rulerDirection === 'vertical'
+			// Vertical Ruler Clicked -> Create HORIZONTAL Guide at this Y position
+			if (!horizontalGuides.includes(snappedPosition)) {
+				// Optional: Prevent duplicates
+				horizontalGuides = [...horizontalGuides, snappedPosition].sort((a, b) => a - b);
+			}
+		}
+		// --- END UPDATED LOGIC ---
+	}
+
+	// Adjusted for event detail from CanvasGuide
+	function handleRemoveGuide(
+		e: CustomEvent<{ direction: 'horizontal' | 'vertical'; index: number }>
+	): void {
+		const { direction, index } = e.detail;
 		if (direction === 'horizontal') {
 			if (index >= 0 && index < horizontalGuides.length) {
 				horizontalGuides.splice(index, 1);
-				horizontalGuides = [...horizontalGuides]; // Trigger reactivity
+				horizontalGuides = [...horizontalGuides];
 			}
 		} else {
-			// Vertical
 			if (index >= 0 && index < verticalGuides.length) {
 				verticalGuides.splice(index, 1);
-				verticalGuides = [...verticalGuides]; // Trigger reactivity
+				verticalGuides = [...verticalGuides];
 			}
 		}
-		closeContextMenu(); // Close menu if action came from there
+		closeContextMenu();
 	}
 
-	// --- Actions (Triggered by Toolbar, Context Menu, Keyboard) ---
+	// --- Actions ---
 
-	/** Clears the current selection */
 	function clearSelection(): void {
 		selectedComponent = null;
 		multiSelectedComponentIds = [];
 	}
 
-	/** Selects all components on the canvas */
 	function selectAllComponents(): void {
 		multiSelectedComponentIds = $componentsStore.map((comp) => comp.id);
-		// Set the first component as the primary selected one if any exist
 		selectedComponent = multiSelectedComponentIds.length > 0 ? $componentsStore[0] : null;
-		closeContextMenu(); // Close menu if open
+		closeContextMenu();
 	}
 
-	/** Resets zoom and centers the canvas view */
 	function resetZoomAndCenter(): void {
-		if (viewportRef) {
-			// Call store action, providing the current viewport dimensions
+		if (viewportWrapperRef) {
+			// Recalculate viewport dimensions before resetting
+			viewportWidth = viewportWrapperRef.clientWidth;
+			viewportHeight = viewportWrapperRef.clientHeight;
 			canvasViewStore.resetZoom(viewportWidth, viewportHeight);
+		} else {
+			// Fallback if ref not ready
+			canvasViewStore.setCanvasTransform(1, 0, 0);
 		}
-		// If viewportRef isn't available yet, centering isn't possible.
-		// Could potentially set scale to 1 and offset to 0 as a fallback.
-		// else { canvasViewStore.setCanvasTransform(1, 0, 0); }
 	}
 
-	/** Zooms in using the store action */
 	function handleZoomIn(): void {
 		canvasViewStore.zoomIn();
 	}
-
-	/** Zooms out using the store action */
 	function handleZoomOut(): void {
 		canvasViewStore.zoomOut();
 	}
 
-	/** Duplicates the currently selected component(s) */
 	function duplicateSelected(): void {
 		if (multiSelectedComponentIds.length === 0) return;
-
 		const newIds: string[] = [];
 		multiSelectedComponentIds.forEach((id) => {
-			const newId = duplicateComponent(id); // Uses surveyStore function
+			const newId = duplicateComponent(id);
 			if (newId) newIds.push(newId);
 		});
-
-		// After duplication, select the newly created components
 		tick().then(() => {
-			// Wait for the store update to reflect in the DOM/components
 			multiSelectedComponentIds = newIds;
 			selectedComponent =
 				newIds.length > 0 ? $componentsStore.find((c) => c.id === newIds[0]) || null : null;
@@ -738,87 +741,63 @@
 		closeContextMenu();
 	}
 
-	/** Deletes the currently selected component(s) */
 	function deleteSelected(): void {
 		if (multiSelectedComponentIds.length > 0) {
-			multiSelectedComponentIds.forEach((id) => deleteComponent(id)); // Uses surveyStore function
-			clearSelection(); // Clear selection after deleting
+			multiSelectedComponentIds.forEach((id) => deleteComponent(id));
+			clearSelection();
 		}
 		closeContextMenu();
 	}
 
-	/** Toggles the measurement units */
 	function toggleUnits(): void {
 		const unitOrder: Array<'cm' | 'inches' | 'px'> = ['cm', 'inches', 'px'];
 		const currentIndex = unitOrder.indexOf(units);
-		units = unitOrder[(currentIndex + 1) % unitOrder.length]; // Cycle through units
-		gridSize = getGridSize(); // Recalculate grid size based on new units
+		units = unitOrder[(currentIndex + 1) % unitOrder.length];
+		gridSize = getGridSize();
 	}
 
-	/** Toggles snapping */
 	function toggleSnap(): void {
 		enableSnap = !enableSnap;
 	}
-
-	/** Toggles guide visibility */
 	function toggleGuides(): void {
 		showGuides = !showGuides;
 	}
 
-	/** Automatically arranges components in a grid-like layout */
 	function autoPosition(): void {
+		/* ... (unchanged) ... */
 		const components = $componentsStore;
 		if (components.length < 1) return;
-
-		const PADDING = 20; // Padding from canvas edge
-		const GAP = 15; // Gap between components
+		const PADDING = 20;
+		const GAP = 15;
 		let currentX = PADDING;
 		let currentY = PADDING;
 		let maxRowHeight = 0;
-		const currentCanvasWidth = $canvasViewStore.width; // Get width from store
-
-		// Get a sorted copy if layout depends on order (optional)
-		const sortedComponents = [...components].sort((a, b) => a.y - b.y || a.x - b.x); // Example sort
-
+		const currentCanvasWidth = $canvasViewStore.width;
+		const sortedComponents = [...components].sort((a, b) => a.y - b.y || a.x - b.x);
 		sortedComponents.forEach((component) => {
-			// Check if adding the component exceeds canvas width
 			if (currentX + component.width + PADDING > currentCanvasWidth && currentX > PADDING) {
-				// Move to the next row
 				currentX = PADDING;
 				currentY += maxRowHeight + GAP;
-				maxRowHeight = 0; // Reset max height for the new row
+				maxRowHeight = 0;
 			}
-
-			// Update component position via surveyStore
 			updateComponent(component.id, { x: currentX, y: currentY });
-
-			// Track the tallest component in the current row
 			maxRowHeight = Math.max(maxRowHeight, component.height);
-			// Advance X position for the next component
 			currentX += component.width + GAP;
 		});
 	}
 
-	/** Aligns selected components based on the primary selection */
 	function alignComponents(
 		alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom'
 	): void {
-		if (multiSelectedComponentIds.length <= 1) return; // Need at least two components
-
+		/* ... (unchanged) ... */
+		if (multiSelectedComponentIds.length <= 1) return;
 		const selectedComps = $componentsStore.filter((c) => multiSelectedComponentIds.includes(c.id));
 		if (selectedComps.length <= 1) return;
-
-		// Determine the primary component (anchor for alignment)
-		// Use the explicitly selected one if available, otherwise the first in the list
 		const primary =
 			selectedComponent && multiSelectedComponentIds.includes(selectedComponent.id)
 				? selectedComponent
-				: selectedComps[0]; // Fallback to the first selected
-
-		// Calculate target alignment coordinate based on the primary component
-		let targetX: number | undefined;
-		let targetY: number | undefined;
-
+				: selectedComps[0];
+		let targetX: number | undefined, targetY: number | undefined;
 		switch (alignment) {
 			case 'left':
 				targetX = primary.x;
@@ -839,164 +818,113 @@
 				targetY = primary.y + primary.height;
 				break;
 		}
-
-		// Apply alignment to other selected components
 		selectedComps.forEach((comp) => {
-			if (comp.id === primary.id) return; // Don't align the primary to itself
-
-			let newX = comp.x;
-			let newY = comp.y;
-
-			// Adjust X based on alignment type
+			if (comp.id === primary.id) return;
+			let newX = comp.x,
+				newY = comp.y;
 			if (targetX !== undefined) {
 				if (alignment === 'left') newX = targetX;
 				else if (alignment === 'center') newX = targetX - comp.width / 2;
 				else if (alignment === 'right') newX = targetX - comp.width;
 			}
-			// Adjust Y based on alignment type
 			if (targetY !== undefined) {
 				if (alignment === 'top') newY = targetY;
 				else if (alignment === 'middle') newY = targetY - comp.height / 2;
 				else if (alignment === 'bottom') newY = targetY - comp.height;
 			}
-
-			// Update component position (rounding helps prevent fractional pixels)
 			updateComponent(comp.id, { x: Math.round(newX), y: Math.round(newY) });
 		});
 	}
 
-	/** Distributes selected components evenly horizontally or vertically */
 	function distributeComponents(direction: 'horizontal' | 'vertical'): void {
-		if (multiSelectedComponentIds.length <= 2) return; // Need at least three components
-
-		// Get copies of selected components to avoid modifying store directly during calculation
+		/* ... (unchanged, check logic carefully) ... */
+		if (multiSelectedComponentIds.length <= 2) return;
 		const selectedComps = $componentsStore
 			.filter((c) => multiSelectedComponentIds.includes(c.id))
-			.map((c) => ({ ...c })); // Shallow copy is enough here
-
+			.map((c) => ({ ...c }));
 		if (selectedComps.length <= 2) return;
 
 		if (direction === 'horizontal') {
-			// Sort components by their left edge (X coordinate)
 			selectedComps.sort((a, b) => a.x - b.x);
-
 			const first = selectedComps[0];
 			const last = selectedComps[selectedComps.length - 1];
-
-			// Calculate the total horizontal span from the left of the first to the right of the last
 			const totalRange = last.x + last.width - first.x;
-			// Calculate the sum of the widths of all selected components
 			const totalWidth = selectedComps.reduce((sum, comp) => sum + comp.width, 0);
-
-			// Calculate the total space available *between* components
-			// Ensure non-negative spacing, handle potential overlap
 			const totalSpacing = Math.max(0, totalRange - totalWidth);
-
-			// Calculate the equal gap size between each component
 			const gap = selectedComps.length > 1 ? totalSpacing / (selectedComps.length - 1) : 0;
-
-			// Reposition components with the calculated gap
-			let currentX = first.x; // Start with the position of the first component
-			selectedComps.forEach((comp) => {
-				// Update the actual component in the store
-				// Avoid updating the first component if its position is the anchor
-				if (comp.id !== first.id) {
+			let currentX = first.x;
+			selectedComps.forEach((comp, index) => {
+				// Use index to avoid modifying the first one based on itself
+				if (index > 0) {
+					// Start positioning from the second component
+					currentX += selectedComps[index - 1].width + gap; // Position based on previous component's end + gap
 					updateComponent(comp.id, { x: Math.round(currentX) });
 				}
-				// Advance the position for the next component
-				currentX += comp.width + gap;
+				// For the first component, its initial position is the anchor.
 			});
 		} else {
-			// Vertical Distribution
-			// Sort components by their top edge (Y coordinate)
+			// Vertical
 			selectedComps.sort((a, b) => a.y - b.y);
-
 			const first = selectedComps[0];
 			const last = selectedComps[selectedComps.length - 1];
-
-			// Calculate the total vertical span
 			const totalRange = last.y + last.height - first.y;
-			// Calculate the sum of the heights
 			const totalHeight = selectedComps.reduce((sum, comp) => sum + comp.height, 0);
-
-			// Calculate total vertical space between components
 			const totalSpacing = Math.max(0, totalRange - totalHeight);
-			// Calculate equal vertical gap
 			const gap = selectedComps.length > 1 ? totalSpacing / (selectedComps.length - 1) : 0;
-
-			// Reposition components
 			let currentY = first.y;
-			selectedComps.forEach((comp) => {
-				// Avoid updating the first component if its position is the anchor
-				if (comp.id !== first.id) {
+			selectedComps.forEach((comp, index) => {
+				if (index > 0) {
+					currentY += selectedComps[index - 1].height + gap;
 					updateComponent(comp.id, { y: Math.round(currentY) });
 				}
-				currentY += comp.height + gap;
 			});
 		}
 	}
 
 	// --- Lifecycle ---
 	onMount(() => {
-		// Initial setup - page format is set by store default
-		// updatePageFormat($canvasViewStore.pageFormat); // Ensure consistency if needed
-
-		// Observe the viewport size changes
 		const resizeObserver = new ResizeObserver((entries) => {
 			for (const entry of entries) {
-				if (entry.target === viewportRef) {
-					// Update LOCAL viewport dimensions
+				if (entry.target === viewportWrapperRef) {
 					viewportWidth = entry.contentRect.width;
 					viewportHeight = entry.contentRect.height;
 				}
 			}
 		});
-
-		if (viewportRef) {
-			resizeObserver.observe(viewportRef);
-			// Get initial dimensions
-			viewportWidth = viewportRef.clientWidth;
-			viewportHeight = viewportRef.clientHeight;
-			// Initial centering after dimensions are known
-			// Ensure viewport dimensions are available before potentially centering
-			tick().then(() => {
-				// resetZoomAndCenter(); // Optional: Center on mount
-			});
+		if (viewportWrapperRef) {
+			resizeObserver.observe(viewportWrapperRef);
+			viewportWidth = viewportWrapperRef.clientWidth;
+			viewportHeight = viewportWrapperRef.clientHeight;
+			// Optional: Center on mount after dimensions known
+			// tick().then(() => { resetZoomAndCenter(); });
 		}
 
-		// Add global event listeners
 		window.addEventListener('mousemove', handleMouseMove);
 		window.addEventListener('mouseup', handleMouseUp);
-		window.addEventListener('mouseleave', handleMouseLeave); // Handle mouse leaving window
+		window.addEventListener('mouseleave', handleMouseLeave);
 		window.addEventListener('keydown', handleKeydown);
+		window.addEventListener('keyup', handleKeyUp); // Add keyup listener
 
-		// Load survey data from localStorage on mount
-		loadSurvey(); // From surveyStore
+		loadSurvey();
 
-		// Cleanup function
 		return () => {
 			resizeObserver.disconnect();
 			window.removeEventListener('mousemove', handleMouseMove);
 			window.removeEventListener('mouseup', handleMouseUp);
 			window.removeEventListener('mouseleave', handleMouseLeave);
 			window.removeEventListener('keydown', handleKeydown);
-			document.body.classList.remove('panning'); // Ensure cursor style is reset
+			window.removeEventListener('keyup', handleKeyUp); // Remove keyup listener
+			document.body.classList.remove('panning', 'space-panning-possible');
 		};
 	});
 
-	// --- External Control (e.g., from a Properties Panel) ---
-	/** Allows external components to set the primary selected component */
+	// --- External Control ---
 	export function setSelectedComponent(comp: SurveyComponentType | null): void {
+		/* ... (unchanged) ... */
 		if (comp) {
 			selectedComponent = comp;
-			// Ensure the externally set component is also in the multi-select list
 			if (!multiSelectedComponentIds.includes(comp.id)) {
-				// If adding to an existing multi-selection is desired, use:
-				// multiSelectedComponentIds = [...multiSelectedComponentIds, comp.id];
-				// If setting it as the *only* selection is desired:
 				multiSelectedComponentIds = [comp.id];
-			} else {
-				// If it's already selected, ensure it's primary (no change to list needed)
 			}
 		} else {
 			clearSelection();
@@ -1036,10 +964,11 @@
 		aria-label="Canvas Area"
 		class="relative flex-1 overflow-hidden"
 		on:contextmenu={handleContextMenu}
+		class:space-panning={spacebarHeld}
 	>
 		<!-- Horizontal Ruler -->
 		<div
-			class="absolute top-0 right-0 z-20 h-8 overflow-hidden"
+			class="absolute top-0 right-0 z-20"
 			style="left: {RULER_SIZE}px; height: {RULER_SIZE}px;"
 			aria-hidden="true"
 		>
@@ -1049,17 +978,14 @@
 				offset={$canvasViewStore.offsetX}
 				viewLength={viewportWidth}
 				{units}
-				{showGuides}
-				guides={verticalGuides}
 				mousePos={mouseX_Viewport}
-				on:startGuideMove={onStartGuideMove}
-				on:removeGuide={removeGuide}
+				on:addGuide={handleAddGuide}
 			/>
 		</div>
 
 		<!-- Vertical Ruler -->
 		<div
-			class="absolute bottom-0 left-0 z-20 w-8 overflow-hidden"
+			class="absolute bottom-0 left-0 z-20"
 			style="top: {RULER_SIZE}px; width: {RULER_SIZE}px;"
 			aria-hidden="true"
 		>
@@ -1069,29 +995,24 @@
 				offset={$canvasViewStore.offsetY}
 				viewLength={viewportHeight}
 				{units}
-				{showGuides}
-				guides={horizontalGuides}
 				mousePos={mouseY_Viewport}
-				on:startGuideMove={onStartGuideMove}
-				on:removeGuide={removeGuide}
+				on:addGuide={handleAddGuide}
 			/>
 		</div>
 
-		<!-- Corner Box (between rulers) -->
+		<!-- Corner Box -->
 		<div
 			class="absolute top-0 left-0 z-20 border-r border-b border-gray-300 bg-gray-200 dark:border-gray-700 dark:bg-gray-800"
 			style="width: {RULER_SIZE}px; height: {RULER_SIZE}px;"
 			aria-hidden="true"
 		></div>
 
-		<!-- Canvas Viewport (Scrollable and Zoomable Area) -->
-		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-		<!-- Keyboard interactions handled globally or via tabindex focus -->
+		<!-- Canvas Viewport Wrapper (for scroll/wheel/size observation) -->
 		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 		<div
-			bind:this={viewportRef}
-			class="absolute inset-0 overflow-auto bg-gray-100 focus:outline-none dark:bg-gray-800"
-			style="top: {RULER_SIZE}px; left: {RULER_SIZE}px;"
+			bind:this={viewportWrapperRef}
+			class="canvas-viewport-wrapper absolute overflow-hidden bg-gray-200 focus:outline-none dark:bg-gray-700"
+			style="top: {RULER_SIZE}px; left: {RULER_SIZE}px; bottom: 0; right: 0;"
 			on:wheel={handleWheel}
 			tabindex="0"
 			role="region"
@@ -1099,7 +1020,6 @@
 		>
 			<!-- The actual canvas content area -->
 			<CanvasViewport
-				bind:this={canvasViewportInstance}
 				canvasWidth={$canvasViewStore.width}
 				canvasHeight={$canvasViewStore.height}
 				canvasScale={$canvasViewStore.scale}
@@ -1113,11 +1033,12 @@
 				{selectionBox}
 				{selectedComponentId}
 				{multiSelectedComponentIds}
+				{spacebarHeld}
 				on:startSelectionBox={onStartSelectionBox}
 				on:canvasClick={handleCanvasClick}
 				on:startPan={onStartPan}
 				on:startGuideMove={onStartGuideMove}
-				on:removeGuide={removeGuide}
+				on:removeGuide={handleRemoveGuide}
 				on:selectComponent={handleSelectComponent}
 				on:startDrag={onStartDrag}
 				on:startResize={onStartResize}
@@ -1135,9 +1056,8 @@
 		canvasScale={$canvasViewStore.scale}
 	/>
 
-	<!-- Context Menu (conditional) -->
+	<!-- Context Menu -->
 	{#if showContextMenu}
-		{console.log('Rendering ContextMenu component...')}
 		<ContextMenu
 			x={contextMenuX}
 			y={contextMenuY}
@@ -1147,7 +1067,7 @@
 			on:close={closeContextMenu}
 			on:duplicate={duplicateSelected}
 			on:delete={deleteSelected}
-			on:removeGuide={removeGuide}
+			on:removeGuide={handleRemoveGuide}
 			on:properties={() => console.log('Properties action triggered')}
 			on:selectAll={selectAllComponents}
 			on:autoPosition={autoPosition}
@@ -1157,11 +1077,22 @@
 
 <style>
 	/* Apply grab/grabbing cursor globally when panning */
-	:global(body.panning) {
-		cursor: grabbing !important;
-	}
-	/* Ensure children inherit cursor during pan */
+	:global(body.panning),
 	:global(body.panning *) {
 		cursor: grabbing !important;
+	}
+
+	/* Apply grab cursor when spacebar is held over the canvas area */
+	.canvas-viewport-wrapper:has(+ :global(body.space-panning-possible)) {
+		cursor: grab;
+	}
+	/* More specific rule for space+drag */
+	:global(body.space-panning-possible) .canvas-viewport-wrapper {
+		cursor: grab;
+	}
+
+	/* Ensure wrapper fills space */
+	.canvas-viewport-wrapper {
+		/* Positioned absolute by style */
 	}
 </style>

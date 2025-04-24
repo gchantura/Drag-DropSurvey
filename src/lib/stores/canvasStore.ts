@@ -126,7 +126,7 @@ function resetZoom(viewportWidth: number, viewportHeight: number) {
 }
 
 /** Increases the zoom level by a fixed step. */
-function zoomIn() {
+function zoomIn(p0?: number, p1?: number) {
     update((state) => {
         const newScale = Math.min(state.scale + 0.1, MAX_ZOOM);
         // Note: Simple zoom doesn't center on mouse - adjustZoom is needed for that
@@ -135,7 +135,7 @@ function zoomIn() {
 }
 
 /** Decreases the zoom level by a fixed step. */
-function zoomOut() {
+function zoomOut(p0?: number, p1?: number) {
     update((state) => {
         const newScale = Math.max(state.scale - 0.1, MIN_ZOOM);
         return { ...state, scale: newScale };
