@@ -3,12 +3,14 @@
 	import {
 		selectedComponentIds,
 		primarySelectedComponentId,
-		canAlignOrDistribute,
+		canAlign,
 		alignSelectedComponents,
-		distributeSelectedComponents,
 		clearSelectionState,
 		selectAllComponentsState
 	} from '$lib/stores/alignmentStore.ts';
+
+	// Import distribution logic from distributionStore
+	import { canDistribute, distributeSelectedComponents } from '$lib/stores/distributionStore.ts';
 	import {
 		componentsStore,
 		updateComponent,
@@ -32,7 +34,6 @@
 	} from '$lib/types/survey.ts';
 
 	import CanvasToolbar from '$lib/components/CanvasComponents/CanvasToolbar.svelte';
-	// Import the new split components
 	import ToolbarAlign from '$lib/components/CanvasComponents/ToolbarAlignment.svelte';
 	import ToolbarDistribute from '$lib/components/CanvasComponents/ToolbarDistribute.svelte';
 	import CanvasRuler from '$lib/components/CanvasComponents/CanvasRuler.svelte';
@@ -780,14 +781,15 @@
 		on:autoPosition={autoPosition}
 	/>
 
-	{#if $canAlignOrDistribute}
-		<div
-			class="flex items-center justify-center gap-x-6 border-b border-gray-300 bg-gray-100 p-1 dark:border-gray-700 dark:bg-gray-800"
-		>
-			<ToolbarAlign on:align={(event) => alignSelectedComponents(event.detail)} />
-			<ToolbarDistribute on:distribute={(event) => distributeSelectedComponents(event.detail)} />
-		</div>
-	{/if}
+	<div
+		class="flex items-center justify-center gap-x-6 border-b border-gray-300 bg-gray-100 p-1 dark:border-gray-700 dark:bg-gray-800"
+	>
+		<ToolbarAlign enabled={$canAlign} on:align={(event) => alignSelectedComponents(event.detail)} />
+		<ToolbarDistribute
+			enabled={$canDistribute}
+			on:distribute={(event) => distributeSelectedComponents(event.detail)}
+		/>
+	</div>
 
 	<div
 		role="group"
@@ -832,6 +834,7 @@
 			aria-hidden="true"
 		></div>
 
+		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 		<div
 			bind:this={viewportWrapperRef}
 			class="canvas-viewport-wrapper absolute overflow-hidden bg-gray-200 focus:outline-none dark:bg-gray-700"

@@ -3,26 +3,27 @@ import { componentsStore, updateComponent } from '$lib/stores/surveyStore.ts';
 import type { SurveyComponent } from '$lib/types/survey.ts';
 
 export type Alignment = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom';
-export type Distribution = 'horizontal' | 'vertical';
 
+// --- Selection State ---
 export const selectedComponentIds = writable<string[]>([]);
-
 export const primarySelectedComponentId = writable<string | null>(null);
 
-export const canAlignOrDistribute = derived(
+// --- Derived State for Button Enablement ---
+export const canAlign = derived(
     selectedComponentIds,
-    ($ids) => $ids.length > 1
+    ($ids) => $ids.length > 1 // Alignment possible with 2 or more
 );
 
+// --- Actions ---
 export function alignSelectedComponents(alignment: Alignment): void {
     const currentSelectedIds = get(selectedComponentIds);
+    if (!get(canAlign)) return; // Prevent action if not possible
+
     const primaryId = get(primarySelectedComponentId);
     const allComponents = get(componentsStore);
 
-    if (currentSelectedIds.length <= 1) return;
-
     const selectedComps = allComponents.filter(c => currentSelectedIds.includes(c.id));
-    if (selectedComps.length <= 1) return;
+    if (selectedComps.length <= 1) return; // Should be caught by canAlign, but safety check
 
     let primary = selectedComps.find(c => c.id === primaryId);
     if (!primary) {
@@ -31,32 +32,17 @@ export function alignSelectedComponents(alignment: Alignment): void {
 
     let targetX: number | undefined, targetY: number | undefined;
     switch (alignment) {
-        case 'left':
-            targetX = primary.x;
-            break;
-        case 'center':
-            targetX = primary.x + primary.width / 2;
-            break;
-        case 'right':
-            targetX = primary.x + primary.width;
-            break;
-        case 'top':
-            targetY = primary.y;
-            break;
-        case 'middle':
-            targetY = primary.y + primary.height / 2;
-            break;
-        case 'bottom':
-            targetY = primary.y + primary.height;
-            break;
+        case 'left': targetX = primary.x; break;
+        case 'center': targetX = primary.x + primary.width / 2; break;
+        case 'right': targetX = primary.x + primary.width; break;
+        case 'top': targetY = primary.y; break;
+        case 'middle': targetY = primary.y + primary.height / 2; break;
+        case 'bottom': targetY = primary.y + primary.height; break;
     }
 
     selectedComps.forEach((comp) => {
         if (comp.id === primary?.id) return;
-
-        let newX = comp.x,
-            newY = comp.y;
-
+        let newX = comp.x, newY = comp.y;
         if (targetX !== undefined) {
             if (alignment === 'left') newX = targetX;
             else if (alignment === 'center') newX = targetX - comp.width / 2;
@@ -71,52 +57,6 @@ export function alignSelectedComponents(alignment: Alignment): void {
     });
 }
 
-export function distributeSelectedComponents(direction: Distribution): void {
-    const currentSelectedIds = get(selectedComponentIds);
-    const allComponents = get(componentsStore);
-
-    if (currentSelectedIds.length <= 2) return;
-
-    const selectedComps = allComponents
-        .filter(c => currentSelectedIds.includes(c.id))
-        .map(c => ({ ...c }));
-
-    if (selectedComps.length <= 2) return;
-
-    if (direction === 'horizontal') {
-        selectedComps.sort((a, b) => a.x - b.x);
-        const first = selectedComps[0];
-        const last = selectedComps[selectedComps.length - 1];
-        const totalRange = (last.x + last.width) - first.x;
-        const totalWidth = selectedComps.reduce((sum, comp) => sum + comp.width, 0);
-        const totalSpacing = Math.max(0, totalRange - totalWidth);
-        const gap = selectedComps.length > 1 ? totalSpacing / (selectedComps.length - 1) : 0;
-
-        let currentX = first.x;
-        selectedComps.forEach((comp, index) => {
-            if (index > 0) {
-                currentX += selectedComps[index - 1].width + gap;
-                updateComponent(comp.id, { x: Math.round(currentX) });
-            }
-        });
-    } else {
-        selectedComps.sort((a, b) => a.y - b.y);
-        const first = selectedComps[0];
-        const last = selectedComps[selectedComps.length - 1];
-        const totalRange = (last.y + last.height) - first.y;
-        const totalHeight = selectedComps.reduce((sum, comp) => sum + comp.height, 0);
-        const totalSpacing = Math.max(0, totalRange - totalHeight);
-        const gap = selectedComps.length > 1 ? totalSpacing / (selectedComps.length - 1) : 0;
-
-        let currentY = first.y;
-        selectedComps.forEach((comp, index) => {
-            if (index > 0) {
-                currentY += selectedComps[index - 1].height + gap;
-                updateComponent(comp.id, { y: Math.round(currentY) });
-            }
-        });
-    }
-}
 
 export function clearSelectionState() {
     selectedComponentIds.set([]);
@@ -129,9 +69,9 @@ export function selectAllComponentsState() {
     primarySelectedComponentId.set(allIds.length > 0 ? allIds[0] : null);
 }
 
+// Removed combined export that included distribution
 export const alignmentActions = {
     alignSelectedComponents,
-    distributeSelectedComponents,
     clearSelectionState,
     selectAllComponentsState
 };
