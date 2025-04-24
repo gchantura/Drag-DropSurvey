@@ -15,14 +15,19 @@
 	import { DarkMode } from 'flowbite-svelte';
 	import { Button } from 'flowbite-svelte';
 	import { Fileupload } from 'flowbite-svelte';
+	import { createEventDispatcher } from 'svelte';
 
-	export let selectedComponent: SurveyComponent | null = null;
+	const dispatch = createEventDispatcher();
 
-	let alertMessage = '';
-	let alertColor: 'green' | 'red' | 'yellow' | 'blue' | 'dark' = 'blue';
+	const { selectedComponent } = $props<{
+		selectedComponent: SurveyComponent | null;
+	}>();
+
+	let alertColor = $state<'green' | 'red' | 'yellow' | 'blue' | 'dark'>('blue');
+	let alertMessage = $state('');
 	let alertTimeout: number | undefined = undefined;
-	let showImport = false;
-	let importFile: FileList | null = null;
+	let showImport = $state(false);
+	let importFile: FileList | null = $state(null);
 
 	function showAlert(message: string, color: typeof alertColor = 'blue', duration: number = 3000) {
 		alertMessage = message;
@@ -45,7 +50,7 @@
 
 	function handleLoad() {
 		if (loadSurvey()) {
-			selectedComponent = null; // Clear selection after loading new data
+			dispatch('resetSelection');
 			showAlert('Survey loaded from browser storage!', 'green');
 		} else {
 			showAlert('No saved survey found or failed to load!', 'yellow');
@@ -55,7 +60,7 @@
 	function handleClear() {
 		if (confirm('Are you sure you want to clear the entire survey? This cannot be undone.')) {
 			clearSurvey();
-			selectedComponent = null;
+			dispatch('resetSelection');
 			showAlert('Survey cleared!', 'yellow');
 		}
 	}
@@ -89,7 +94,7 @@
 			try {
 				const jsonData = e.target?.result as string;
 				if (importSurvey(jsonData)) {
-					selectedComponent = null; // Clear selection
+					dispatch('resetSelection');
 					showAlert('Survey imported successfully!', 'green');
 					showImport = false; // Hide import section
 					importFile = null;
@@ -106,11 +111,55 @@
 		};
 		reader.readAsText(file);
 	}
+
+	let sidebarWidth = $state(300);
+	let startX = $state(0);
+	let startWidth = $state(0);
+	let sidebarEl: HTMLDivElement;
+
+	function handleResizeStart(event: MouseEvent | TouchEvent) {
+		const clientX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX;
+		startX = clientX;
+		startWidth = sidebarWidth;
+
+		window.addEventListener('mousemove', handleResizing);
+		window.addEventListener('touchmove', handleResizing, { passive: false });
+		window.addEventListener('mouseup', handleResizeEnd);
+		window.addEventListener('touchend', handleResizeEnd);
+	}
+
+	function handleResizing(event: MouseEvent | TouchEvent) {
+		event.preventDefault();
+		const clientX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX;
+		const newWidth = startWidth + (clientX - startX);
+		if (newWidth > 200 && newWidth < 800) {
+			sidebarWidth = newWidth;
+		}
+	}
+
+	function handleResizeEnd() {
+		window.removeEventListener('mousemove', handleResizing);
+		window.removeEventListener('touchmove', handleResizing);
+		window.removeEventListener('mouseup', handleResizeEnd);
+		window.removeEventListener('touchend', handleResizeEnd);
+	}
 </script>
 
 <div
-	class="allow-input h-full w-full overflow-y-auto bg-gray-50 p-4 dark:bg-gray-800 dark:text-gray-300"
+	bind:this={sidebarEl}
+	class="sidebar-left-container allow-input relative h-full overflow-y-auto bg-gray-50 p-4 pr-6 dark:bg-gray-800 dark:text-gray-300"
+	style={`width: ${sidebarWidth}px;`}
 >
+	<!-- RESIZE HANDLE -->
+	<button
+		type="button"
+		class="resize-handle absolute top-0 right-0 h-full w-2 cursor-col-resize bg-gray-200 dark:bg-gray-600"
+		aria-label="Resize sidebar"
+		onmousedown={handleResizeStart}
+		ontouchstart={handleResizeStart}
+	></button>
+
+	<!-- Header with DarkMode -->
 	<div class="mb-4 flex items-center justify-between">
 		<h2 class="text-xl font-semibold">Survey Editor</h2>
 		<DarkMode
@@ -118,8 +167,10 @@
 		/>
 	</div>
 
+	<!-- Components -->
 	<ComponentToolbar />
 
+	<!-- Aktions -->
 	<div class="mt-6 mb-4 border-t pt-4 dark:border-gray-700">
 		<h3 class="mb-2 text-lg font-medium">Actions</h3>
 		<SurveyActions onSave={handleSave} onLoad={handleLoad} onClear={handleClear} />
@@ -129,6 +180,7 @@
 				{showImport ? 'Cancel Import' : 'Import JSON'}
 			</Button>
 		</div>
+
 		{#if showImport}
 			<div class="mt-3 rounded border bg-gray-100 p-3 dark:border-gray-600 dark:bg-gray-700">
 				<Fileupload
@@ -149,15 +201,27 @@
 		{/if}
 	</div>
 
+	<!-- Properties -->
 	<div class="mt-6 border-t pt-4 dark:border-gray-700">
 		<h3 class="mb-2 text-lg font-medium">Properties</h3>
-		<PropertiesEditor bind:component={selectedComponent} />
+		<PropertiesEditor component={selectedComponent} />
 	</div>
 
+	<!-- Alert -->
 	{#if alertMessage}
 		<div class="sticky bottom-0 mt-4 p-1">
-			<!-- **** Corrected Prop Name (assuming SurveyAlert expects alertMessage) **** -->
 			<SurveyAlert {alertMessage} {alertColor} on:dismiss={() => (alertMessage = '')} />
 		</div>
 	{/if}
 </div>
+
+<style>
+	.sidebar-left-container {
+		position: absolute;
+		z-index: 10000;
+	}
+
+	.resize-handle {
+		z-index: 50;
+	}
+</style>
