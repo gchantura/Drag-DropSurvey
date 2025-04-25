@@ -1,3 +1,5 @@
+<!-- src/lib/components/CanvasComponents/ContextMenu.svelte -->
+
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import type { SurveyComponent } from '$lib/types/survey.ts';

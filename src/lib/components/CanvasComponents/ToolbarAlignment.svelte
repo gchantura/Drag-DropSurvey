@@ -1,3 +1,5 @@
+<!-- src/lib/components/CanvasComponents/ToolbarAlignment.svelte -->
+
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 

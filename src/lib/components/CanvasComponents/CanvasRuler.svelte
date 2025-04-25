@@ -1,3 +1,5 @@
+<!-- src/lib/components/CanvasComponents/CanvasRuler.svelte -->
+
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 

@@ -3,7 +3,6 @@
 	import { createEventDispatcher } from 'svelte';
 	import { componentsStore } from '$lib/stores/surveyStore.ts';
 	import type { SurveyComponent as SurveyComponentType, SelectionBox } from '$lib/types/survey.ts';
-	// import CanvasGuide from './CanvasGuide.svelte'; // REMOVED Import
 	import SurveyComponent from '$lib/components/SurveyComponent.svelte';
 
 	// --- Props ---
@@ -11,11 +10,7 @@
 	export let canvasHeight: number;
 	export let enableSnap: boolean;
 	export let gridSize: number;
-	// Removed props related to guides, scale, offset as they are handled by viewport now for guide rendering
-	// export let showGuides: boolean;
-	// export let horizontalGuides: number[];
-	// export let verticalGuides: number[];
-	export let selectionBox: SelectionBox; // Still needed for selection box visual
+	export let selectionBox: SelectionBox;
 	export let selectedComponentId: string | null;
 	export let multiSelectedComponentIds: string[];
 	export let canvasScale: number = 1; // Still needed for grid pattern
@@ -68,9 +63,6 @@
 			</svg>
 		</div>
 	{/if}
-
-	<!-- Guides - REMOVED FROM HERE -->
-	<!-- {#if showGuides} ... {/if} -->
 
 	<!-- Selection box -->
 	{#if selectionBox.active}

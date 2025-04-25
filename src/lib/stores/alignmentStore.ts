@@ -1,3 +1,5 @@
+// alignmentStore.ts 
+
 import { writable, derived, get } from 'svelte/store';
 import { componentsStore, updateComponent } from '$lib/stores/surveyStore.ts';
 import type { SurveyComponent } from '$lib/types/survey.ts';
