@@ -912,10 +912,6 @@
 		on:toggleSnap={toggleSnap}
 		on:toggleGuides={toggleGuides}
 		on:updatePageFormat={(e) => updatePageFormat(e.detail)}
-		on:resetZoom={resetZoomAndCenter}
-		on:zoomIn={handleZoomIn}
-		on:zoomOut={handleZoomOut}
-		on:autoPosition={autoPosition}
 	/>
 
 	<div
@@ -1018,6 +1014,7 @@
 		{selectedComponent}
 		multiSelectedComponentIds={$selectedComponentIds}
 		canvasScale={$canvasViewStore.scale}
+		on:resetZoom={resetZoomAndCenter}
 	/>
 
 	{#if showContextMenu}

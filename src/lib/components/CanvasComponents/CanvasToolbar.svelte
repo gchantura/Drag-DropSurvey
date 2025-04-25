@@ -2,9 +2,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 
-	import CanvasZoomToolbar from '$lib/components/CanvasComponents/CanvasZoom/CanvasZoomToolbar.svelte';
-	import CanvasGrid from '$lib/components/CanvasComponents/CanvasGrid/CanvasGrid.svelte'; // Assuming this exists or remove if not used
-
 	export let units: 'cm' | 'inches' | 'px';
 	export let enableSnap: boolean;
 	export let showGuides: boolean;
@@ -15,10 +12,7 @@
 		toggleSnap: void;
 		toggleGuides: void;
 		updatePageFormat: string;
-		resetZoom: void;
-		zoomIn: void;
-		zoomOut: void;
-		autoPosition: void;
+		// Removed zoom/autoPosition events
 	}>();
 
 	function handlePageFormatChange(event: Event) {
@@ -62,15 +56,5 @@
 			<option value="Letter">Letter</option>
 			<option value="Custom">Custom</option>
 		</select>
-		<!-- Removed canvasScale display as it's better handled in StatusBar or ZoomToolbar -->
-	</div>
-
-	<div class="flex flex-wrap items-center gap-2">
-		<CanvasZoomToolbar
-			on:resetZoom={() => dispatch('resetZoom')}
-			on:zoomIn={() => dispatch('zoomIn')}
-			on:zoomOut={() => dispatch('zoomOut')}
-		/>
-		<CanvasGrid on:autoPosition={() => dispatch('autoPosition')} />
 	</div>
 </div>
