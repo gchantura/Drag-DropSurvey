@@ -1,3 +1,4 @@
+<!-- src/lib/components/SideBarRight.svelte -->
 <script lang="ts">
 	import ComponentToolbarRight from '$lib/components/SideBarRightComponents/ComponentToolbarRight.svelte';
 	import { createEventDispatcher } from 'svelte';
@@ -5,6 +6,7 @@
 
 	const dispatch = createEventDispatcher();
 
+	// Assumes this line is present based on the error message
 	const { selectedComponent } = $props<{
 		selectedComponent: SurveyComponent | null;
 	}>();
@@ -28,7 +30,7 @@
 	function handleResizing(event: MouseEvent | TouchEvent) {
 		event.preventDefault();
 		const clientX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX;
-		const newWidth = startWidth + (startX - clientX); // ← Rechts = Spiegelung der Logik
+		const newWidth = startWidth + (startX - clientX);
 		if (newWidth > 200 && newWidth < 800) {
 			sidebarWidth = newWidth;
 		}
@@ -42,21 +44,11 @@
 	}
 </script>
 
-<!-- Template -->
 <div
 	bind:this={sidebarEl}
-	class="sidebar-right-container allow-input relative h-full overflow-y-auto bg-gray-50 p-4 pr-6 dark:bg-gray-800 dark:text-gray-300"
+	class="sidebar-right-container allow-input relative h-full overflow-y-auto bg-gray-50 p-4 pl-6 dark:bg-gray-800 dark:text-gray-300"
 	style={`width: ${sidebarWidth}px;`}
 >
-	<!-- Header -->
-	<div class="mb-4 flex items-center justify-between">
-		<h2 class="text-xl font-semibold">Tool Bar Right</h2>
-	</div>
-
-	<!-- Komponentenleiste -->
-	<ComponentToolbarRight />
-
-	<!-- RESIZE HANDLE -->
 	<button
 		type="button"
 		class="resize-handle absolute top-0 left-0 h-full w-2 cursor-col-resize bg-gray-200 dark:bg-gray-600"
@@ -64,13 +56,17 @@
 		onmousedown={handleResizeStart}
 		ontouchstart={handleResizeStart}
 	></button>
+
+	<div class="mb-4 flex items-center justify-between">
+		<h2 class="text-xl font-semibold">Tool Bar Right</h2>
+	</div>
+
+	<ComponentToolbarRight />
 </div>
 
 <style>
 	.sidebar-right-container {
-		position: absolute;
-		right: 0;
-		z-index: 10000;
+		/* Removed absolute positioning as it's part of flex layout */
 	}
 
 	.resize-handle {

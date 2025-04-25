@@ -1,3 +1,4 @@
+<!-- src/lib/components/Canvas.svelte -->
 <script lang="ts">
 	import { get } from 'svelte/store';
 	import {
@@ -30,7 +31,6 @@
 		SelectionBox,
 		DraggingGuide
 	} from '$lib/types/survey.ts';
-	// Removed incorrect import: import type { MouseEvent as SvelteMouseEvent } from 'svelte/elements';
 
 	import CanvasToolbar from '$lib/components/CanvasComponents/CanvasToolbar.svelte';
 	import ToolbarAlign from '$lib/components/CanvasComponents/ToolbarAlignment.svelte';
@@ -46,6 +46,7 @@
 		position: number;
 	};
 
+	// Use export let as Canvas doesn't use runes for props yet
 	export let selectedComponent: SurveyComponentType | null = null;
 	export let units: 'cm' | 'inches' | 'px' = 'cm';
 
@@ -89,10 +90,8 @@
 
 	$: selectedComponentId = $primarySelectedComponentId;
 
-	$: {
-		const primaryId = $primarySelectedComponentId;
-		selectedComponent = primaryId ? $componentsStore.find((c) => c.id === primaryId) || null : null;
-	}
+	// REMOVED: The reactive block syncing selectedComponent from the store is removed.
+	// We rely on the prop passed from SurveyBuilder, which should itself be synced with the store.
 
 	function getGridSize(): number {
 		switch (units) {
@@ -415,7 +414,6 @@
 	}
 
 	function handleContextMenu(event: MouseEvent): void {
-		// Use standard MouseEvent
 		const targetElement = event.target as Element;
 		if (
 			isDragging ||
@@ -423,7 +421,8 @@
 			isResizing ||
 			isSelecting ||
 			draggingGuide ||
-			targetElement.closest('.ruler-container')
+			targetElement.closest('.ruler-container') ||
+			targetElement.closest('.canvas-guide')
 		) {
 			return;
 		}
@@ -471,10 +470,35 @@
 		}
 
 		contextMenuGuideInfo = closestGuideInfo;
+		contextMenuTarget = event.target as EventTarget;
 		showContextMenu = true;
 		contextMenuX = event.clientX;
 		contextMenuY = event.clientY;
+		closeContextMenu();
+		tick().then(() => {
+			showContextMenu = true;
+			contextMenuX = event.clientX;
+			contextMenuY = event.clientY;
+			contextMenuTarget = event.target as EventTarget;
+		});
+	}
+
+	function handleGuideContextMenu(
+		e: CustomEvent<{
+			direction: 'horizontal' | 'vertical';
+			index: number;
+			position: number;
+			event: MouseEvent;
+		}>
+	) {
+		const { direction, index, position, event } = e.detail;
+		event.preventDefault();
+
+		contextMenuGuideInfo = { direction, index, position };
 		contextMenuTarget = event.target as EventTarget;
+		showContextMenu = true;
+		contextMenuX = event.clientX;
+		contextMenuY = event.clientY;
 		closeContextMenu();
 		tick().then(() => {
 			showContextMenu = true;
@@ -494,7 +518,10 @@
 
 	function handleDeleteGuide(e: CustomEvent<GuideInfo>) {
 		const { direction, index } = e.detail;
-		handleRemoveGuide(e);
+		handleRemoveGuide({ detail: { direction, index } } as CustomEvent<{
+			direction: 'horizontal' | 'vertical';
+			index: number;
+		}>);
 		closeContextMenu();
 	}
 
@@ -503,7 +530,7 @@
 		const currentPos = position.toFixed(1);
 
 		const newPositionStr = prompt(
-			`Set new position for ${direction} guide (current: ${currentPos}):`,
+			`Set new position for ${direction} guide (current: ${currentPos}px):`,
 			`${currentPos}`
 		);
 		closeContextMenu();
@@ -946,7 +973,6 @@
 			aria-hidden="true"
 		></div>
 
-		<!-- Ensure a11y ignore comment is present before the element -->
 		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 		<div
 			bind:this={viewportWrapperRef}
@@ -977,6 +1003,7 @@
 				on:startPan={onStartPan}
 				on:startGuideMove={onStartGuideMove}
 				on:removeGuide={handleRemoveGuide}
+				on:guideContextMenu={handleGuideContextMenu}
 				on:selectComponent={handleSelectComponent}
 				on:startDrag={onStartDrag}
 				on:startResize={onStartResize}
