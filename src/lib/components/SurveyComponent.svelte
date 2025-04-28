@@ -2,8 +2,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import type { SurveyComponent as SurveyComponentType } from '$lib/types/survey.ts';
-
-	// Dynamic imports map
 	const componentMap = {
 		text: () => import('./MainComponents/TextComponent.svelte'),
 		input: () => import('./MainComponents/InputComponent.svelte'),
@@ -18,23 +16,17 @@
 		introduction: () => import('./MainComponents/IntroductionComponent.svelte'),
 		matrix: () => import('./MainComponents/MatrixComponent.svelte'),
 		rating: () => import('./MainComponents/RatingComponent.svelte')
-		// Add other component types here
 	};
-
 	export let component: SurveyComponentType;
 	export let isSelected: boolean = false;
 	export let isActive: boolean = false;
-
 	const dispatch = createEventDispatcher<{
-		select: SurveyComponentType;
+		select: { event: MouseEvent; component: SurveyComponentType };
 		startDrag: { event: MouseEvent; component: SurveyComponentType };
 		startResize: { event: MouseEvent; component: SurveyComponentType };
 	}>();
-
 	let componentImplementation: Promise<{ default: any }> | null = null;
-
 	$: {
-		// Reactive block to load component implementation
 		if (component && componentMap[component.type]) {
 			componentImplementation = componentMap[component.type]();
 		} else {
@@ -44,27 +36,31 @@
 			}
 		}
 	}
-
 	function handleMouseDown(e: MouseEvent): void {
 		if (e.button === 0 && !(e.target as HTMLElement).classList.contains('resize-handle')) {
 			dispatch('startDrag', { event: e, component });
 		}
 	}
-
 	function handleResizeMouseDown(e: MouseEvent): void {
 		if (e.button === 0) {
 			dispatch('startResize', { event: e, component });
 			e.stopPropagation();
 		}
 	}
-
 	function handleClick(e: MouseEvent): void {
-		e.stopPropagation();
+		if (e.button === 0) {
+			if (!(e.target as HTMLElement).classList.contains('resize-handle')) {
+				dispatch('select', { event: e, component });
+				e.stopPropagation();
+			}
+		}
 	}
 	function handleKeyDown(e: KeyboardEvent): void {
 		if (e.key === 'Enter' || e.key === ' ') {
+			const mockEvent = new MouseEvent('click', { shiftKey: false });
+			dispatch('select', { event: mockEvent, component });
 			e.preventDefault();
-			dispatch('select', component);
+			e.stopPropagation();
 		}
 	}
 </script>
@@ -74,6 +70,7 @@
 	class="component absolute border outline-none"
 	class:selected={isSelected}
 	class:active={isActive}
+	data-component-id={component.id}
 	style:top="{component.y}px"
 	style:left="{component.x}px"
 	style:width="{component.width}px"
@@ -83,9 +80,9 @@
 	style:color={component.color ?? '#000000'}
 	style:background-color={component.bgColor ?? '#FFFFFF'}
 	style:z-index={isSelected ? 20 : 10}
-	on:mousedown={handleMouseDown}
-	on:click={handleClick}
-	on:keydown={handleKeyDown}
+	onmousedown={handleMouseDown}
+	onclick={handleClick}
+	onkeydown={handleKeyDown}
 	tabindex="0"
 	role="button"
 	aria-label="{component.type} component: {component.label ?? 'No Label'}"
@@ -106,16 +103,14 @@
 			<p class="text-red-500">Unknown type: {component.type}</p>
 		{/if}
 	</div>
-
 	{#if isSelected}
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
 			class="resize-handle absolute right-0 bottom-0 h-3 w-3 cursor-nwse-resize border-2 border-white bg-blue-600 dark:border-gray-800 dark:bg-blue-400"
-			on:mousedown|stopPropagation={handleResizeMouseDown}
+			onmousedown={handleResizeMouseDown}
 			aria-hidden="true"
 			title="Drag to resize"
 		></div>
-		<!-- FIXED Self Closing Tag -->
 	{/if}
 </div>
 
@@ -130,9 +125,7 @@
 		overflow: hidden;
 	}
 	.component:focus {
-		outline: 2px solid Highlight;
-		outline: 2px solid -webkit-focus-ring-color;
-		outline-offset: 1px;
+		outline: none;
 	}
 	.component.selected {
 		outline: 1px solid #3b82f6;
@@ -147,7 +140,6 @@
 	.component-content {
 		position: relative;
 	}
-	/* Allow interaction with form elements inside */
 	.component-content :global(input),
 	.component-content :global(textarea),
 	.component-content :global(select),
@@ -157,5 +149,4 @@
 	.resize-handle {
 		z-index: 25;
 	}
-	/* Removed unused CSS selectors */
 </style>

@@ -4,8 +4,8 @@
 	import { componentsStore } from '$lib/stores/surveyStore.ts';
 	import type { SurveyComponent as SurveyComponentType, SelectionBox } from '$lib/types/survey.ts';
 	import SurveyComponent from '$lib/components/SurveyComponent.svelte';
+	// Removed theme store import
 
-	// --- Props ---
 	export let canvasWidth: number;
 	export let canvasHeight: number;
 	export let enableSnap: boolean;
@@ -13,36 +13,31 @@
 	export let selectionBox: SelectionBox;
 	export let selectedComponentId: string | null;
 	export let multiSelectedComponentIds: string[];
-	export let canvasScale: number = 1; // Still needed for grid pattern
-	export let canvasOffsetX: number = 0; // Still needed for grid pattern
-	export let canvasOffsetY: number = 0; // Still needed for grid pattern
-
-	// --- Event Dispatcher ---
-	// Event map updated - no guide events originate here anymore
+	export let canvasScale: number = 1;
+	export let canvasOffsetX: number = 0;
+	export let canvasOffsetY: number = 0;
 	type EventMap = {
-		selectComponent: SurveyComponentType;
+		selectComponent: { event: MouseEvent; component: SurveyComponentType };
 		startDrag: { event: MouseEvent; component: SurveyComponentType };
 		startResize: { event: MouseEvent; component: SurveyComponentType };
 	};
 	const dispatch = createEventDispatcher<EventMap>();
-
-	// --- Functions ---
 	function forwardEvent(event: Event) {
 		dispatch((event as CustomEvent).type as keyof EventMap, (event as CustomEvent).detail);
 	}
 </script>
 
 <div
+	id="canvas-content-capture-area"
 	class="canvas-content-area relative bg-white dark:bg-gray-800"
 	style="width: {canvasWidth}px; height: {canvasHeight}px; overflow: visible;"
 	role="presentation"
 >
-	<!-- Background grid -->
 	{#if enableSnap && gridSize > 0 && canvasScale > 0.1}
 		<div class="grid-lines pointer-events-none absolute inset-0 overflow-hidden">
 			<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-				<defs>
-					<pattern
+				<defs
+					><pattern
 						id="gridPattern"
 						width={gridSize * canvasScale}
 						height={gridSize * canvasScale}
@@ -58,24 +53,21 @@
 							class="dark:stroke-gray-700"
 						/>
 					</pattern>
-				</defs>
-				<rect width="100%" height="100%" fill="url(#gridPattern)" />
+				</defs> <rect width="100%" height="100%" fill="url(#gridPattern)" />
 			</svg>
 		</div>
 	{/if}
-
-	<!-- Selection box -->
 	{#if selectionBox.active}
 		<div
-			class="selection-box bg-opacity-20 dark:bg-opacity-30 pointer-events-none absolute border border-blue-500 bg-blue-100 dark:border-blue-400 dark:bg-blue-900"
+			class="selection-box pointer-events-none absolute border"
 			style:left="{Math.min(selectionBox.startX, selectionBox.endX)}px"
 			style:top="{Math.min(selectionBox.startY, selectionBox.endY)}px"
 			style:width="{Math.abs(selectionBox.endX - selectionBox.startX)}px"
 			style:height="{Math.abs(selectionBox.endY - selectionBox.startY)}px"
+			style:background-color="var(--selection-bg-color)"
+			style:border-color="var(--selection-border-color)"
 		></div>
 	{/if}
-
-	<!-- Survey Components -->
 	{#each $componentsStore as component (component.id)}
 		<SurveyComponent
 			{component}
@@ -95,5 +87,7 @@
 	}
 	.selection-box {
 		z-index: 10;
+		border-width: 1px;
+		border-style: solid;
 	}
 </style>

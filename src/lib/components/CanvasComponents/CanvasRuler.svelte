@@ -1,35 +1,25 @@
 <!-- src/lib/components/CanvasComponents/CanvasRuler.svelte -->
-
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-
+	import { PIXEL_PER_CM, PIXEL_PER_INCH } from '$lib/stores/canvasStore.ts';
 	export let direction: 'horizontal' | 'vertical';
 	export let scale: number = 1;
 	export let offset: number = 0;
 	export let viewLength: number;
 	export let units: 'cm' | 'inches' | 'px';
 	export let mousePos: number = 0;
-
 	const dispatch = createEventDispatcher<{
 		addGuide: { direction: 'horizontal' | 'vertical'; position: number };
 		rulerContextMenu: { direction: 'horizontal' | 'vertical'; position: number; event: MouseEvent };
 	}>();
-
-	const DPI = 96;
-	const CM_PER_INCH = 2.54;
-	const PIXEL_PER_CM = DPI / CM_PER_INCH;
-	const PIXEL_PER_INCH = DPI;
-
 	let majorTickCanvasInterval = 100;
 	let minorTicksCount = 10;
 	let labelMultiplier = 1;
-
 	function findNicePixelInterval(targetScreenSpacing: number, currentScale: number): number {
 		const desiredCanvasSpacing = targetScreenSpacing / currentScale;
 		const intervals = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000, 10000];
 		let bestInterval = intervals[intervals.length - 1];
 		let minDiff = Infinity;
-
 		for (const interval of intervals) {
 			const diff = Math.abs(interval - desiredCanvasSpacing);
 			if (diff < minDiff) {
@@ -42,10 +32,8 @@
 		}
 		return Math.max(1, bestInterval);
 	}
-
 	$: {
 		const MIN_PX_MAJOR_TICK_SCREEN_SPACING = 50;
-
 		if (units === 'px') {
 			majorTickCanvasInterval = findNicePixelInterval(MIN_PX_MAJOR_TICK_SCREEN_SPACING, scale);
 			minorTicksCount =
@@ -68,30 +56,24 @@
 			labelMultiplier = 1;
 		}
 	}
-
 	$: viewStart = -offset / scale;
 	$: viewEnd = (-offset + viewLength) / scale;
 	$: indicatorPosition = mousePos;
-
 	function formatLabel(canvasValue: number): string {
 		const rawDisplayValue = canvasValue === 0 ? 0 : canvasValue * labelMultiplier;
 		const displayValue = Math.round(rawDisplayValue);
 		return `${displayValue}`;
 	}
-
 	function getTicks() {
 		const ticks = [];
 		const minTickThreshold = 4;
 		const majorTickScreenSize = majorTickCanvasInterval * scale;
 		const minorTickScreenSize = minorTicksCount > 0 ? majorTickScreenSize / minorTicksCount : 0;
 		const drawMinorTicks = minorTickScreenSize > minTickThreshold && minorTicksCount > 0;
-
 		const startValue = Math.floor(viewStart / majorTickCanvasInterval) * majorTickCanvasInterval;
 		const endValue = Math.ceil(viewEnd / majorTickCanvasInterval) * majorTickCanvasInterval;
-
 		const maxIterations = 1000;
 		let iterations = 0;
-
 		for (
 			let value = startValue;
 			value <= endValue && iterations < maxIterations;
@@ -99,14 +81,8 @@
 		) {
 			iterations++;
 			const screenPos = value * scale + offset;
-
 			if (screenPos >= -majorTickScreenSize && screenPos <= viewLength + majorTickScreenSize) {
-				ticks.push({
-					type: 'major',
-					pos: screenPos,
-					label: formatLabel(value)
-				});
-
+				ticks.push({ type: 'major', pos: screenPos, label: formatLabel(value) });
 				if (drawMinorTicks && iterations < maxIterations) {
 					const minorCanvasInterval = majorTickCanvasInterval / minorTicksCount;
 					for (let j = 1; j < minorTicksCount; j++) {
@@ -130,7 +106,6 @@
 		}
 		return ticks;
 	}
-
 	function handleDoubleClick(event: MouseEvent) {
 		let clickPos: number;
 		if (direction === 'horizontal') {
@@ -142,7 +117,6 @@
 		dispatch('addGuide', { direction, position: canvasPosition });
 		event.stopPropagation();
 	}
-
 	function handleContextMenu(event: MouseEvent) {
 		event.preventDefault();
 		let clickPos: number;
@@ -168,8 +142,8 @@
 	class:border-r={direction === 'vertical'}
 	class:w-8={direction === 'vertical'}
 	class:h-full={direction === 'vertical'}
-	on:dblclick={handleDoubleClick}
-	on:contextmenu={handleContextMenu}
+	ondblclick={handleDoubleClick}
+	oncontextmenu={handleContextMenu}
 >
 	<svg
 		xmlns="http://www.w3.org/2000/svg"
@@ -197,7 +171,6 @@
 				<line class="minor-tick" x1="24" y1={tick.pos} x2="32" y2={tick.pos} />
 			{/if}
 		{/each}
-
 		{#if indicatorPosition >= 0 && indicatorPosition <= viewLength}
 			{#if direction === 'horizontal'}
 				<line class="indicator" x1={indicatorPosition} y1="0" x2={indicatorPosition} y2="32" />

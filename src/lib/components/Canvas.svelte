@@ -1,6 +1,8 @@
 <!-- src/lib/components/Canvas.svelte -->
 <script lang="ts">
 	import { get } from 'svelte/store';
+	// *** USE dom-to-image-more ***
+	import domtoimage from 'dom-to-image-more';
 	import {
 		selectedComponentIds,
 		primarySelectedComponentId,
@@ -31,6 +33,7 @@
 		SelectionBox,
 		DraggingGuide
 	} from '$lib/types/survey.ts';
+	import { browser } from '$app/environment'; // Import browser check
 
 	import CanvasToolbar from '$lib/components/CanvasComponents/CanvasToolbar.svelte';
 	import ToolbarAlign from '$lib/components/CanvasComponents/ToolbarAlignment.svelte';
@@ -46,7 +49,6 @@
 		position: number;
 	};
 
-	// Use export let as Canvas doesn't use runes for props yet
 	export let selectedComponent: SurveyComponentType | null = null;
 	export let units: 'cm' | 'inches' | 'px' = 'cm';
 
@@ -54,7 +56,6 @@
 	let viewportHeight = 0;
 	let containerRef: HTMLDivElement;
 	let viewportWrapperRef: HTMLDivElement;
-
 	let mouseX_Viewport = 0;
 	let mouseY_Viewport = 0;
 	let mouseX_Canvas = 0;
@@ -69,29 +70,90 @@
 	let startOffsetX_Interaction = 0;
 	let startOffsetY_Interaction = 0;
 	let activeComponentId_Interaction: string | null = null;
-	let lastClickTime = 0;
 	let dragInitialPositions = new Map<string, { x: number; y: number }>();
-
+	let dragThresholdMet = false;
+	const DRAG_THRESHOLD = 5;
 	let selectionBox: SelectionBox = { active: false, startX: 0, startY: 0, endX: 0, endY: 0 };
-
 	let horizontalGuides: number[] = [100, 200];
 	let verticalGuides: number[] = [100, 300];
 	let showGuides = true;
 	let draggingGuide: DraggingGuide = null;
-
 	let enableSnap = true;
 	let gridSize = getGridSize();
-
 	let showContextMenu = false;
 	let contextMenuX = 0;
 	let contextMenuY = 0;
-	let contextMenuTarget: EventTarget | null = null;
 	let contextMenuGuideInfo: GuideInfo | null = null;
 
 	$: selectedComponentId = $primarySelectedComponentId;
+	$: multiSelectedComponentIds = $selectedComponentIds;
 
-	// REMOVED: The reactive block syncing selectedComponent from the store is removed.
-	// We rely on the prop passed from SurveyBuilder, which should itself be synced with the store.
+	function showAlert(message: string, color: string = 'blue', duration: number = 3000): void {
+		console.log(`ALERT (${color}): ${message}`);
+	}
+
+	// --- Export Function using dom-to-image-more ---
+	export async function exportCanvasAsImage(format: 'png' | 'jpeg'): Promise<void> {
+		console.log(`Canvas: exportCanvasAsImage (${format}) using dom-to-image-more`);
+		if (!viewportWrapperRef) {
+			showAlert('Export failed: Viewport not ready.', 'red');
+			return;
+		}
+		const targetElement = viewportWrapperRef.querySelector(
+			'#canvas-content-capture-area'
+		) as HTMLElement;
+		console.log('Canvas: Target Element Found:', targetElement);
+		if (!targetElement) {
+			showAlert('Export failed: Target element not found.', 'red');
+			return;
+		}
+
+		const originalSelection = get(selectedComponentIds);
+		const originalPrimary = get(primarySelectedComponentId);
+		console.log('Canvas: Clearing selection before export.');
+		clearSelectionState();
+		selectionBox = { ...selectionBox, active: false };
+		await tick();
+
+		const options = {
+			quality: format === 'jpeg' ? 0.95 : 1.0,
+			bgcolor: '#ffffff',
+			width: targetElement.offsetWidth,
+			height: targetElement.offsetHeight
+		};
+		console.log('Canvas: dom-to-image options:', options);
+
+		try {
+			let dataUrl: string;
+			console.log(`Canvas: Calling domtoimage.${format === 'jpeg' ? 'toJpeg' : 'toPng'}...`);
+
+			if (format === 'jpeg') {
+				dataUrl = await domtoimage.toJpeg(targetElement, options);
+			} else {
+				dataUrl = await domtoimage.toPng(targetElement, options);
+			}
+			console.log('Canvas: dom-to-image call succeeded.');
+
+			const link = document.createElement('a');
+			link.href = dataUrl;
+			link.download = `survey-canvas-${Date.now()}.${format}`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			console.log('Canvas: Download triggered.');
+			showAlert(`Canvas exported as ${format.toUpperCase()}.`, 'green');
+		} catch (error) {
+			console.error(`Canvas: Error during dom-to-image call (${format}):`, error);
+			showAlert('Export failed. See console for details.', 'red');
+		} finally {
+			console.log('Canvas: Restoring selection state.');
+			selectedComponentIds.set(originalSelection);
+			primarySelectedComponentId.set(originalPrimary);
+			await tick();
+			console.log('Canvas: Selection state restored.');
+		}
+	}
+	// --- End Export Function ---
 
 	function getGridSize(): number {
 		switch (units) {
@@ -105,17 +167,14 @@
 				return PIXEL_PER_CM / 2;
 		}
 	}
-
-	function updatePageFormat(newFormat: string): void {
-		canvasViewStore.setPageFormat(newFormat);
+	function updateCanvasSize(detail: { width: number; height: number }): void {
+		canvasViewStore.setCanvasDimensions(detail.width, detail.height);
 		gridSize = getGridSize();
 	}
-
 	function snapToGrid(value: number): number {
 		if (!enableSnap || gridSize <= 0 || isNaN(value)) return value;
 		return Math.round(value / gridSize) * gridSize;
 	}
-
 	function snapToGuides(value: number, direction: 'horizontal' | 'vertical'): number {
 		if (!enableSnap || !showGuides || isNaN(value)) return value;
 		const guides = direction === 'horizontal' ? verticalGuides : horizontalGuides;
@@ -127,43 +186,49 @@
 		}
 		return value;
 	}
-
 	function calculateViewportMousePos(clientX: number, clientY: number): { x: number; y: number } {
 		if (!viewportWrapperRef) return { x: 0, y: 0 };
 		const viewportRect = viewportWrapperRef.getBoundingClientRect();
 		return { x: clientX - viewportRect.left, y: clientY - viewportRect.top };
 	}
-
 	function calculateCanvasMousePos(clientX: number, clientY: number): { x: number; y: number } {
 		if (!viewportWrapperRef) return { x: 0, y: 0 };
 		const { x: mouseX_VP, y: mouseY_VP } = calculateViewportMousePos(clientX, clientY);
 		const { offsetX, offsetY, scale } = $canvasViewStore;
 		return { x: (mouseX_VP - offsetX) / scale, y: (mouseY_VP - offsetY) / scale };
 	}
-
-	function startPanInteraction(event: MouseEvent) {
+	function startPanInteraction(event: MouseEvent): void {
 		if (isPanning) return;
 		isPanning = true;
 		startX = event.clientX;
 		startY = event.clientY;
 		startOffsetX_Interaction = $canvasViewStore.offsetX;
 		startOffsetY_Interaction = $canvasViewStore.offsetY;
-		document.body.classList.add('panning');
+		document.body.style.cursor = 'grabbing';
 		closeContextMenu();
 	}
-
-	function startSelectionInteraction(event: MouseEvent) {
-		if (isSelecting || spacebarHeld) return;
-		const { x, y } = calculateCanvasMousePos(event.clientX, event.clientY);
+	function startSelectionInteraction(event: MouseEvent): void {
+		if (isSelecting || spacebarHeld || event.button !== 0) return;
+		const { x: canvasStartX, y: canvasStartY } = calculateCanvasMousePos(
+			event.clientX,
+			event.clientY
+		);
 		isSelecting = true;
-		selectionBox = { active: true, startX: x, startY: y, endX: x, endY: y };
-
+		dragThresholdMet = false;
+		startX = event.clientX;
+		startY = event.clientY;
+		selectionBox = {
+			active: true,
+			startX: canvasStartX,
+			startY: canvasStartY,
+			endX: canvasStartX,
+			endY: canvasStartY
+		};
 		if (!event.shiftKey) {
-			clearSelection();
+			clearSelectionState();
 		}
 		closeContextMenu();
 	}
-
 	function handleMouseMove(e: MouseEvent): void {
 		const currentScale = $canvasViewStore.scale;
 		const { x: vpX, y: vpY } = calculateViewportMousePos(e.clientX, e.clientY);
@@ -172,7 +237,13 @@
 		const { x: currentCanvasX, y: currentCanvasY } = calculateCanvasMousePos(e.clientX, e.clientY);
 		mouseX_Canvas = currentCanvasX;
 		mouseY_Canvas = currentCanvasY;
-
+		if (!dragThresholdMet && (isDragging || isResizing || isSelecting || draggingGuide)) {
+			const dx = Math.abs(e.clientX - startX);
+			const dy = Math.abs(e.clientY - startY);
+			if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
+				dragThresholdMet = true;
+			}
+		}
 		if (isPanning) {
 			const dx_viewport = e.clientX - startX;
 			const dy_viewport = e.clientY - startY;
@@ -180,10 +251,11 @@
 				startOffsetX_Interaction + dx_viewport,
 				startOffsetY_Interaction + dy_viewport
 			);
-		} else if (isDragging && activeComponentId_Interaction) {
+		} else if (isDragging && activeComponentId_Interaction && dragThresholdMet) {
 			const dx_canvas = (e.clientX - startX) / currentScale;
 			const dy_canvas = (e.clientY - startY) / currentScale;
-			$selectedComponentIds.forEach((id) => {
+			const currentSelectedIds = get(selectedComponentIds);
+			currentSelectedIds.forEach((id) => {
 				const initialPos = dragInitialPositions.get(id);
 				if (initialPos) {
 					let newX = initialPos.x + dx_canvas;
@@ -195,7 +267,7 @@
 					updateComponent(id, { x: newX, y: newY });
 				}
 			});
-		} else if (isResizing && activeComponentId_Interaction) {
+		} else if (isResizing && activeComponentId_Interaction && dragThresholdMet) {
 			const component = $componentsStore.find((c) => c.id === activeComponentId_Interaction);
 			if (!component || component.startX === undefined || component.startY === undefined) return;
 			const dx_canvas = (e.clientX - startX) / currentScale;
@@ -207,7 +279,7 @@
 			newWidth = snapToGrid(Math.max(minWidth, newWidth));
 			newHeight = snapToGrid(Math.max(minHeight, newHeight));
 			updateComponent(activeComponentId_Interaction, { width: newWidth, height: newHeight });
-		} else if (draggingGuide) {
+		} else if (draggingGuide && dragThresholdMet) {
 			const { scale, offsetX, offsetY } = $canvasViewStore;
 			const guideCanvasPos =
 				draggingGuide.direction === 'horizontal'
@@ -224,34 +296,37 @@
 				);
 				verticalGuides = [...verticalGuides];
 			}
-		} else if (isSelecting && selectionBox.active) {
+		} else if (isSelecting && dragThresholdMet) {
 			selectionBox.endX = currentCanvasX;
 			selectionBox.endY = currentCanvasY;
-			selectionBox = { ...selectionBox };
+			selectionBox = { ...selectionBox, active: true };
 			updateSelectionFromBox();
 		}
 	}
-
 	function handleMouseUp(e: MouseEvent): void {
+		const wasPanning = isPanning;
+		const wasDragging = isDragging && dragThresholdMet;
+		const wasResizing = isResizing && dragThresholdMet;
+		const wasSelecting = isSelecting && dragThresholdMet;
+		const wasDraggingGuide = !!draggingGuide && dragThresholdMet;
+		const wasInteraction =
+			wasPanning || wasDragging || wasResizing || wasSelecting || wasDraggingGuide;
 		if (isPanning) {
 			isPanning = false;
-			document.body.classList.remove('panning');
+			document.body.style.cursor = '';
 		}
 		if (isDragging) isDragging = false;
 		if (isResizing) isResizing = false;
 		if (draggingGuide) draggingGuide = null;
-
-		if (isSelecting && selectionBox.active && e.button === 0) {
+		if (isSelecting) {
 			isSelecting = false;
-			updateSelectionFromBox();
-		} else {
-			isSelecting = false;
+			if (dragThresholdMet) selectionBox = { ...selectionBox, active: false };
 		}
-
 		activeComponentId_Interaction = null;
 		dragInitialPositions.clear();
+		dragThresholdMet = false;
+		// if (wasInteraction) { e.stopPropagation(); } // Allow click to maybe propagate to viewport handler
 	}
-
 	function handleMouseLeave(e: MouseEvent): void {
 		if (
 			e.relatedTarget === null &&
@@ -260,7 +335,6 @@
 			handleMouseUp(e);
 		}
 	}
-
 	function handleWheel(e: WheelEvent): void {
 		if (showContextMenu) return;
 		if (e.ctrlKey || e.metaKey) {
@@ -278,15 +352,28 @@
 			canvasViewStore.setCanvasOffset(offsetX + panX, offsetY + panY);
 		}
 	}
-
 	function handleKeydown(e: KeyboardEvent): void {
 		if (e.key === 'Escape') {
 			closeContextMenu();
-			if (isSelecting) isSelecting = false;
-			if (selectionBox.active) selectionBox = { ...selectionBox, active: false };
-			if (draggingGuide) draggingGuide = null;
+			if (isSelecting) {
+				isSelecting = false;
+				selectionBox = { ...selectionBox, active: false };
+			}
+			if (isDragging || isResizing || isPanning || draggingGuide) {
+				isDragging = false;
+				isResizing = false;
+				isPanning = false;
+				draggingGuide = null;
+				activeComponentId_Interaction = null;
+				dragInitialPositions.clear();
+				dragThresholdMet = false;
+				document.body.style.cursor = '';
+				if (viewportWrapperRef) viewportWrapperRef.style.cursor = '';
+			}
+			clearSelectionState();
+			selectionBox = { active: false, startX: 0, startY: 0, endX: 0, endY: 0 };
+			return;
 		}
-
 		if (e.key === ' ' && !spacebarHeld) {
 			if (
 				!(
@@ -299,10 +386,9 @@
 				e.preventDefault();
 			}
 			spacebarHeld = true;
-			document.body.classList.add('space-panning-possible');
+			if (viewportWrapperRef) viewportWrapperRef.style.cursor = 'grab';
 			return;
 		}
-
 		if (
 			e.target instanceof HTMLInputElement ||
 			e.target instanceof HTMLTextAreaElement ||
@@ -312,12 +398,10 @@
 			return;
 		}
 		if (spacebarHeld) return;
-
 		let dx = 0,
 			dy = 0;
 		const step = e.shiftKey ? 10 : 1;
 		let needsUpdate = false;
-
 		switch (e.key) {
 			case 'ArrowUp':
 				dy = -step;
@@ -388,7 +472,6 @@
 			default:
 				return;
 		}
-
 		if (needsUpdate && $selectedComponentIds.length > 0) {
 			e.preventDefault();
 			$selectedComponentIds.forEach((id) => {
@@ -401,18 +484,16 @@
 			});
 		}
 	}
-
 	function handleKeyUp(e: KeyboardEvent): void {
 		if (e.key === ' ') {
 			spacebarHeld = false;
-			document.body.classList.remove('space-panning-possible');
+			if (viewportWrapperRef) viewportWrapperRef.style.cursor = '';
 			if (isPanning && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
 				isPanning = false;
-				document.body.classList.remove('panning');
+				document.body.style.cursor = '';
 			}
 		}
 	}
-
 	function handleContextMenu(event: MouseEvent): void {
 		const targetElement = event.target as Element;
 		if (
@@ -422,31 +503,33 @@
 			isSelecting ||
 			draggingGuide ||
 			targetElement.closest('.ruler-container') ||
-			targetElement.closest('.canvas-guide')
+			targetElement.closest('.guide')
 		) {
 			return;
 		}
-
 		event.preventDefault();
 		contextMenuGuideInfo = null;
 		showContextMenu = true;
 		contextMenuX = event.clientX;
 		contextMenuY = event.clientY;
-		contextMenuTarget = event.target;
+		const componentElement = targetElement.closest('.component');
+		if (componentElement instanceof HTMLElement) {
+			const componentId = componentElement.dataset.componentId;
+			if (componentId && !$selectedComponentIds.includes(componentId) && !event.shiftKey) {
+				selectedComponentIds.set([componentId]);
+				primarySelectedComponentId.set(componentId);
+			}
+		}
 	}
-
 	function handleRulerContextMenu(
 		e: CustomEvent<{ direction: 'horizontal' | 'vertical'; position: number; event: MouseEvent }>
-	) {
+	): void {
 		const { direction: rulerDirection, position: canvasClickPos, event } = e.detail;
 		event.preventDefault();
-
 		const GUIDE_CLICK_THRESHOLD_PX = 5;
 		const { scale, offsetX, offsetY } = $canvasViewStore;
-
 		let closestGuideInfo: GuideInfo | null = null;
 		let minDistance = GUIDE_CLICK_THRESHOLD_PX;
-
 		if (rulerDirection === 'horizontal') {
 			const screenClickX = event.offsetX;
 			verticalGuides.forEach((guidePos, index) => {
@@ -468,9 +551,7 @@
 				}
 			});
 		}
-
 		contextMenuGuideInfo = closestGuideInfo;
-		contextMenuTarget = event.target as EventTarget;
 		showContextMenu = true;
 		contextMenuX = event.clientX;
 		contextMenuY = event.clientY;
@@ -479,10 +560,8 @@
 			showContextMenu = true;
 			contextMenuX = event.clientX;
 			contextMenuY = event.clientY;
-			contextMenuTarget = event.target as EventTarget;
 		});
 	}
-
 	function handleGuideContextMenu(
 		e: CustomEvent<{
 			direction: 'horizontal' | 'vertical';
@@ -490,12 +569,10 @@
 			position: number;
 			event: MouseEvent;
 		}>
-	) {
+	): void {
 		const { direction, index, position, event } = e.detail;
 		event.preventDefault();
-
 		contextMenuGuideInfo = { direction, index, position };
-		contextMenuTarget = event.target as EventTarget;
 		showContextMenu = true;
 		contextMenuX = event.clientX;
 		contextMenuY = event.clientY;
@@ -504,19 +581,15 @@
 			showContextMenu = true;
 			contextMenuX = event.clientX;
 			contextMenuY = event.clientY;
-			contextMenuTarget = event.target as EventTarget;
 		});
 	}
-
 	function closeContextMenu(): void {
 		if (showContextMenu) {
 			showContextMenu = false;
-			contextMenuTarget = null;
 			contextMenuGuideInfo = null;
 		}
 	}
-
-	function handleDeleteGuide(e: CustomEvent<GuideInfo>) {
+	function handleDeleteGuide(e: CustomEvent<GuideInfo>): void {
 		const { direction, index } = e.detail;
 		handleRemoveGuide({ detail: { direction, index } } as CustomEvent<{
 			direction: 'horizontal' | 'vertical';
@@ -524,22 +597,18 @@
 		}>);
 		closeContextMenu();
 	}
-
-	function handleSetGuidePosition(e: CustomEvent<GuideInfo>) {
+	function handleSetGuidePosition(e: CustomEvent<GuideInfo>): void {
 		const { direction, index, position } = e.detail;
 		const currentPos = position.toFixed(1);
-
 		const newPositionStr = prompt(
 			`Set new position for ${direction} guide (current: ${currentPos}px):`,
 			`${currentPos}`
 		);
 		closeContextMenu();
-
 		if (newPositionStr !== null) {
 			const newPosition = parseFloat(newPositionStr);
 			if (!isNaN(newPosition)) {
 				const snappedNewPosition = snapToGrid(newPosition);
-
 				if (direction === 'horizontal') {
 					if (index >= 0 && index < horizontalGuides.length) {
 						horizontalGuides[index] = snappedNewPosition;
@@ -558,188 +627,152 @@
 			}
 		}
 	}
-
-	function onStartDrag(e: CustomEvent): void {
-		const detail = e.detail as { event: MouseEvent; component: SurveyComponentType };
-		if (spacebarHeld) {
-			startPanInteraction(detail.event);
-			detail.event.stopPropagation();
-			detail.event.preventDefault();
-			return;
-		}
-		if (detail.event.button !== 0) return;
-
-		isDragging = true;
-		activeComponentId_Interaction = detail.component.id;
-		startX = detail.event.clientX;
-		startY = detail.event.clientY;
-
-		let currentSelection = get(selectedComponentIds);
-		let newSelection: string[];
-		let newPrimaryId: string | null;
-		const clickedId = detail.component.id;
-
-		if (detail.event.shiftKey) {
-			if (currentSelection.includes(clickedId)) {
-				newSelection = currentSelection.filter((id) => id !== clickedId);
-			} else {
-				newSelection = [...currentSelection, clickedId];
-			}
-		} else {
-			if (!currentSelection.includes(clickedId)) {
-				newSelection = [clickedId];
-			} else {
-				newSelection = [...currentSelection];
-			}
-		}
-
-		newPrimaryId = clickedId;
-		if (!newSelection.includes(newPrimaryId) && newSelection.length > 0) {
-			newPrimaryId = newSelection[0];
-		} else if (newSelection.length === 0) {
-			newPrimaryId = null;
-		}
-
-		selectedComponentIds.set(newSelection);
-		primarySelectedComponentId.set(newPrimaryId);
-
-		dragInitialPositions.clear();
-		newSelection.forEach((id) => {
-			const comp = $componentsStore.find((c) => c.id === id);
-			if (comp) dragInitialPositions.set(id, { x: comp.x, y: comp.y });
-		});
-
-		detail.event.preventDefault();
-		closeContextMenu();
-	}
-
-	function onStartResize(e: CustomEvent): void {
-		const detail = e.detail as { event: MouseEvent; component: SurveyComponentType };
-		if (spacebarHeld || detail.event.button !== 0) return;
-
-		isResizing = true;
-		activeComponentId_Interaction = detail.component.id;
-		startX = detail.event.clientX;
-		startY = detail.event.clientY;
-
-		updateComponent(detail.component.id, {
-			startX: detail.component.width,
-			startY: detail.component.height
-		});
-
-		selectedComponentIds.set([detail.component.id]);
-		primarySelectedComponentId.set(detail.component.id);
-
-		detail.event.stopPropagation();
-		detail.event.preventDefault();
-		closeContextMenu();
-	}
-
-	function handleCanvasClick(e: CustomEvent): void {
-		const detail = e.detail as { event: MouseEvent };
-		lastClickTime = Date.now();
-
-		if (!isDragging && !isResizing && !isSelecting && !detail.event.shiftKey && !spacebarHeld) {
-			clearSelection();
-			if (selectionBox.active) {
-				selectionBox = { active: false, startX: 0, startY: 0, endX: 0, endY: 0 };
-			}
+	function handleClearSelection(): void {
+		if (
+			!isDragging &&
+			!isResizing &&
+			!isSelecting &&
+			!isPanning &&
+			!spacebarHeld &&
+			!dragThresholdMet
+		) {
+			clearSelectionState();
+			selectionBox = { active: false, startX: 0, startY: 0, endX: 0, endY: 0 };
 		}
 		closeContextMenu();
 	}
-
-	function handleSelectComponent(e: CustomEvent): void {
-		if (spacebarHeld || isDragging || isResizing) return;
-
-		const component = e.detail.component as SurveyComponentType;
-		const event = e.detail.event as MouseEvent;
-
+	function handleSelectComponent(
+		e: CustomEvent<{ event: MouseEvent; component: SurveyComponentType }>
+	): void {
+		const { component, event } = e.detail;
+		if (isDragging || isResizing || isSelecting || spacebarHeld || dragThresholdMet) return;
 		let currentSelection = get(selectedComponentIds);
 		let newSelection: string[];
 		let newPrimaryId: string | null = null;
 		const clickedId = component.id;
-
 		if (event.shiftKey) {
 			if (currentSelection.includes(clickedId)) {
 				newSelection = currentSelection.filter((id) => id !== clickedId);
+				if (get(primarySelectedComponentId) === clickedId) {
+					newPrimaryId = newSelection.length > 0 ? newSelection[0] : null;
+				} else {
+					newPrimaryId = get(primarySelectedComponentId);
+				}
 			} else {
 				newSelection = [...currentSelection, clickedId];
+				newPrimaryId = clickedId;
 			}
 		} else {
 			newSelection = [clickedId];
-		}
-
-		if (newSelection.length === 1) {
-			newPrimaryId = newSelection[0];
-		} else if (newSelection.length > 1) {
 			newPrimaryId = clickedId;
-			if (!newSelection.includes(newPrimaryId)) {
-				newPrimaryId = newSelection.length > 0 ? newSelection[0] : null;
-			}
-		} else {
-			newPrimaryId = null;
 		}
-
 		selectedComponentIds.set(newSelection);
 		primarySelectedComponentId.set(newPrimaryId);
-
 		closeContextMenu();
 	}
-
-	function onStartSelectionBox(e: CustomEvent): void {
-		const detail = e.detail as { event: MouseEvent };
-		startSelectionInteraction(detail.event);
+	function onStartSelectionBox(e: CustomEvent<{ event: MouseEvent }>): void {
+		const { event } = e.detail;
+		startSelectionInteraction(event);
 	}
-
+	function onStartDrag(
+		e: CustomEvent<{ event: MouseEvent; component: SurveyComponentType }>
+	): void {
+		const { event, component } = e.detail;
+		if (spacebarHeld || event.button !== 0) return;
+		let currentSelection = get(selectedComponentIds);
+		const clickedId = component.id;
+		if (!event.shiftKey) {
+			if (!currentSelection.includes(clickedId)) {
+				selectedComponentIds.set([clickedId]);
+				primarySelectedComponentId.set(clickedId);
+			} else {
+				primarySelectedComponentId.set(clickedId);
+			}
+		} else {
+			if (currentSelection.includes(clickedId)) {
+				const newSelection = currentSelection.filter((id) => id !== clickedId);
+				selectedComponentIds.set(newSelection);
+				if (get(primarySelectedComponentId) === clickedId) {
+					primarySelectedComponentId.set(newSelection.length > 0 ? newSelection[0] : null);
+				}
+			} else {
+				const newSelection = [...currentSelection, clickedId];
+				selectedComponentIds.set(newSelection);
+				primarySelectedComponentId.set(clickedId);
+			}
+		}
+		isDragging = true;
+		activeComponentId_Interaction = component.id;
+		startX = event.clientX;
+		startY = event.clientY;
+		dragThresholdMet = false;
+		dragInitialPositions.clear();
+		const finalSelectionForDrag = get(selectedComponentIds);
+		finalSelectionForDrag.forEach((id) => {
+			const comp = $componentsStore.find((c) => c.id === id);
+			if (comp) dragInitialPositions.set(id, { x: comp.x, y: comp.y });
+		});
+		event.preventDefault();
+		event.stopPropagation();
+		closeContextMenu();
+	}
+	function onStartResize(
+		e: CustomEvent<{ event: MouseEvent; component: SurveyComponentType }>
+	): void {
+		const { event, component } = e.detail;
+		if (spacebarHeld || event.button !== 0) return;
+		isResizing = true;
+		activeComponentId_Interaction = component.id;
+		startX = event.clientX;
+		startY = event.clientY;
+		dragThresholdMet = false;
+		updateComponent(component.id, { startX: component.width, startY: component.height });
+		selectedComponentIds.set([component.id]);
+		primarySelectedComponentId.set(component.id);
+		event.stopPropagation();
+		event.preventDefault();
+		closeContextMenu();
+	}
 	function updateSelectionFromBox(): void {
-		if (!selectionBox.active) return;
+		if (!selectionBox.active || !isSelecting) return;
 		const minX = Math.min(selectionBox.startX, selectionBox.endX);
 		const maxX = Math.max(selectionBox.startX, selectionBox.endX);
 		const minY = Math.min(selectionBox.startY, selectionBox.endY);
 		const maxY = Math.max(selectionBox.startY, selectionBox.endY);
-
 		const newlySelectedIds = $componentsStore
-			.filter(
-				(comp) =>
-					comp.x + comp.width / 2 >= minX &&
-					comp.x + comp.width / 2 <= maxX &&
-					comp.y + comp.height / 2 >= minY &&
-					comp.y + comp.height / 2 <= maxY
-			)
+			.filter((comp) => {
+				const centerX = comp.x + comp.width / 2;
+				const centerY = comp.y + comp.height / 2;
+				return centerX >= minX && centerX <= maxX && centerY >= minY && centerY <= maxY;
+			})
 			.map((comp) => comp.id);
-
 		selectedComponentIds.set(newlySelectedIds);
-
-		const newPrimary = newlySelectedIds.length > 0 ? newlySelectedIds[0] : null;
-		primarySelectedComponentId.set(newPrimary);
+		primarySelectedComponentId.set(newlySelectedIds.length > 0 ? newlySelectedIds[0] : null);
 	}
-
-	function onStartPan(e: CustomEvent): void {
-		const event = e.detail as MouseEvent;
+	function onStartPan(e: CustomEvent<MouseEvent>): void {
+		const event = e.detail;
 		startPanInteraction(event);
 		event.preventDefault();
 	}
-
-	function onStartGuideMove(e: CustomEvent): void {
+	function onStartGuideMove(
+		e: CustomEvent<{ direction: 'horizontal' | 'vertical'; index: number; event: MouseEvent }>
+	): void {
+		const { event, direction, index } = e.detail;
 		if (spacebarHeld) {
-			const detail = e.detail as { event: MouseEvent };
-			startPanInteraction(detail.event);
-			detail.event?.stopPropagation();
-			detail.event?.preventDefault();
+			startPanInteraction(event);
+			event?.stopPropagation();
+			event?.preventDefault();
 			return;
 		}
-		const detail = e.detail as {
-			direction: 'horizontal' | 'vertical';
-			index: number;
-			event: MouseEvent;
-		};
-		draggingGuide = { direction: detail.direction, index: detail.index };
+		draggingGuide = { direction, index };
+		dragThresholdMet = false;
+		startX = event.clientX;
+		startY = event.clientY;
 		closeContextMenu();
 	}
-
 	function handleAddGuide(
 		e: CustomEvent<{ direction: 'horizontal' | 'vertical'; position: number }>
-	) {
+	): void {
 		const { direction: rulerDirection, position } = e.detail;
 		const snappedPosition = snapToGrid(position);
 		if (rulerDirection === 'horizontal') {
@@ -752,7 +785,6 @@
 			}
 		}
 	}
-
 	function handleRemoveGuide(
 		e: CustomEvent<{ direction: 'horizontal' | 'vertical'; index: number }>
 	): void {
@@ -770,16 +802,10 @@
 		}
 		closeContextMenu();
 	}
-
-	function clearSelection(): void {
-		clearSelectionState();
-	}
-
 	function selectAllComponents(): void {
 		selectAllComponentsState();
 		closeContextMenu();
 	}
-
 	function resetZoomAndCenter(): void {
 		if (viewportWrapperRef) {
 			viewportWidth = viewportWrapperRef.clientWidth;
@@ -789,14 +815,12 @@
 			canvasViewStore.setCanvasTransform(1, 0, 0);
 		}
 	}
-
 	function handleZoomIn(): void {
 		canvasViewStore.zoomIn();
 	}
 	function handleZoomOut(): void {
 		canvasViewStore.zoomOut();
 	}
-
 	function duplicateSelected(): void {
 		const idsToDup = get(selectedComponentIds);
 		if (idsToDup.length === 0) return;
@@ -807,35 +831,30 @@
 		});
 		tick().then(() => {
 			selectedComponentIds.set(newIds);
-			const newPrimary = newIds.length > 0 ? newIds[0] : null;
-			primarySelectedComponentId.set(newPrimary);
+			primarySelectedComponentId.set(newIds.length > 0 ? newIds[0] : null);
 		});
 		closeContextMenu();
 	}
-
 	function deleteSelected(): void {
 		const idsToDelete = get(selectedComponentIds);
 		if (idsToDelete.length > 0) {
 			idsToDelete.forEach((id) => deleteComponent(id));
-			clearSelection();
+			clearSelectionState();
 		}
 		closeContextMenu();
 	}
-
 	function toggleUnits(): void {
 		const unitOrder: Array<'cm' | 'inches' | 'px'> = ['cm', 'inches', 'px'];
 		const currentIndex = unitOrder.indexOf(units);
 		units = unitOrder[(currentIndex + 1) % unitOrder.length];
 		gridSize = getGridSize();
 	}
-
 	function toggleSnap(): void {
 		enableSnap = !enableSnap;
 	}
 	function toggleGuides(): void {
 		showGuides = !showGuides;
 	}
-
 	function autoPosition(): void {
 		const components = $componentsStore;
 		if (components.length < 1) return;
@@ -856,8 +875,8 @@
 			maxRowHeight = Math.max(maxRowHeight, component.height);
 			currentX += component.width + GAP;
 		});
+		closeContextMenu();
 	}
-
 	onMount(() => {
 		const resizeObserver = new ResizeObserver((entries) => {
 			for (const entry of entries) {
@@ -878,7 +897,7 @@
 		window.addEventListener('mouseleave', handleMouseLeave);
 		window.addEventListener('keydown', handleKeydown);
 		window.addEventListener('keyup', handleKeyUp);
-		window.addEventListener('click', closeContextMenu, { capture: true });
+		window.addEventListener('click', closeContextMenu);
 		loadSurvey();
 		return () => {
 			resizeObserver.disconnect();
@@ -887,11 +906,10 @@
 			window.removeEventListener('mouseleave', handleMouseLeave);
 			window.removeEventListener('keydown', handleKeydown);
 			window.removeEventListener('keyup', handleKeyUp);
-			window.removeEventListener('click', closeContextMenu, { capture: true });
-			document.body.classList.remove('panning', 'space-panning-possible');
+			window.removeEventListener('click', closeContextMenu);
+			document.body.style.cursor = '';
 		};
 	});
-
 	export function setPrimarySelection(compId: string | null): void {
 		if (compId) {
 			selectedComponentIds.set([compId]);
@@ -907,13 +925,11 @@
 		{units}
 		{enableSnap}
 		{showGuides}
-		pageFormat={$canvasViewStore.pageFormat}
 		on:toggleUnits={toggleUnits}
 		on:toggleSnap={toggleSnap}
 		on:toggleGuides={toggleGuides}
-		on:updatePageFormat={(e) => updatePageFormat(e.detail)}
+		on:updateCanvasSize={(e) => updateCanvasSize(e.detail)}
 	/>
-
 	<div
 		class="flex items-center justify-center gap-x-6 border-b border-gray-300 bg-gray-100 p-1 dark:border-gray-700 dark:bg-gray-800"
 	>
@@ -923,13 +939,11 @@
 			on:distribute={(event) => distributeSelectedComponents(event.detail)}
 		/>
 	</div>
-
 	<div
 		role="group"
 		aria-label="Canvas Area"
 		class="relative flex-1 overflow-hidden"
-		on:contextmenu={handleContextMenu}
-		class:space-panning={spacebarHeld}
+		oncontextmenu={handleContextMenu}
 	>
 		<div
 			class="absolute top-0 right-0 z-20"
@@ -968,13 +982,13 @@
 			style="width: {RULER_SIZE}px; height: {RULER_SIZE}px;"
 			aria-hidden="true"
 		></div>
-
 		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 		<div
 			bind:this={viewportWrapperRef}
 			class="canvas-viewport-wrapper absolute overflow-hidden bg-gray-200 focus:outline-none dark:bg-gray-700"
 			style="top: {RULER_SIZE}px; left: {RULER_SIZE}px; bottom: 0; right: 0;"
-			on:wheel={handleWheel}
+			style:cursor={spacebarHeld ? 'grab' : isPanning ? 'grabbing' : 'default'}
+			onwheel={handleWheel}
 			tabindex="0"
 			role="region"
 			aria-label="Canvas Viewport"
@@ -995,7 +1009,7 @@
 				multiSelectedComponentIds={$selectedComponentIds}
 				{spacebarHeld}
 				on:startSelectionBox={onStartSelectionBox}
-				on:canvasClick={handleCanvasClick}
+				on:clearSelection={handleClearSelection}
 				on:startPan={onStartPan}
 				on:startGuideMove={onStartGuideMove}
 				on:removeGuide={handleRemoveGuide}
@@ -1006,7 +1020,6 @@
 			/>
 		</div>
 	</div>
-
 	<StatusBar
 		mouseX={mouseX_Canvas}
 		mouseY={mouseY_Canvas}
@@ -1016,18 +1029,15 @@
 		canvasScale={$canvasViewStore.scale}
 		on:resetZoom={resetZoomAndCenter}
 	/>
-
 	{#if showContextMenu}
 		<ContextMenu
 			x={contextMenuX}
 			y={contextMenuY}
 			{selectedComponent}
-			targetElement={contextMenuTarget}
 			{contextMenuGuideInfo}
 			on:close={closeContextMenu}
 			on:duplicate={duplicateSelected}
 			on:delete={deleteSelected}
-			on:removeGuide={handleRemoveGuide}
 			on:deleteGuide={handleDeleteGuide}
 			on:setPositionGuide={handleSetGuidePosition}
 			on:properties={() => console.log('Properties action triggered')}
@@ -1038,13 +1048,6 @@
 </div>
 
 <style>
-	:global(body.panning),
-	:global(body.panning *) {
-		cursor: grabbing !important;
-	}
-	:global(body.space-panning-possible) .canvas-viewport-wrapper {
-		cursor: grab;
-	}
 	.canvas-viewport-wrapper {
 	}
 </style>

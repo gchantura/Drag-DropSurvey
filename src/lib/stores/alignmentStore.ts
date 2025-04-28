@@ -1,79 +1,12 @@
-// alignmentStore.ts 
-
+// src/lib/stores/alignmentStore.ts
 import { writable, derived, get } from 'svelte/store';
 import { componentsStore, updateComponent } from '$lib/stores/surveyStore.ts';
 import type { SurveyComponent } from '$lib/types/survey.ts';
 
 export type Alignment = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom';
-
-// --- Selection State ---
-export const selectedComponentIds = writable<string[]>([]);
-export const primarySelectedComponentId = writable<string | null>(null);
-
-// --- Derived State for Button Enablement ---
-export const canAlign = derived(
-    selectedComponentIds,
-    ($ids) => $ids.length > 1 // Alignment possible with 2 or more
-);
-
-// --- Actions ---
-export function alignSelectedComponents(alignment: Alignment): void {
-    const currentSelectedIds = get(selectedComponentIds);
-    if (!get(canAlign)) return; // Prevent action if not possible
-
-    const primaryId = get(primarySelectedComponentId);
-    const allComponents = get(componentsStore);
-
-    const selectedComps = allComponents.filter(c => currentSelectedIds.includes(c.id));
-    if (selectedComps.length <= 1) return; // Should be caught by canAlign, but safety check
-
-    let primary = selectedComps.find(c => c.id === primaryId);
-    if (!primary) {
-        primary = selectedComps[0];
-    }
-
-    let targetX: number | undefined, targetY: number | undefined;
-    switch (alignment) {
-        case 'left': targetX = primary.x; break;
-        case 'center': targetX = primary.x + primary.width / 2; break;
-        case 'right': targetX = primary.x + primary.width; break;
-        case 'top': targetY = primary.y; break;
-        case 'middle': targetY = primary.y + primary.height / 2; break;
-        case 'bottom': targetY = primary.y + primary.height; break;
-    }
-
-    selectedComps.forEach((comp) => {
-        if (comp.id === primary?.id) return;
-        let newX = comp.x, newY = comp.y;
-        if (targetX !== undefined) {
-            if (alignment === 'left') newX = targetX;
-            else if (alignment === 'center') newX = targetX - comp.width / 2;
-            else if (alignment === 'right') newX = targetX - comp.width;
-        }
-        if (targetY !== undefined) {
-            if (alignment === 'top') newY = targetY;
-            else if (alignment === 'middle') newY = targetY - comp.height / 2;
-            else if (alignment === 'bottom') newY = targetY - comp.height;
-        }
-        updateComponent(comp.id, { x: Math.round(newX), y: Math.round(newY) });
-    });
-}
-
-
-export function clearSelectionState() {
-    selectedComponentIds.set([]);
-    primarySelectedComponentId.set(null);
-}
-
-export function selectAllComponentsState() {
-    const allIds = get(componentsStore).map(c => c.id);
-    selectedComponentIds.set(allIds);
-    primarySelectedComponentId.set(allIds.length > 0 ? allIds[0] : null);
-}
-
-// Removed combined export that included distribution
-export const alignmentActions = {
-    alignSelectedComponents,
-    clearSelectionState,
-    selectAllComponentsState
-};
+export const selectedComponentIds = writable<string[]>([]); export const primarySelectedComponentId = writable<string | null>(null);
+export const canAlign = derived(selectedComponentIds, ($ids) => $ids.length > 1);
+export function alignSelectedComponents(alignment: Alignment): void { const currentSelectedIds = get(selectedComponentIds); if (!get(canAlign)) return; const primaryId = get(primarySelectedComponentId); const allComponents = get(componentsStore); const selectedComps = allComponents.filter((c) => currentSelectedIds.includes(c.id)); if (selectedComps.length <= 1) return; let primary = selectedComps.find((c) => c.id === primaryId); if (!primary) { primary = selectedComps[0]; } let targetX: number | undefined, targetY: number | undefined; switch (alignment) { case 'left': targetX = primary.x; break; case 'center': targetX = primary.x + primary.width / 2; break; case 'right': targetX = primary.x + primary.width; break; case 'top': targetY = primary.y; break; case 'middle': targetY = primary.y + primary.height / 2; break; case 'bottom': targetY = primary.y + primary.height; break; } selectedComps.forEach((comp) => { if (comp.id === primary?.id) return; let newX = comp.x, newY = comp.y; if (targetX !== undefined) { if (alignment === 'left') newX = targetX; else if (alignment === 'center') newX = targetX - comp.width / 2; else if (alignment === 'right') newX = targetX - comp.width; } if (targetY !== undefined) { if (alignment === 'top') newY = targetY; else if (alignment === 'middle') newY = targetY - comp.height / 2; else if (alignment === 'bottom') newY = targetY - comp.height; } updateComponent(comp.id, { x: Math.round(newX), y: Math.round(newY) }); }); }
+export function clearSelectionState() { selectedComponentIds.set([]); primarySelectedComponentId.set(null); }
+export function selectAllComponentsState() { const allIds = get(componentsStore).map((c) => c.id); selectedComponentIds.set(allIds); primarySelectedComponentId.set(allIds.length > 0 ? allIds[0] : null); }
+export const alignmentActions = { alignSelectedComponents, clearSelectionState, selectAllComponentsState };

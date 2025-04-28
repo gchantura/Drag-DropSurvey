@@ -2,32 +2,20 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import type { SurveyComponent } from '$lib/types/survey.ts';
-	import { canvasViewStore } from '$lib/stores/canvasStore.ts';
+	import { canvasViewStore, PIXEL_PER_CM, PIXEL_PER_INCH } from '$lib/stores/canvasStore.ts';
 	import { Button, Dropdown, DropdownItem } from 'flowbite-svelte';
-	import { ExpandOutline, ZoomInOutline, ZoomOutOutline } from 'flowbite-svelte-icons';
-
+	import { ExpandOutline } from 'flowbite-svelte-icons';
 	export let mouseX: number = 0;
 	export let mouseY: number = 0;
 	export let units: 'cm' | 'inches' | 'px' = 'cm';
 	export let selectedComponent: SurveyComponent | null = null;
 	export let multiSelectedComponentIds: string[] = [];
 	export let canvasScale: number = 1;
-
-	const dispatch = createEventDispatcher<{
-		resetZoom: void;
-	}>();
-
-	const DPI = 96;
-	const CM_PER_INCH = 2.54;
-	const PIXEL_PER_CM = DPI / CM_PER_INCH;
-	const PIXEL_PER_INCH = DPI;
-
+	const dispatch = createEventDispatcher<{ resetZoom: void }>();
 	const zoomPresets = [25, 50, 75, 100, 150, 200, 300, 400];
-
 	$: unitMultiplier = units === 'cm' ? PIXEL_PER_CM : units === 'inches' ? PIXEL_PER_INCH : 1;
 	$: displayUnits = units === 'px' ? 'px' : units;
 	$: displayZoomPercent = Math.round(canvasScale * 100);
-
 	$: statusText = (() => {
 		if (selectedComponent && multiSelectedComponentIds.length <= 1) {
 			const widthPx = selectedComponent.width ?? 0;
@@ -41,20 +29,11 @@
 			return 'No selection';
 		}
 	})();
-
 	function handleZoomPreset(presetPercent: number) {
 		canvasViewStore.setCanvasScale(presetPercent / 100);
 	}
-
 	function handleResetZoom() {
 		dispatch('resetZoom');
-	}
-
-	function handleZoomIn() {
-		canvasViewStore.zoomIn();
-	}
-	function handleZoomOut() {
-		canvasViewStore.zoomOut();
 	}
 </script>
 
@@ -67,21 +46,14 @@
 		).toFixed(1)}
 		{displayUnits}
 	</div>
-
 	<div class="flex-1 text-center">{statusText}</div>
-
-	<!-- Make this container relative to properly position the absolute dropdown -->
 	<div class="relative flex items-center gap-1 whitespace-nowrap">
-		<!-- Zoom Dropdown Trigger -->
 		<Button size="xs" class="min-w-[50px] !p-1.5 !px-2 text-center">{displayZoomPercent}%</Button>
-		<!-- Dropdown Panel: absolute positioning should work relative to the container above -->
 		<Dropdown class="z-50 text-sm whitespace-nowrap" placement="top-start">
 			{#each zoomPresets as preset}
 				<DropdownItem on:click={() => handleZoomPreset(preset)}>{preset}%</DropdownItem>
 			{/each}
 		</Dropdown>
-
-		<!-- Reset Button -->
 		<Button
 			size="xs"
 			class="!p-1"
