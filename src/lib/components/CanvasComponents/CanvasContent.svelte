@@ -1,10 +1,11 @@
 <!-- src/lib/components/CanvasComponents/CanvasContent.svelte -->
 <script lang="ts">
+	// ... (script remains the same)
 	import { createEventDispatcher } from 'svelte';
 	import { componentsStore } from '$lib/stores/surveyStore.ts';
 	import type { SurveyComponent as SurveyComponentType, SelectionBox } from '$lib/types/survey.ts';
 	import SurveyComponent from '$lib/components/SurveyComponent.svelte';
-	// Removed theme store import
+	import { theme } from '$lib/stores/themeStore.ts';
 
 	export let canvasWidth: number;
 	export let canvasHeight: number;
@@ -34,7 +35,10 @@
 	role="presentation"
 >
 	{#if enableSnap && gridSize > 0 && canvasScale > 0.1}
-		<div class="grid-lines pointer-events-none absolute inset-0 overflow-hidden">
+		<!-- Add class="canvas-grid-container" -->
+		<div
+			class="canvas-grid-container grid-lines pointer-events-none absolute inset-0 overflow-hidden"
+		>
 			<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
 				<defs
 					><pattern
@@ -53,7 +57,8 @@
 							class="dark:stroke-gray-700"
 						/>
 					</pattern>
-				</defs> <rect width="100%" height="100%" fill="url(#gridPattern)" />
+				</defs>
+				<rect width="100%" height="100%" fill="url(#gridPattern)" />
 			</svg>
 		</div>
 	{/if}

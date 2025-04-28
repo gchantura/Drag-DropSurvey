@@ -1,7 +1,6 @@
 <!-- src/lib/components/Canvas.svelte -->
 <script lang="ts">
 	import { get } from 'svelte/store';
-	// *** USE dom-to-image-more ***
 	import domtoimage from 'dom-to-image-more';
 	import {
 		selectedComponentIds,
@@ -33,8 +32,7 @@
 		SelectionBox,
 		DraggingGuide
 	} from '$lib/types/survey.ts';
-	import { browser } from '$app/environment'; // Import browser check
-
+	import { browser } from '$app/environment';
 	import CanvasToolbar from '$lib/components/CanvasComponents/CanvasToolbar.svelte';
 	import ToolbarAlign from '$lib/components/CanvasComponents/ToolbarAlignment.svelte';
 	import ToolbarDistribute from '$lib/components/CanvasComponents/ToolbarDistribute.svelte';
@@ -43,11 +41,7 @@
 	import ContextMenu from '$lib/components/CanvasComponents/ContextMenu.svelte';
 	import StatusBar from '$lib/components/CanvasComponents/StatusBar.svelte';
 
-	type GuideInfo = {
-		direction: 'horizontal' | 'vertical';
-		index: number;
-		position: number;
-	};
+	type GuideInfo = { direction: 'horizontal' | 'vertical'; index: number; position: number };
 
 	export let selectedComponent: SurveyComponentType | null = null;
 	export let units: 'cm' | 'inches' | 'px' = 'cm';
@@ -92,9 +86,8 @@
 		console.log(`ALERT (${color}): ${message}`);
 	}
 
-	// --- Export Function using dom-to-image-more ---
 	export async function exportCanvasAsImage(format: 'png' | 'jpeg'): Promise<void> {
-		console.log(`Canvas: exportCanvasAsImage (${format}) using dom-to-image-more`);
+		// console.log(`Canvas: exportCanvasAsImage (${format}) using dom-to-image-more`);
 		if (!viewportWrapperRef) {
 			showAlert('Export failed: Viewport not ready.', 'red');
 			return;
@@ -102,17 +95,22 @@
 		const targetElement = viewportWrapperRef.querySelector(
 			'#canvas-content-capture-area'
 		) as HTMLElement;
-		console.log('Canvas: Target Element Found:', targetElement);
+		// console.log('Canvas: Target Element Found:', targetElement);
 		if (!targetElement) {
 			showAlert('Export failed: Target element not found.', 'red');
 			return;
 		}
 
+		// Find grid element
+		const gridElement = targetElement.querySelector('.canvas-grid-container') as HTMLElement | null;
+		const originalGridDisplay = gridElement ? gridElement.style.display : '';
+
 		const originalSelection = get(selectedComponentIds);
 		const originalPrimary = get(primarySelectedComponentId);
-		console.log('Canvas: Clearing selection before export.');
+		// console.log('Canvas: Clearing selection and hiding grid before export.');
 		clearSelectionState();
 		selectionBox = { ...selectionBox, active: false };
+		if (gridElement) gridElement.style.display = 'none'; // Hide grid
 		await tick();
 
 		const options = {
@@ -121,39 +119,37 @@
 			width: targetElement.offsetWidth,
 			height: targetElement.offsetHeight
 		};
-		console.log('Canvas: dom-to-image options:', options);
+		// console.log('Canvas: dom-to-image options:', options);
 
 		try {
 			let dataUrl: string;
-			console.log(`Canvas: Calling domtoimage.${format === 'jpeg' ? 'toJpeg' : 'toPng'}...`);
-
+			// console.log(`Canvas: Calling domtoimage.${format === 'jpeg' ? 'toJpeg' : 'toPng'}...`);
 			if (format === 'jpeg') {
 				dataUrl = await domtoimage.toJpeg(targetElement, options);
 			} else {
 				dataUrl = await domtoimage.toPng(targetElement, options);
 			}
-			console.log('Canvas: dom-to-image call succeeded.');
-
+			// console.log('Canvas: dom-to-image call succeeded.');
 			const link = document.createElement('a');
 			link.href = dataUrl;
 			link.download = `survey-canvas-${Date.now()}.${format}`;
 			document.body.appendChild(link);
 			link.click();
 			document.body.removeChild(link);
-			console.log('Canvas: Download triggered.');
+			// console.log('Canvas: Download triggered.');
 			showAlert(`Canvas exported as ${format.toUpperCase()}.`, 'green');
 		} catch (error) {
 			console.error(`Canvas: Error during dom-to-image call (${format}):`, error);
 			showAlert('Export failed. See console for details.', 'red');
 		} finally {
-			console.log('Canvas: Restoring selection state.');
+			// console.log('Canvas: Restoring selection state and grid.');
+			if (gridElement) gridElement.style.display = originalGridDisplay; // Restore grid display
 			selectedComponentIds.set(originalSelection);
 			primarySelectedComponentId.set(originalPrimary);
 			await tick();
-			console.log('Canvas: Selection state restored.');
+			// console.log('Canvas: Selection state and grid restored.');
 		}
 	}
-	// --- End Export Function ---
 
 	function getGridSize(): number {
 		switch (units) {
@@ -303,6 +299,8 @@
 			updateSelectionFromBox();
 		}
 	}
+
+	// *** UPDATED handleMouseUp ***
 	function handleMouseUp(e: MouseEvent): void {
 		const wasPanning = isPanning;
 		const wasDragging = isDragging && dragThresholdMet;
@@ -311,6 +309,46 @@
 		const wasDraggingGuide = !!draggingGuide && dragThresholdMet;
 		const wasInteraction =
 			wasPanning || wasDragging || wasResizing || wasSelecting || wasDraggingGuide;
+
+		// Apply final snap for drag/resize if interaction occurred
+		if (wasDragging && activeComponentId_Interaction) {
+			const currentSelectedIds = get(selectedComponentIds);
+			currentSelectedIds.forEach((id) => {
+				const comp = $componentsStore.find((c) => c.id === id);
+				if (comp) {
+					// Calculate final position based on last mouse move (already snapped in handleMouseMove)
+					// Or recalculate based on final mouse position and snap again
+					const finalCanvasPos = calculateCanvasMousePos(e.clientX, e.clientY);
+					const dx_canvas = (e.clientX - startX) / $canvasViewStore.scale;
+					const dy_canvas = (e.clientY - startY) / $canvasViewStore.scale;
+					const initialPos = dragInitialPositions.get(id);
+					if (initialPos) {
+						let finalX = initialPos.x + dx_canvas;
+						let finalY = initialPos.y + dy_canvas;
+						finalX = snapToGuides(finalX, 'horizontal');
+						finalY = snapToGuides(finalY, 'vertical');
+						finalX = snapToGrid(finalX);
+						finalY = snapToGrid(finalY);
+						updateComponent(id, { x: finalX, y: finalY });
+					}
+				}
+			});
+		} else if (wasResizing && activeComponentId_Interaction) {
+			const component = $componentsStore.find((c) => c.id === activeComponentId_Interaction);
+			if (component && component.startX !== undefined && component.startY !== undefined) {
+				const dx_canvas = (e.clientX - startX) / $canvasViewStore.scale;
+				const dy_canvas = (e.clientY - startY) / $canvasViewStore.scale;
+				const minWidth = 20;
+				const minHeight = 20;
+				let finalWidth = component.startX + dx_canvas;
+				let finalHeight = component.startY + dy_canvas;
+				finalWidth = snapToGrid(Math.max(minWidth, finalWidth));
+				finalHeight = snapToGrid(Math.max(minHeight, finalHeight));
+				updateComponent(activeComponentId_Interaction, { width: finalWidth, height: finalHeight });
+			}
+		}
+
+		// Reset states AFTER applying final snap
 		if (isPanning) {
 			isPanning = false;
 			document.body.style.cursor = '';
@@ -325,8 +363,9 @@
 		activeComponentId_Interaction = null;
 		dragInitialPositions.clear();
 		dragThresholdMet = false;
-		// if (wasInteraction) { e.stopPropagation(); } // Allow click to maybe propagate to viewport handler
 	}
+	// *** End UPDATED handleMouseUp ***
+
 	function handleMouseLeave(e: MouseEvent): void {
 		if (
 			e.relatedTarget === null &&
