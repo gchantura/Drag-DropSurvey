@@ -1,4 +1,3 @@
-// src/lib/types/survey.ts
 export type ComponentType =
     | 'text'
     | 'input'

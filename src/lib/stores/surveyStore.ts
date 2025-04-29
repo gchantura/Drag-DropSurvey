@@ -1,7 +1,6 @@
-// src/lib/stores/surveyStore.ts
 import { v4 as uuid } from 'uuid';
 import { writable, get } from 'svelte/store';
-import type { ComponentType, SurveyComponent } from '$lib/types/survey.ts';
+import type { ComponentType, SurveyComponent } from '$lib/types/survey.ts'; // Use standard path without .ts
 
 export const componentsStore = writable<SurveyComponent[]>([]);
 
