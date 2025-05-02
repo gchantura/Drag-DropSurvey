@@ -40,6 +40,7 @@
 	import CanvasViewport from '$lib/components/CanvasComponents/CanvasViewport.svelte';
 	import ContextMenu from '$lib/components/CanvasComponents/ContextMenu.svelte';
 	import StatusBar from '$lib/components/CanvasComponents/StatusBar.svelte';
+	import ToolBarMiddle from '$lib/components/CanvasComponents/ToolBarMiddle/ToolBarMiddle.svelte';
 
 	type GuideInfo = { direction: 'horizontal' | 'vertical'; index: number; position: number };
 
@@ -960,6 +961,7 @@
 </script>
 
 <div class="flex h-full w-full flex-col bg-gray-50 dark:bg-gray-900" bind:this={containerRef}>
+
 	<CanvasToolbar
 		{units}
 		{enableSnap}
@@ -978,6 +980,7 @@
 			on:distribute={(event) => distributeSelectedComponents(event.detail)}
 		/>
 	</div>
+	
 	<div
 		role="group"
 		aria-label="Canvas Area"
@@ -1000,6 +1003,7 @@
 				on:rulerContextMenu={handleRulerContextMenu}
 			/>
 		</div>
+		<ToolBarMiddle />
 		<div
 			class="absolute bottom-0 left-0 z-20"
 			style="top: {RULER_SIZE}px; width: {RULER_SIZE}px;"
