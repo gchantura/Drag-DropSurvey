@@ -1,7 +1,12 @@
 <script lang="ts">
 	import ToolbarAlign from '$lib/components/CanvasComponents/ToolbarAlignment.svelte';
 	import ToolbarDistribute from '$lib/components/CanvasComponents/ToolbarDistribute.svelte';
+	import TextOptions from '$lib/components/SideBarRightComponents/TextOptions/TypographyOptions.svelte';
+	import PropertiesEditor from '$lib/components/SideBarComponents/PropertiesEditor.svelte';
 
+	import type { SurveyComponent } from '$lib/types/survey.ts';
+	const { selectedComponent } = $props<{ selectedComponent: SurveyComponent | null }>();
+	
 	import {
 		canDistribute, // Use specific derived store
 		distributeSelectedComponents
@@ -30,6 +35,7 @@
 			/>
 		</div>
 	</div>
+	<div class="flex flex-col gap-2 sm:grid-cols-2"><PropertiesEditor component={selectedComponent}  /></div>
 </div>
 
 <style>

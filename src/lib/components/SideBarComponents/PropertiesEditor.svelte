@@ -37,7 +37,7 @@
 
 {#if component}
 	<div class="rounded border border-gray-300 bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-800">
-		<h3 class="mb-2 text-lg font-semibold">Properties</h3>
+		<h3 class="mb-2 text-lg font-semibold">Typography</h3>
 
 		<!-- Text/Label editor -->
 		<div class="mb-3">
