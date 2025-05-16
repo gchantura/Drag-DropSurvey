@@ -80,8 +80,8 @@
 	let contextMenuY = 0;
 	let contextMenuGuideInfo: GuideInfo | null = null;
 
-	$: selectedComponentId = $primarySelectedComponentId;
-	$: multiSelectedComponentIds = $selectedComponentIds;
+	let selectedComponentId: string | null = null;
+	let multiSelectedComponentIds: string[] = [];
 
 	function showAlert(message: string, color: string = 'blue', duration: number = 3000): void {
 		console.log(`ALERT (${color}): ${message}`);
@@ -175,7 +175,7 @@
 	function snapToGuides(value: number, direction: 'horizontal' | 'vertical'): number {
 		if (!enableSnap || !showGuides || isNaN(value)) return value;
 		const guides = direction === 'horizontal' ? verticalGuides : horizontalGuides;
-		const currentScale = $canvasViewStore.scale;
+		const currentScale = get(canvasViewStore).scale;
 		for (const guide of guides) {
 			if (Math.abs(value - guide) * currentScale < SNAP_THRESHOLD) {
 				return guide;
@@ -191,7 +191,7 @@
 	function calculateCanvasMousePos(clientX: number, clientY: number): { x: number; y: number } {
 		if (!viewportWrapperRef) return { x: 0, y: 0 };
 		const { x: mouseX_VP, y: mouseY_VP } = calculateViewportMousePos(clientX, clientY);
-		const { offsetX, offsetY, scale } = $canvasViewStore;
+		const { offsetX, offsetY, scale } = get(canvasViewStore);
 		return { x: (mouseX_VP - offsetX) / scale, y: (mouseY_VP - offsetY) / scale };
 	}
 	function startPanInteraction(event: MouseEvent): void {
@@ -199,8 +199,8 @@
 		isPanning = true;
 		startX = event.clientX;
 		startY = event.clientY;
-		startOffsetX_Interaction = $canvasViewStore.offsetX;
-		startOffsetY_Interaction = $canvasViewStore.offsetY;
+		startOffsetX_Interaction = get(canvasViewStore).offsetX;
+		startOffsetY_Interaction = get(canvasViewStore).offsetY;
 		document.body.style.cursor = 'grabbing';
 		closeContextMenu();
 	}
@@ -227,7 +227,7 @@
 		closeContextMenu();
 	}
 	function handleMouseMove(e: MouseEvent): void {
-		const currentScale = $canvasViewStore.scale;
+		const currentScale = get(canvasViewStore).scale;
 		const { x: vpX, y: vpY } = calculateViewportMousePos(e.clientX, e.clientY);
 		mouseX_Viewport = vpX;
 		mouseY_Viewport = vpY;
@@ -265,7 +265,7 @@
 				}
 			});
 		} else if (isResizing && activeComponentId_Interaction && dragThresholdMet) {
-			const component = $componentsStore.find((c) => c.id === activeComponentId_Interaction);
+			const component = get(componentsStore).find((c) => c.id === activeComponentId_Interaction);
 			if (!component || component.startX === undefined || component.startY === undefined) return;
 			const dx_canvas = (e.clientX - startX) / currentScale;
 			const dy_canvas = (e.clientY - startY) / currentScale;
@@ -277,7 +277,7 @@
 			newHeight = snapToGrid(Math.max(minHeight, newHeight));
 			updateComponent(activeComponentId_Interaction, { width: newWidth, height: newHeight });
 		} else if (draggingGuide && dragThresholdMet) {
-			const { scale, offsetX, offsetY } = $canvasViewStore;
+			const { scale, offsetX, offsetY } = get(canvasViewStore);
 			const guideCanvasPos =
 				draggingGuide.direction === 'horizontal'
 					? (mouseY_Viewport - offsetY) / scale
@@ -315,13 +315,13 @@
 		if (wasDragging && activeComponentId_Interaction) {
 			const currentSelectedIds = get(selectedComponentIds);
 			currentSelectedIds.forEach((id) => {
-				const comp = $componentsStore.find((c) => c.id === id);
+				const comp = get(componentsStore).find((c) => c.id === id);
 				if (comp) {
 					// Calculate final position based on last mouse move (already snapped in handleMouseMove)
 					// Or recalculate based on final mouse position and snap again
 					const finalCanvasPos = calculateCanvasMousePos(e.clientX, e.clientY);
-					const dx_canvas = (e.clientX - startX) / $canvasViewStore.scale;
-					const dy_canvas = (e.clientY - startY) / $canvasViewStore.scale;
+					const dx_canvas = (e.clientX - startX) / get(canvasViewStore).scale;
+					const dy_canvas = (e.clientY - startY) / get(canvasViewStore).scale;
 					const initialPos = dragInitialPositions.get(id);
 					if (initialPos) {
 						let finalX = initialPos.x + dx_canvas;
@@ -335,10 +335,10 @@
 				}
 			});
 		} else if (wasResizing && activeComponentId_Interaction) {
-			const component = $componentsStore.find((c) => c.id === activeComponentId_Interaction);
+			const component = get(componentsStore).find((c) => c.id === activeComponentId_Interaction);
 			if (component && component.startX !== undefined && component.startY !== undefined) {
-				const dx_canvas = (e.clientX - startX) / $canvasViewStore.scale;
-				const dy_canvas = (e.clientY - startY) / $canvasViewStore.scale;
+				const dx_canvas = (e.clientX - startX) / get(canvasViewStore).scale;
+				const dy_canvas = (e.clientY - startY) / get(canvasViewStore).scale;
 				const minWidth = 20;
 				const minHeight = 20;
 				let finalWidth = component.startX + dx_canvas;
@@ -386,7 +386,7 @@
 			}
 		} else if (viewportWrapperRef) {
 			e.preventDefault();
-			const { offsetX, offsetY } = $canvasViewStore;
+			const { offsetX, offsetY } = get(canvasViewStore);
 			const panX = e.shiftKey ? -e.deltaY : -e.deltaX;
 			const panY = e.shiftKey ? -e.deltaX : -e.deltaY;
 			canvasViewStore.setCanvasOffset(offsetX + panX, offsetY + panY);
@@ -461,7 +461,7 @@
 				break;
 			case 'Delete':
 			case 'Backspace':
-				if ($selectedComponentIds.length > 0) {
+				if (get(selectedComponentIds).length > 0) {
 					e.preventDefault();
 					deleteSelected();
 				}
@@ -512,10 +512,10 @@
 			default:
 				return;
 		}
-		if (needsUpdate && $selectedComponentIds.length > 0) {
+		if (needsUpdate && get(selectedComponentIds).length > 0) {
 			e.preventDefault();
-			$selectedComponentIds.forEach((id) => {
-				const comp = $componentsStore.find((c) => c.id === id);
+			get(selectedComponentIds).forEach((id) => {
+				const comp = get(componentsStore).find((c) => c.id === id);
 				if (comp) {
 					let newX = comp.x + dx;
 					let newY = comp.y + dy;
@@ -555,7 +555,7 @@
 		const componentElement = targetElement.closest('.component');
 		if (componentElement instanceof HTMLElement) {
 			const componentId = componentElement.dataset.componentId;
-			if (componentId && !$selectedComponentIds.includes(componentId) && !event.shiftKey) {
+			if (componentId && !get(selectedComponentIds).includes(componentId) && !event.shiftKey) {
 				selectedComponentIds.set([componentId]);
 				primarySelectedComponentId.set(componentId);
 			}
@@ -567,7 +567,7 @@
 		const { direction: rulerDirection, position: canvasClickPos, event } = e.detail;
 		event.preventDefault();
 		const GUIDE_CLICK_THRESHOLD_PX = 5;
-		const { scale, offsetX, offsetY } = $canvasViewStore;
+		const { scale, offsetX, offsetY } = get(canvasViewStore);
 		let closestGuideInfo: GuideInfo | null = null;
 		let minDistance = GUIDE_CLICK_THRESHOLD_PX;
 		if (rulerDirection === 'horizontal') {
@@ -749,7 +749,7 @@
 		dragInitialPositions.clear();
 		const finalSelectionForDrag = get(selectedComponentIds);
 		finalSelectionForDrag.forEach((id) => {
-			const comp = $componentsStore.find((c) => c.id === id);
+			const comp = get(componentsStore).find((c) => c.id === id);
 			if (comp) dragInitialPositions.set(id, { x: comp.x, y: comp.y });
 		});
 		event.preventDefault();
@@ -779,7 +779,7 @@
 		const maxX = Math.max(selectionBox.startX, selectionBox.endX);
 		const minY = Math.min(selectionBox.startY, selectionBox.endY);
 		const maxY = Math.max(selectionBox.startY, selectionBox.endY);
-		const newlySelectedIds = $componentsStore
+		const newlySelectedIds = get(componentsStore)
 			.filter((comp) => {
 				const centerX = comp.x + comp.width / 2;
 				const centerY = comp.y + comp.height / 2;
@@ -896,14 +896,14 @@
 		showGuides = !showGuides;
 	}
 	function autoPosition(): void {
-		const components = $componentsStore;
+		const components = get(componentsStore);
 		if (components.length < 1) return;
 		const PADDING = 20;
 		const GAP = 15;
 		let currentX = PADDING;
 		let currentY = PADDING;
 		let maxRowHeight = 0;
-		const currentCanvasWidth = $canvasViewStore.width;
+		const currentCanvasWidth = get(canvasViewStore).width;
 		const sortedComponents = [...components].sort((a, b) => a.y - b.y || a.x - b.x);
 		sortedComponents.forEach((component) => {
 			if (currentX + component.width + PADDING > currentCanvasWidth && currentX > PADDING) {
@@ -961,7 +961,6 @@
 </script>
 
 <div class="flex h-full w-full flex-col bg-gray-50 dark:bg-gray-900" bind:this={containerRef}>
-
 	<CanvasToolbar
 		{units}
 		{enableSnap}
@@ -980,7 +979,7 @@
 			on:distribute={(event) => distributeSelectedComponents(event.detail)}
 		/>
 	</div>
-	
+
 	<div
 		role="group"
 		aria-label="Canvas Area"
@@ -1003,7 +1002,7 @@
 				on:rulerContextMenu={handleRulerContextMenu}
 			/>
 		</div>
-		<ToolBarMiddle />
+		<ToolBarMiddle on:resetZoom={resetZoomAndCenter} on:autoPosition={autoPosition} />
 		<div
 			class="absolute bottom-0 left-0 z-20"
 			style="top: {RULER_SIZE}px; width: {RULER_SIZE}px;"
