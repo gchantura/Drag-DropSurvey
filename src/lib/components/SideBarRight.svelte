@@ -3,6 +3,7 @@
 	import ComponentToolbarRight from '$lib/components/SideBarRightComponents/ComponentToolbarRight.svelte';
 	import { createEventDispatcher } from 'svelte';
 	import type { SurveyComponent } from '$lib/types/survey.ts';
+
 	const dispatch = createEventDispatcher();
 	const { selectedComponent } = $props<{ selectedComponent: SurveyComponent | null }>();
 	let sidebarWidth = $state(300);
@@ -40,7 +41,7 @@
 
 <div
 	bind:this={sidebarEl}
-	class="sidebar-right-container allow-input relative h-full overflow-y-auto bg-gray-50 p-4 pl-6 dark:bg-gray-800 dark:text-gray-300"
+	class="sidebar-right-container allow-input relative h-full overflow-y-auto bg-gray-50 dark:bg-gray-800 dark:text-gray-300"
 	style="width: {sidebarWidth}px;"
 >
 	<button
@@ -50,10 +51,7 @@
 		onmousedown={handleResizeStart}
 		ontouchstart={handleResizeStart}
 	></button>
-	<div class="mb-4 flex items-center justify-between">
-		<h2 class="text-xl font-semibold">Tool Bar Right</h2>
-	</div>
-	<ComponentToolbarRight />
+	<ComponentToolbarRight {selectedComponent} />
 </div>
 
 <style>

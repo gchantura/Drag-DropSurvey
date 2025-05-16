@@ -82,7 +82,7 @@
 	<Tabs style="underline">
 		<TabItem open title="Basic">
 			<div
-				class="rounded border border-gray-300 bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-800"
+				class=""
 			>
 				<!-- Text/Label editor -->
 				<div class="mb-3">
@@ -302,7 +302,7 @@
 
 		<TabItem title="Style">
 			<div
-				class="rounded border border-gray-300 bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-800"
+				class=""
 			>
 				<!-- Typography -->
 				<h3 class="mb-2 text-base font-medium">Typography</h3>
@@ -461,7 +461,7 @@
 					</div>
 				</div>
 
-				<h3 class="mt-4 mb-2 text-base font-medium">Border & Spacing</h3>
+				<h3 class="mb-2 text-base font-medium">Border & Spacing</h3>
 
 				<!-- Border radius -->
 				<div class="mb-3">
@@ -562,7 +562,7 @@
 
 				<!-- Box Shadow Presets -->
 				<div class="mb-3">
-					<label for="comp-box-shadow" class="mb-1 block text-sm font-medium">Box Shadow:</label>
+					<label for="comp-box-shadow" class="block text-sm font-medium">Box Shadow:</label>
 					<select
 						id="comp-box-shadow"
 						class="w-full rounded border p-1 dark:border-gray-700 dark:bg-gray-800"
@@ -665,7 +665,7 @@
 
 		<TabItem title="Advanced">
 			<div
-				class="rounded border border-gray-300 bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-800"
+				class=""
 			>
 				<!-- Matrix-->
 				{#if component.type === 'matrix'}
