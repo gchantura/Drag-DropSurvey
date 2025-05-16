@@ -75,7 +75,7 @@
 	<button
 		class="group flex h-8 w-8 items-center justify-center border-r border-gray-200 dark:border-gray-700"
 		title="Toggle toolbar"
-		on:click={toggleExtendedTools}
+		onclick={toggleExtendedTools}
 	>
 		<span
 			class="inline-block h-4 w-4 text-gray-700 group-hover:text-black dark:text-slate-200 dark:group-hover:text-white [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
@@ -94,7 +94,7 @@
 			<button
 				class="group flex h-8 w-8 items-center justify-center border-r border-gray-200 dark:border-gray-700"
 				title={component.title}
-				on:click={() => handleAddComponent(component.type)}
+				onclick={() => handleAddComponent(component.type)}
 			>
 				<span
 					class="inline-block h-4 w-4 text-gray-700 group-hover:text-black dark:text-slate-200 dark:group-hover:text-white [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
@@ -108,7 +108,7 @@
 		<button
 			class="group flex h-8 w-8 items-center justify-center border-r border-gray-200 dark:border-gray-700"
 			title="Zoom In"
-			on:click={handleZoomIn}
+			onclick={handleZoomIn}
 		>
 			<span
 				class="inline-block h-4 w-4 text-gray-700 group-hover:text-black dark:text-slate-200 dark:group-hover:text-white [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
@@ -119,7 +119,7 @@
 		<button
 			class="group flex h-8 w-8 items-center justify-center border-r border-gray-200 dark:border-gray-700"
 			title="Zoom Out"
-			on:click={handleZoomOut}
+			onclick={handleZoomOut}
 		>
 			<span
 				class="inline-block h-4 w-4 text-gray-700 group-hover:text-black dark:text-slate-200 dark:group-hover:text-white [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
@@ -130,7 +130,7 @@
 		<button
 			class="group flex h-8 w-8 items-center justify-center"
 			title="Reset Zoom"
-			on:click={handleResetZoom}
+			onclick={handleResetZoom}
 		>
 			<span
 				class="inline-block h-4 w-4 text-gray-700 group-hover:text-black dark:text-slate-200 dark:group-hover:text-white [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
@@ -143,7 +143,7 @@
 		<button
 			class="group flex h-8 w-8 items-center justify-center"
 			title="Add Text Component"
-			on:click={() => handleAddComponent('text')}
+			onclick={() => handleAddComponent('text')}
 		>
 			<span
 				class="inline-block h-4 w-4 text-gray-700 group-hover:text-black dark:text-slate-200 dark:group-hover:text-white [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
@@ -174,8 +174,5 @@
 	}
 	.container-toolbar button:hover {
 		background-color: rgba(0, 0, 0, 0.05);
-	}
-	.dark .container-toolbar button:hover {
-		background-color: rgba(255, 255, 255, 0.1);
 	}
 </style>

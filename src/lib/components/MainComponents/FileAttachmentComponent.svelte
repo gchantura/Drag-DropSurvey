@@ -1,5 +1,3 @@
-<!-- src/lib/components/MainComponents  -->
-
 <script lang="ts">
 	export let id: string;
 	export let label: string;
@@ -24,12 +22,15 @@
 	}
 
 	// Extract filename from source path
+	let filename: string;
+	let fileIcon: string;
+
 	$: filename = src?.split('/').pop() || '';
 	$: fileIcon = getFileIcon(filename);
 </script>
 
 <div class="file-attachment">
-	<label for={id} class="mb-2 block">
+	<label for={id} class="file-label">
 		{label}
 		{required ? '*' : ''}
 	</label>
@@ -50,20 +51,29 @@
 <style>
 	.file-attachment {
 		width: 100%;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+	}
+
+	.file-label {
+		margin-bottom: 8px;
+		font-weight: 500;
 	}
 
 	.file-preview {
 		display: flex;
 		align-items: center;
-		padding: 8px;
-		border: 1px solid #ddd;
-		border-radius: 4px;
-		background-color: #f9f9f9;
+		padding: 10px;
+		border: 1px solid #e5e7eb;
+		border-radius: 6px;
+		background-color: #f9fafb;
 	}
 
 	.file-icon {
 		font-size: 1.5em;
-		margin-right: 8px;
+		margin-right: 10px;
 	}
 
 	.file-name {
@@ -71,22 +81,30 @@
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		color: #4b5563;
 	}
 
 	.download-btn {
 		background-color: #3b82f6;
 		color: white;
-		padding: 4px 8px;
+		padding: 4px 10px;
 		border-radius: 4px;
 		text-decoration: none;
 		font-size: 0.875rem;
+		font-weight: 500;
+		transition: background-color 0.2s;
+	}
+
+	.download-btn:hover {
+		background-color: #2563eb;
 	}
 
 	.no-file {
-		padding: 8px;
-		border: 1px dashed #ddd;
-		border-radius: 4px;
-		color: #666;
+		padding: 12px;
+		border: 1px dashed #d1d5db;
+		border-radius: 6px;
+		color: #6b7280;
 		text-align: center;
+		background-color: #f9fafb;
 	}
 </style>

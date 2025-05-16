@@ -1,5 +1,3 @@
-<!-- src/lib/components/MainComponents/FileUploadComponent.svelte -->
-
 <script lang="ts">
 	export let id: string;
 	export let label: string;
@@ -31,7 +29,7 @@
 </script>
 
 <div class="file-upload">
-	<label for={id} class="mb-2 block">
+	<label for={id} class="upload-label">
 		{label}
 		{required ? '*' : ''}
 	</label>
@@ -46,7 +44,7 @@
 		/>
 
 		<div class="upload-btn">
-			<span>Choose file</span>
+			<span class="btn-text">Choose file</span>
 			<span class="file-name">{selectedFile ? selectedFile.name : 'No file chosen'}</span>
 		</div>
 	</div>
@@ -65,6 +63,15 @@
 <style>
 	.file-upload {
 		width: 100%;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+	}
+
+	.upload-label {
+		margin-bottom: 8px;
+		font-weight: 500;
 	}
 
 	.upload-container {
@@ -88,16 +95,18 @@
 		display: flex;
 		width: 100%;
 		align-items: center;
-		border: 1px solid #ddd;
+		border: 1px solid #d1d5db;
 		border-radius: 4px;
 		overflow: hidden;
 	}
 
-	.upload-btn span:first-child {
-		background-color: #f0f0f0;
+	.btn-text {
+		background-color: #f3f4f6;
 		padding: 8px 12px;
-		border-right: 1px solid #ddd;
+		border-right: 1px solid #d1d5db;
 		white-space: nowrap;
+		font-weight: 500;
+		color: #4b5563;
 	}
 
 	.file-name {
@@ -106,16 +115,18 @@
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		color: #6b7280;
 	}
 
 	.error-message {
-		color: #e53e3e;
+		color: #ef4444;
 		font-size: 0.875rem;
 		margin-bottom: 8px;
 	}
 
 	.help-text {
 		font-size: 0.75rem;
-		color: #666;
+		color: #6b7280;
+		margin-top: 4px;
 	}
 </style>

@@ -11,12 +11,17 @@
 <style>
 	.title-component {
 		width: 100%;
-		text-align: center;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.survey-title {
 		font-size: 1.75rem;
 		font-weight: 700;
 		margin: 0;
+		color: #1f2937;
+		text-align: center;
 	}
 </style>

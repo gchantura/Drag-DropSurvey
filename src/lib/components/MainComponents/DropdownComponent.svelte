@@ -8,15 +8,35 @@
 	let selected: string = '';
 </script>
 
-<Label for={`select-${id}`} class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-	{label}
-	{required ? '*' : ''}
-</Label>
+<div class="dropdown-component">
+	<Label for={`select-${id}`} class="dropdown-label">
+		{label}
+		{required ? '*' : ''}
+	</Label>
 
-<Select
-	id={`select-${id}`}
-	bind:value={selected}
-	class="w-full"
-	items={options.map((opt) => ({ value: opt, name: opt }))}
-	placeholder="-- Select --"
-/>
+	<Select
+		id={`select-${id}`}
+		bind:value={selected}
+		class="dropdown-select"
+		items={options.map((opt) => ({ value: opt, name: opt }))}
+		placeholder="-- Select --"
+	/>
+</div>
+
+<style>
+	.dropdown-component {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+	}
+	.dropdown-label {
+		margin-bottom: 4px;
+		font-weight: 500;
+	}
+	:global(.dropdown-select) {
+		border-radius: 4px;
+		border: 1px solid #d1d5db;
+	}
+</style>

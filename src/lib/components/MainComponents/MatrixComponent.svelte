@@ -8,44 +8,65 @@
 </script>
 
 <div class="matrix-component">
-	<!-- svelte-ignore a11y_label_has_associated_control -->
-	<label>{label} {required && '*'}</label>
-	<table>
-		<thead>
-			<tr>
-				<th></th>
-				{#each columns as column}
-					<th>{column}</th>
-				{/each}
-			</tr>
-		</thead>
-		<tbody>
-			{#each rows as row}
+	<label class="matrix-label">{label} {required && '*'}</label>
+	<div class="table-container">
+		<table class="matrix-table">
+			<thead>
 				<tr>
-					<td>{row}</td>
+					<th></th>
 					{#each columns as column}
-						<td>
-							<input type="radio" name="{id}-{row}" />
-						</td>
+						<th>{column}</th>
 					{/each}
 				</tr>
-			{/each}
-		</tbody>
-	</table>
+			</thead>
+			<tbody>
+				{#each rows as row}
+					<tr>
+						<td>{row}</td>
+						{#each columns as column}
+							<td>
+								<input type="radio" name="{id}-{row}" />
+							</td>
+						{/each}
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+	</div>
 </div>
 
 <style>
-	table {
+	.matrix-component {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+	.matrix-label {
+		font-weight: 500;
+		margin-bottom: 8px;
+	}
+	.table-container {
+		overflow: auto;
+		flex-grow: 1;
+	}
+	.matrix-table {
 		border-collapse: collapse;
-		margin-top: 8px;
+		width: 100%;
 	}
 	th,
 	td {
-		border: 1px solid #ddd;
+		border: 1px solid #e5e7eb;
 		padding: 8px;
 		text-align: center;
+		font-size: 0.875rem;
 	}
 	th {
-		background-color: #f5f5f5;
+		background-color: #f9fafb;
+		font-weight: 500;
+	}
+	td:first-child {
+		text-align: left;
+		font-weight: 500;
 	}
 </style>

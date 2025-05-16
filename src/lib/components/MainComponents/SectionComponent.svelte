@@ -1,5 +1,3 @@
-<!-- src/lib/components/MainComponents/SectionComponent.svelte  -->
-
 <script lang="ts">
 	export let label: string;
 	export let description: string = '';
@@ -17,23 +15,30 @@
 <style>
 	.section-component {
 		width: 100%;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
 	}
 
 	.divider {
-		height: 2px;
+		height: 3px;
 		background-color: #3b82f6;
-		margin-bottom: 8px;
+		margin-bottom: 12px;
+		border-radius: 2px;
 	}
 
 	.section-title {
 		font-size: 1.25rem;
 		font-weight: 600;
 		margin: 0 0 8px 0;
+		color: #1f2937;
 	}
 
 	.section-description {
 		font-size: 0.875rem;
 		color: #4b5563;
 		margin-top: 4px;
+		line-height: 1.4;
 	}
 </style>

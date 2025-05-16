@@ -1,4 +1,3 @@
-<!-- lib/components/MainComponents/RatingComponent.svelte -->
 <script lang="ts">
 	export let id: string;
 	export let label: string;
@@ -7,29 +6,48 @@
 </script>
 
 <div class="rating-component">
-	<!-- svelte-ignore a11y_label_has_associated_control -->
-	<label>{label} {required && '*'}</label>
+	<label class="rating-label">{label} {required && '*'}</label>
 	<div class="rating-stars">
 		{#each Array(maxRating).fill(0) as _, i}
-			<button class="star" on:click|preventDefault={() => {}} name={id}> {i + 1} </button>
+			<button class="star" on:click|preventDefault={() => {}} name={id}>
+				{i + 1}
+			</button>
 		{/each}
 	</div>
 </div>
 
 <style>
+	.rating-component {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+	}
+	.rating-label {
+		font-weight: 500;
+		margin-bottom: 12px;
+	}
 	.rating-stars {
 		display: flex;
 		gap: 8px;
-		margin-top: 8px;
 	}
 	.star {
 		width: 40px;
 		height: 40px;
-		border: 1px solid #ddd;
+		border: 1px solid #d1d5db;
 		background: #fff;
 		cursor: pointer;
+		border-radius: 4px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 500;
+		color: #4b5563;
+		transition: all 0.2s;
 	}
 	.star:hover {
-		background: #f0f0f0;
+		background: #f3f4f6;
+		border-color: #9ca3af;
 	}
 </style>

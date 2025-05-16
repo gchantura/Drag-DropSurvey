@@ -1,4 +1,3 @@
-<!-- src/lib/components/SideBar.svelte -->
 <script lang="ts">
 	import {
 		saveSurvey,
@@ -11,6 +10,7 @@
 	import SurveyActions from './SideBarComponents/SurveyActions.svelte';
 	import PropertiesEditor from './SideBarComponents/PropertiesEditor.svelte';
 	import SurveyAlert from './SideBarComponents/SurveyAlert.svelte';
+	import ExportModal from './ExportModal.svelte';
 	import type { SurveyComponent } from '$lib/types/survey.ts';
 	import { Button } from 'flowbite-svelte';
 	import { Fileupload } from 'flowbite-svelte';
@@ -26,6 +26,11 @@
 	let alertTimeout: number | undefined = undefined;
 	let showImport = $state(false);
 	let importFile: FileList | null = $state(null);
+	let showExportModal = $state(false);
+	let sidebarWidth = $state(300);
+	let startX = $state(0);
+	let startWidth = $state(0);
+
 	function showAlert(message: string, color: typeof alertColor = 'blue', duration: number = 3000) {
 		alertMessage = message;
 		alertColor = color;
@@ -65,6 +70,9 @@
 			showAlert('Failed to export survey.', 'red');
 		}
 	}
+	function handleCodeExport() {
+		showExportModal = true;
+	}
 	function handleImportClick() {
 		showImport = !showImport;
 		importFile = null;
@@ -100,9 +108,6 @@
 		};
 		reader.readAsText(file);
 	}
-	let sidebarWidth = $state(300);
-	let startX = $state(0);
-	let startWidth = $state(0);
 	let sidebarEl: HTMLDivElement;
 	function handleResizeStart(event: MouseEvent | TouchEvent) {
 		const clientX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX;
@@ -196,6 +201,11 @@
 				Export JPG
 			</Button>
 		</div>
+		<div class="mt-2">
+			<Button size="sm" color="primary" class="w-full" onclick={handleCodeExport}>
+				Export as Code
+			</Button>
+		</div>
 		{#if showImport}
 			<div class="mt-3 rounded border bg-gray-100 p-3 dark:border-gray-600 dark:bg-gray-700">
 				<Fileupload
@@ -225,6 +235,8 @@
 		</div>
 	{/if}
 </div>
+
+<ExportModal bind:open={showExportModal} on:close={() => (showExportModal = false)} />
 
 <style>
 	.resize-handle {
