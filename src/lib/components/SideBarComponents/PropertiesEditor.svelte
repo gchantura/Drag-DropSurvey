@@ -301,7 +301,7 @@
 		</TabItem>
 
 		<TabItem title="Style">
-			<TypographyOptions />
+<!-- 			<TypographyOptions /> -->
 
 			<div class="">
 				<!-- Typography -->
