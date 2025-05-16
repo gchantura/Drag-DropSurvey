@@ -5,54 +5,195 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Survey Form</title>
+    <style>
+        /* Survey Form Styles */
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .checkbox-group,
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .section {
+            border-top: 3px solid #3b82f6;
+            padding-top: 10px;
+            margin-top: 30px;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .introduction {
+            background-color: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .required {
+            color: #e11d48;
+        }
+
+        .help-text {
+            font-size: 0.8em;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        button[type="submit"] {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #2563eb;
+        }
+
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .matrix-table th,
+        .matrix-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .matrix-table th {
+            background-color: #f3f4f6;
+        }
+
+        .rating {
+            display: flex;
+            gap: 8px;
+        }
+
+        .rating input[type="radio"] {
+            display: none;
+        }
+
+        .rating label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .rating input[type="radio"]:checked+label {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .file-attachment {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9fafb;
+        }
+
+        /* Validation styles */
+        .invalid {
+            border-color: #e11d48 !important;
+            background-color: rgba(225, 29, 72, 0.05);
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+    </style>
 </head>
 
 <body>
     <form id="survey-form">
         <div class="form-group">
-            <label for="input-470afd35-e021-46c1-831e-c55ed18d0379">Full Name </label>
-            <input type="text" id="input-470afd35-e021-46c1-831e-c55ed18d0379"
-                name="input-470afd35-e021-46c1-831e-c55ed18d0379" placeholder="">
-
-        </div>
-        <div class="form-group">
-            <label>Rating Component </label>
-            <div class="rating">
-                <input type="radio" id="rating-dd2e503c-3b81-4a4d-8380-81572386c721-1"
-                    name="rating-dd2e503c-3b81-4a4d-8380-81572386c721" value="1">
-                <label for="rating-dd2e503c-3b81-4a4d-8380-81572386c721-1">1</label>
-                <input type="radio" id="rating-dd2e503c-3b81-4a4d-8380-81572386c721-2"
-                    name="rating-dd2e503c-3b81-4a4d-8380-81572386c721" value="2">
-                <label for="rating-dd2e503c-3b81-4a4d-8380-81572386c721-2">2</label>
-                <input type="radio" id="rating-dd2e503c-3b81-4a4d-8380-81572386c721-3"
-                    name="rating-dd2e503c-3b81-4a4d-8380-81572386c721" value="3">
-                <label for="rating-dd2e503c-3b81-4a4d-8380-81572386c721-3">3</label>
-                <input type="radio" id="rating-dd2e503c-3b81-4a4d-8380-81572386c721-4"
-                    name="rating-dd2e503c-3b81-4a4d-8380-81572386c721" value="4">
-                <label for="rating-dd2e503c-3b81-4a4d-8380-81572386c721-4">4</label>
-                <input type="radio" id="rating-dd2e503c-3b81-4a4d-8380-81572386c721-5"
-                    name="rating-dd2e503c-3b81-4a4d-8380-81572386c721" value="5">
-                <label for="rating-dd2e503c-3b81-4a4d-8380-81572386c721-5">5</label>
-            </div>
-
-        </div>
-        <div class="form-group">
-            <p>Text Component</p>
-        </div>
-        <div class="introduction">
-            <h2>Introduction Component</h2>
-            <p>Description...</p>
-        </div>
-        <div class="form-group">
-            <label for="textarea-866a0023-a0cf-4e59-970b-e55d8948e6ac">This is text area </label>
-            <textarea id="textarea-866a0023-a0cf-4e59-970b-e55d8948e6ac"
-                name="textarea-866a0023-a0cf-4e59-970b-e55d8948e6ac" rows="5" placeholder="Add the Comment"></textarea>
-            <div class="help-text">this is a place of comment</div>
-        </div>
-        <div class="form-group">
             <button type="submit">Submit</button>
         </div>
     </form>
+    <script>
+        // Survey Form JavaScript
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('survey-form');
+
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                // Collect form data
+                const formData = new FormData(this);
+                const formValues = {};
+
+                for (let [key, value] of formData.entries()) {
+                    formValues[key] = value;
+                }
+
+                console.log('Form submitted:', formValues);
+
+                // Here you would typically send the data to a server
+                alert('Form submitted successfully!');
+            });
+
+            // Add validation for required fields
+            const requiredFields = form.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                field.addEventListener('invalid', function (event) {
+                    if (!field.validity.valid) {
+                        field.classList.add('invalid');
+                    }
+                });
+
+                field.addEventListener('input', function (event) {
+                    if (field.validity.valid) {
+                        field.classList.remove('invalid');
+                    }
+                });
+            });
+        });
+
+    </script>
 </body>
 
 </html>

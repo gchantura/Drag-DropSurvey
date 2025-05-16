@@ -27,11 +27,16 @@
 		ZOOM_SENSITIVITY
 	} from '$lib/stores/canvasStore.ts';
 	import { onMount, tick, onDestroy } from 'svelte';
-	import type {
-		SurveyComponent as SurveyComponentType,
-		SelectionBox,
-		DraggingGuide
-	} from '$lib/types/survey.ts';
+	import type { SurveyComponent as SurveyComponentType } from '$lib/types/survey.ts';
+
+	// Define SelectionBox type locally since it's not exported from survey.ts
+	type SelectionBox = {
+		active: boolean;
+		startX: number;
+		startY: number;
+		endX: number;
+		endY: number;
+	};
 	import { browser } from '$app/environment';
 	import CanvasToolbar from '$lib/components/CanvasComponents/CanvasToolbar.svelte';
 	import ToolbarAlign from '$lib/components/CanvasComponents/ToolbarAlignment.svelte';
@@ -72,6 +77,7 @@
 	let horizontalGuides: number[] = [100, 200];
 	let verticalGuides: number[] = [100, 300];
 	let showGuides = true;
+	type DraggingGuide = { direction: 'horizontal' | 'vertical'; index: number } | null;
 	let draggingGuide: DraggingGuide = null;
 	let enableSnap = true;
 	let gridSize = getGridSize();

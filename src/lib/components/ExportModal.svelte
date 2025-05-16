@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, Modal, Select, Checkbox, Textarea } from 'flowbite-svelte';
+	import { Button, Modal, Select, Checkbox, Textarea, Tabs, TabItem } from 'flowbite-svelte';
 	import { createEventDispatcher } from 'svelte';
 	import { exportSurveyAsCode, exportSettingsStore } from '$lib/stores/surveyStore.ts';
 	import type { ExportFormat } from '$lib/types/survey.ts';
@@ -15,7 +15,9 @@
 	let includeValidation = true;
 	let includeFramework = false;
 	let minify = false;
-	let exportedCode = '';
+	let splitFiles = false;
+	let exportedFiles: { name: string; content: string }[] = [];
+	let activeTab = 0;
 
 	function handleClose() {
 		dispatch('close');
@@ -27,17 +29,24 @@
 			includeStyles,
 			includeValidation,
 			includeFramework,
-			minify
+			minify,
+			splitFiles
 		};
 
 		exportSettingsStore.set(settings);
-		exportedCode = exportSurveyAsCode(exportFormat, settings);
+
+		const result = exportSurveyAsCode(exportFormat, settings);
+
+		if (result && 'files' in result) {
+			exportedFiles = result.files;
+			activeTab = 0;
+		}
 	}
 
-	function copyToClipboard() {
-		if (exportedCode) {
+	function copyToClipboard(content: string) {
+		if (content) {
 			navigator.clipboard
-				.writeText(exportedCode)
+				.writeText(content)
 				.then(() => {
 					alert('Code copied to clipboard!');
 				})
@@ -48,52 +57,47 @@
 		}
 	}
 
-	function downloadCode() {
-		if (!exportedCode) return;
+	function downloadFile(file: { name: string; content: string }) {
+		if (!file.content) return;
 
-		let extension = '.txt';
 		let mimeType = 'text/plain';
+		if (file.name.endsWith('.html')) mimeType = 'text/html';
+		if (file.name.endsWith('.css')) mimeType = 'text/css';
+		if (file.name.endsWith('.js')) mimeType = 'text/javascript';
+		if (file.name.endsWith('.json')) mimeType = 'application/json';
+		if (file.name.endsWith('.jsx')) mimeType = 'text/javascript';
 
-		switch (exportFormat) {
-			case 'html':
-				extension = '.html';
-				mimeType = 'text/html';
-				break;
-			case 'json':
-				extension = '.json';
-				mimeType = 'application/json';
-				break;
-			case 'react':
-				extension = '.jsx';
-				mimeType = 'text/javascript';
-				break;
-			case 'vue':
-				extension = '.vue';
-				mimeType = 'text/plain';
-				break;
-			case 'angular':
-				extension = '.ts';
-				mimeType = 'text/plain';
-				break;
-		}
-
-		const blob = new Blob([exportedCode], { type: mimeType });
+		const blob = new Blob([file.content], { type: mimeType });
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement('a');
 		a.style.display = 'none';
 		a.href = url;
-		a.download = `survey-export${extension}`;
+		a.download = file.name;
 		document.body.appendChild(a);
 		a.click();
 		window.URL.revokeObjectURL(url);
 		document.body.removeChild(a);
 	}
 
+	function downloadAllFiles() {
+		// Create a download link for each file
+		exportedFiles.forEach((file) => {
+			downloadFile(file);
+		});
+	}
+
 	$: if (open) {
 		generateExport();
 	}
 
-	$: if (exportFormat) {
+	$: if (
+		exportFormat ||
+		includeStyles ||
+		includeValidation ||
+		includeFramework ||
+		minify ||
+		splitFiles
+	) {
 		generateExport();
 	}
 </script>
@@ -165,19 +169,57 @@
 						>Minify Output</label
 					>
 				</div>
+
+				<div class="flex items-center">
+					<Checkbox id="split-files" bind:checked={splitFiles} />
+					<label for="split-files" class="ml-2 text-sm text-gray-900 dark:text-white"
+						>Split HTML/CSS/JS Files</label
+					>
+				</div>
 			</div>
 
 			<div class="flex flex-col space-y-2">
-				<Button color="primary" on:click={copyToClipboard}>Copy to Clipboard</Button>
-				<Button color="alternative" on:click={downloadCode}>Download</Button>
+				<Button color="primary" on:click={downloadAllFiles}>
+					Download {exportedFiles.length > 1 ? 'All Files' : 'File'}
+				</Button>
 			</div>
 		</div>
 
 		<div class="col-span-2">
-			<label for="export-code" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
-				>Generated Code</label
-			>
-			<Textarea id="export-code" rows={20} bind:value={exportedCode} class="font-mono text-sm" />
+			{#if exportedFiles.length > 0}
+				<Tabs active={activeTab} on:activeTabChange={(e) => (activeTab = e.detail)}>
+					{#each exportedFiles as file, i}
+						<TabItem title={file.name}>
+							<div class="mb-2 flex justify-between">
+								<span class="text-sm font-medium">{file.name}</span>
+								<div class="space-x-2">
+									<Button
+										size="xs"
+										color="alternative"
+										on:click={() => copyToClipboard(file.content)}
+									>
+										Copy
+									</Button>
+									<Button size="xs" color="alternative" on:click={() => downloadFile(file)}>
+										Download
+									</Button>
+								</div>
+							</div>
+							<Textarea
+								id={`export-code-${i}`}
+								rows={20}
+								value={file.content}
+								class="font-mono text-sm"
+								readonly
+							/>
+						</TabItem>
+					{/each}
+				</Tabs>
+			{:else}
+				<div class="p-4 text-center">
+					<p>No export files generated. Please check your settings and try again.</p>
+				</div>
+			{/if}
 		</div>
 	</div>
 </Modal>

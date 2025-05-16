@@ -75,20 +75,32 @@
 	style:left="{component.x}px"
 	style:width="{component.width}px"
 	style:height="{component.height}px"
-	style:font-family={component.fontFamily ?? 'Arial'}
-	style:font-size="{component.fontSize ?? 16}px"
-	style:color={component.color ?? '#000000'}
-	style:background-color="transparent"
+	style:font-family={component.fontFamily || 'Arial'}
+	style:font-size="{component.fontSize || 16}px"
+	style:color={component.color || '#000000'}
+	style:background-color={component.bgColor || '#FFFFFF'}
+	style:border-radius="{component.borderRadius || 0}px"
+	style:border-width="{component.borderWidth || 0}px"
+	style:border-color={component.borderColor || 'transparent'}
+	style:border-style={component.borderStyle || 'none'}
+	style:padding="{component.padding || 0}px"
+	style:margin="{component.margin || 0}px"
+	style:text-align={component.textAlign || 'left'}
+	style:font-weight={component.fontWeight || 'normal'}
+	style:font-style={component.fontStyle || 'normal'}
+	style:text-decoration={component.textDecoration || 'none'}
+	style:opacity={component.opacity || 1}
+	style:box-shadow={component.boxShadow || 'none'}
 	style:z-index={isSelected ? 20 : 10}
 	onmousedown={handleMouseDown}
 	onclick={handleClick}
 	onkeydown={handleKeyDown}
 	tabindex="0"
 	role="button"
-	aria-label="{component.type} component: {component.label ?? 'No Label'}"
+	aria-label="{component.type} component: {component.label || 'No Label'}"
 	aria-pressed={isSelected}
 >
-	<div class="component-content pointer-events-none h-full w-full overflow-hidden p-2">
+	<div class="component-content pointer-events-none h-full w-full overflow-hidden">
 		{#if componentImplementation}
 			{#await componentImplementation then module}
 				{#if module && module.default}
