@@ -11,6 +11,7 @@
 		toggleUnits: void;
 		toggleSnap: void;
 		toggleGuides: void;
+		manageGuides: void;
 	}>();
 </script>
 
@@ -38,6 +39,13 @@
 			title="Toggle visibility of guides"
 		>
 			{showGuides ? '⊣⊢ Guides On' : '―― Guides Off'}
+		</button>
+		<button
+			class="rounded border border-gray-300 bg-white px-3 py-1 text-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+			onclick={() => dispatch('manageGuides')}
+			title="Manage guides"
+		>
+			Guide Manager
 		</button>
 	</div>
 	<!-- Removed canvas size controls div -->

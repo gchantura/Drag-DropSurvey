@@ -560,7 +560,7 @@
 					/>
 				</div>
 
-				<!-- Box shadow -->
+				<!-- Box Shadow Presets -->
 				<div class="mb-3">
 					<label for="comp-box-shadow" class="mb-1 block text-sm font-medium">Box Shadow:</label>
 					<select
@@ -574,7 +574,91 @@
 						<option value="0 4px 6px rgba(0,0,0,0.1)">Medium</option>
 						<option value="0 10px 15px rgba(0,0,0,0.1)">Large</option>
 						<option value="0 20px 25px rgba(0,0,0,0.15)">Extra Large</option>
+						<option value="0 0 5px rgba(59, 130, 246, 0.5)">Blue Glow</option>
+						<option value="0 0 5px rgba(220, 38, 38, 0.5)">Red Glow</option>
+						<option value="0 0 5px rgba(16, 185, 129, 0.5)">Green Glow</option>
+						<option value="inset 0 2px 4px rgba(0,0,0,0.1)">Inset</option>
 					</select>
+				</div>
+
+				<!-- Transform Options -->
+				<h3 class="mt-4 mb-2 text-base font-medium">Transform</h3>
+
+				<!-- Rotation -->
+				<div class="mb-3">
+					<label for="comp-rotation" class="mb-1 block text-sm font-medium">Rotation (deg):</label>
+					<Range
+						id="comp-rotation"
+						min="-180"
+						max="180"
+						step="1"
+						class="w-full"
+						value={getDefaultValue('rotation', 0)}
+						on:change={(e) => handleInputChange(e, 'rotation')}
+					/>
+					<div class="flex justify-between text-xs text-gray-500">
+						<span>-180°</span>
+						<span>0°</span>
+						<span>180°</span>
+					</div>
+				</div>
+
+				<!-- Scale -->
+				<div class="mb-3">
+					<label for="comp-scale" class="mb-1 block text-sm font-medium">Scale:</label>
+					<Range
+						id="comp-scale"
+						min="0.5"
+						max="2"
+						step="0.1"
+						class="w-full"
+						value={getDefaultValue('scale', 1)}
+						on:change={(e) => handleInputChange(e, 'scale')}
+					/>
+					<div class="flex justify-between text-xs text-gray-500">
+						<span>50%</span>
+						<span>100%</span>
+						<span>200%</span>
+					</div>
+				</div>
+
+				<!-- Animation -->
+				<h3 class="mt-4 mb-2 text-base font-medium">Animation</h3>
+
+				<!-- Animation Type -->
+				<div class="mb-3">
+					<label for="comp-animation" class="mb-1 block text-sm font-medium">Animation:</label>
+					<select
+						id="comp-animation"
+						class="w-full rounded border p-1 dark:border-gray-700 dark:bg-gray-800"
+						value={getDefaultValue('animation', 'none')}
+						on:change={(e) => handleInputChange(e, 'animation')}
+					>
+						<option value="none">None</option>
+						<option value="fade">Fade In</option>
+						<option value="slide">Slide In</option>
+						<option value="bounce">Bounce</option>
+						<option value="pulse">Pulse</option>
+						<option value="spin">Spin</option>
+					</select>
+				</div>
+
+				<!-- Animation Duration -->
+				<div class="mb-3">
+					<label for="comp-animation-duration" class="mb-1 block text-sm font-medium"
+						>Duration (s):</label
+					>
+					<input
+						id="comp-animation-duration"
+						type="number"
+						min="0.1"
+						max="10"
+						step="0.1"
+						class="w-full rounded border p-1 dark:border-gray-700 dark:bg-gray-800"
+						value={getDefaultValue('animationDuration', 1)}
+						on:input={(e) => handleInputChange(e, 'animationDuration')}
+						disabled={getDefaultValue('animation', 'none') === 'none'}
+					/>
 				</div>
 			</div>
 		</TabItem>

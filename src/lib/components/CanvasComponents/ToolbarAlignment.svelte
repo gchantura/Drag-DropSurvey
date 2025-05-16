@@ -1,7 +1,15 @@
 <!-- src/lib/components/CanvasComponents/ToolbarAlignment.svelte -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	type Alignment = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom';
+	type Alignment =
+		| 'left'
+		| 'center'
+		| 'right'
+		| 'top'
+		| 'middle'
+		| 'bottom'
+		| 'middleLeft'
+		| 'middleRight';
 	export let enabled: boolean = false;
 	const dispatch = createEventDispatcher<{ align: Alignment }>();
 	const AlignLeft = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="4" x2="5" y2="20"></line><rect x="7" y="8" width="10" height="4"></rect><rect x="7" y="16" width="14" height="4"></rect></svg>`;
@@ -16,7 +24,17 @@
 		{ icon: AlignRight, value: 'right', title: 'Align Right' },
 		{ icon: AlignTop, value: 'top', title: 'Align Top' },
 		{ icon: AlignHorizontally, value: 'middle', title: 'Align Middle Horizontally' },
-		{ icon: AlignBottom, value: 'bottom', title: 'Align Bottom' }
+		{ icon: AlignBottom, value: 'bottom', title: 'Align Bottom' },
+		{
+			icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="5" y2="12"></line><rect x="7" y="8" width="10" height="8"></rect></svg>`,
+			value: 'middleLeft',
+			title: 'Align Middle Left'
+		},
+		{
+			icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="19" y2="12"></line><rect x="7" y="8" width="10" height="8"></rect></svg>`,
+			value: 'middleRight',
+			title: 'Align Middle Right'
+		}
 	];
 </script>
 

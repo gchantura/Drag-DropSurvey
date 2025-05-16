@@ -91,6 +91,11 @@
 	style:text-decoration={component.textDecoration || 'none'}
 	style:opacity={component.opacity || 1}
 	style:box-shadow={component.boxShadow || 'none'}
+	style:transform="{component.rotation ? `rotate(${component.rotation}deg)` : ''}
+	{component.scale ? `scale(${component.scale})` : ''}"
+	style:animation={component.animation && component.animation !== 'none'
+		? `${component.animation} ${component.animationDuration || 1}s`
+		: 'none'}
 	style:z-index={isSelected ? 20 : 10}
 	onmousedown={handleMouseDown}
 	onclick={handleClick}

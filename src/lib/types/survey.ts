@@ -37,6 +37,11 @@ export interface SurveyComponent {
     textDecoration?: string
     opacity?: number
     boxShadow?: string
+    rotation?: number
+    scale?: number
+    animation?: "none" | "fade" | "slide" | "bounce" | "pulse" | "spin"
+    animationDuration?: number
+    zIndex?: number
     required?: boolean
     placeholder?: string
     helpText?: string

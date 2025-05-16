@@ -17,8 +17,11 @@
 			position: number;
 			event: MouseEvent;
 		};
+		toggleVisibility: { direction: 'horizontal' | 'vertical'; index: number };
 	}>();
 	const isHorizontal = direction === 'horizontal';
+	let screenPosition: number;
+	let displayPosition: number;
 	$: screenPosition = position * scale + offset;
 	$: displayPosition = Math.round(position);
 	function startDrag(event: MouseEvent) {
@@ -36,6 +39,10 @@
 	function handleClick(event: MouseEvent) {
 		if (event.button !== 0) return;
 		dispatch('select', { index });
+		event.stopPropagation();
+	}
+	function handleToggleVisibility(event: MouseEvent) {
+		dispatch('toggleVisibility', { direction, index });
 		event.stopPropagation();
 	}
 </script>
@@ -65,13 +72,34 @@
 		class:h-px={isHorizontal}
 	></div>
 	<div
-		class="guide-label absolute rounded border border-blue-500 bg-white px-1 py-0.5 text-xs text-blue-500 opacity-0 shadow-sm group-hover:opacity-100 dark:border-blue-400 dark:bg-gray-800 dark:text-blue-300"
+		class="guide-label absolute flex items-center gap-1 rounded border border-blue-500 bg-white px-1 py-0.5 text-xs text-blue-500 opacity-0 shadow-sm group-hover:opacity-100 dark:border-blue-400 dark:bg-gray-800 dark:text-blue-300"
 		class:opacity-100={selected}
 		style={isHorizontal
 			? 'left: 4px; top: -20px; transform: translateY(-100%);'
 			: 'left: 4px; top: 4px;'}
 	>
-		{displayPosition}px
+		<span>{displayPosition}px</span>
+		<button
+			class="ml-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+			title="Toggle guide visibility"
+			onclick={handleToggleVisibility}
+			aria-label="Toggle guide visibility"
+		>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="10"
+				height="10"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+				<circle cx="12" cy="12" r="3"></circle>
+			</svg>
+		</button>
 	</div>
 	<div
 		class="interaction-area absolute"

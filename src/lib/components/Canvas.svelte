@@ -89,20 +89,29 @@
 	let selectedComponentId: string | null = null;
 	let multiSelectedComponentIds: string[] = [];
 
+	let showGuideManager = false;
+	let newHorizontalGuide: number | undefined;
+	let newVerticalGuide: number | undefined;
+
 	function showAlert(message: string, color: string = 'blue', duration: number = 3000): void {
 		console.log(`ALERT (${color}): ${message}`);
 	}
 
-	export async function exportCanvasAsImage(format: 'png' | 'jpeg'): Promise<void> {
-		// console.log(`Canvas: exportCanvasAsImage (${format}) using dom-to-image-more`);
+	export async function exportCanvasAsImage(
+		format: 'png' | 'jpeg',
+		options: { includeBackground?: boolean; includeGrid?: boolean } = {}
+	): Promise<void> {
+		const { includeBackground = true, includeGrid = false } = options;
+
 		if (!viewportWrapperRef) {
 			showAlert('Export failed: Viewport not ready.', 'red');
 			return;
 		}
+
 		const targetElement = viewportWrapperRef.querySelector(
 			'#canvas-content-capture-area'
 		) as HTMLElement;
-		// console.log('Canvas: Target Element Found:', targetElement);
+
 		if (!targetElement) {
 			showAlert('Export failed: Target element not found.', 'red');
 			return;
@@ -112,49 +121,57 @@
 		const gridElement = targetElement.querySelector('.canvas-grid-container') as HTMLElement | null;
 		const originalGridDisplay = gridElement ? gridElement.style.display : '';
 
+		// Store original background
+		const originalBackground = targetElement.style.background;
+
+		// Set background based on options
+		if (!includeBackground) {
+			targetElement.style.background = 'transparent';
+		}
+
 		const originalSelection = get(selectedComponentIds);
 		const originalPrimary = get(primarySelectedComponentId);
-		// console.log('Canvas: Clearing selection and hiding grid before export.');
+
+		// Clear selection and hide grid if needed
 		clearSelectionState();
 		selectionBox = { ...selectionBox, active: false };
-		if (gridElement) gridElement.style.display = 'none'; // Hide grid
+		if (!includeGrid && gridElement) gridElement.style.display = 'none';
+
 		await tick();
 
-		const options = {
+		const domToImageOptions = {
 			quality: format === 'jpeg' ? 0.95 : 1.0,
-			bgcolor: '#ffffff',
+			bgcolor: includeBackground ? '#ffffff' : 'transparent',
 			width: targetElement.offsetWidth,
 			height: targetElement.offsetHeight
 		};
-		// console.log('Canvas: dom-to-image options:', options);
 
 		try {
 			let dataUrl: string;
-			// console.log(`Canvas: Calling domtoimage.${format === 'jpeg' ? 'toJpeg' : 'toPng'}...`);
 			if (format === 'jpeg') {
-				dataUrl = await domtoimage.toJpeg(targetElement, options);
+				dataUrl = await domtoimage.toJpeg(targetElement, domToImageOptions);
 			} else {
-				dataUrl = await domtoimage.toPng(targetElement, options);
+				dataUrl = await domtoimage.toPng(targetElement, domToImageOptions);
 			}
-			// console.log('Canvas: dom-to-image call succeeded.');
+
 			const link = document.createElement('a');
 			link.href = dataUrl;
 			link.download = `survey-canvas-${Date.now()}.${format}`;
 			document.body.appendChild(link);
 			link.click();
 			document.body.removeChild(link);
-			// console.log('Canvas: Download triggered.');
+
 			showAlert(`Canvas exported as ${format.toUpperCase()}.`, 'green');
 		} catch (error) {
 			console.error(`Canvas: Error during dom-to-image call (${format}):`, error);
 			showAlert('Export failed. See console for details.', 'red');
 		} finally {
-			// console.log('Canvas: Restoring selection state and grid.');
-			if (gridElement) gridElement.style.display = originalGridDisplay; // Restore grid display
+			// Restore original state
+			if (gridElement) gridElement.style.display = originalGridDisplay;
+			targetElement.style.background = originalBackground;
 			selectedComponentIds.set(originalSelection);
 			primarySelectedComponentId.set(originalPrimary);
 			await tick();
-			// console.log('Canvas: Selection state and grid restored.');
 		}
 	}
 
@@ -923,6 +940,21 @@
 		});
 		closeContextMenu();
 	}
+
+	function handleManageGuides(): void {
+		showGuideManager = true;
+	}
+
+	// Add the auto-spacing functionality to the Canvas component
+	// Add this function to handle the autoSpacing event:
+
+	function handleAutoSpacing(): void {
+		import('$lib/stores/distributionStore.ts').then((module) => {
+			module.autoSpaceSelectedComponents();
+		});
+		closeContextMenu();
+	}
+
 	onMount(() => {
 		const resizeObserver = new ResizeObserver((entries) => {
 			for (const entry of entries) {
@@ -1008,7 +1040,12 @@
 				on:rulerContextMenu={handleRulerContextMenu}
 			/>
 		</div>
-		<ToolBarMiddle on:resetZoom={resetZoomAndCenter} on:autoPosition={autoPosition} />
+		<ToolBarMiddle
+			on:resetZoom={resetZoomAndCenter}
+			on:autoPosition={autoPosition}
+			on:autoSpacing={handleAutoSpacing}
+			on:manageGuides={handleManageGuides}
+		/>
 		<div
 			class="absolute bottom-0 left-0 z-20"
 			style="top: {RULER_SIZE}px; width: {RULER_SIZE}px;"
@@ -1091,11 +1128,237 @@
 			on:properties={() => console.log('Properties action triggered')}
 			on:selectAll={selectAllComponents}
 			on:autoPosition={autoPosition}
+			on:autoSpacing={handleAutoSpacing}
 		/>
+	{/if}
+
+	{#if showGuideManager}
+		<div class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+			<div class="w-96 rounded-lg bg-white p-4 shadow-lg dark:bg-gray-800">
+				<div class="mb-4 flex items-center justify-between">
+					<h3 class="text-lg font-medium">Guide Manager</h3>
+					<button
+						class="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+						onclick={() => (showGuideManager = false)}
+						aria-label="Close guide manager"
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="20"
+							height="20"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<line x1="18" y1="6" x2="6" y2="18"></line>
+							<line x1="6" y1="6" x2="18" y2="18"></line>
+						</svg>
+					</button>
+				</div>
+
+				<div class="mb-4">
+					<h4 class="mb-2 font-medium">Horizontal Guides</h4>
+					{#if horizontalGuides.length === 0}
+						<p class="text-sm text-gray-500">No horizontal guides added yet.</p>
+					{:else}
+						<div class="max-h-40 overflow-y-auto">
+							{#each horizontalGuides as guide, index}
+								<div class="mb-1 flex items-center justify-between">
+									<span>{guide}px</span>
+									<div class="flex gap-1">
+										<button
+											class="rounded p-1 text-xs hover:bg-gray-200 dark:hover:bg-gray-700"
+											onclick={() => {
+												const newPosition = prompt('Enter new position:', guide.toString());
+												if (newPosition && !isNaN(+newPosition)) {
+													horizontalGuides[index] = +newPosition;
+													horizontalGuides = [...horizontalGuides].sort((a, b) => a - b);
+												}
+											}}
+										>
+											Edit
+										</button>
+										<button
+											class="rounded p-1 text-xs text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30"
+											onclick={() => {
+												horizontalGuides.splice(index, 1);
+												horizontalGuides = [...horizontalGuides];
+											}}
+										>
+											Remove
+										</button>
+									</div>
+								</div>
+							{/each}
+						</div>
+					{/if}
+
+					<div class="mt-2 flex gap-2">
+						<input
+							type="number"
+							class="w-full rounded border p-1 dark:border-gray-600 dark:bg-gray-700"
+							bind:value={newHorizontalGuide}
+							placeholder="Position in px"
+						/>
+						<button
+							class="rounded bg-blue-500 px-2 py-1 text-white hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
+							onclick={() => {
+								if (newHorizontalGuide && !isNaN(newHorizontalGuide)) {
+									horizontalGuides = [...horizontalGuides, newHorizontalGuide].sort(
+										(a, b) => a - b
+									);
+									newHorizontalGuide = undefined;
+								}
+							}}
+						>
+							Add
+						</button>
+					</div>
+				</div>
+
+				<div class="mb-4">
+					<h4 class="mb-2 font-medium">Vertical Guides</h4>
+					{#if verticalGuides.length === 0}
+						<p class="text-sm text-gray-500">No vertical guides added yet.</p>
+					{:else}
+						<div class="max-h-40 overflow-y-auto">
+							{#each verticalGuides as guide, index}
+								<div class="mb-1 flex items-center justify-between">
+									<span>{guide}px</span>
+									<div class="flex gap-1">
+										<button
+											class="rounded p-1 text-xs hover:bg-gray-200 dark:hover:bg-gray-700"
+											onclick={() => {
+												const newPosition = prompt('Enter new position:', guide.toString());
+												if (newPosition && !isNaN(+newPosition)) {
+													verticalGuides[index] = +newPosition;
+													verticalGuides = [...verticalGuides].sort((a, b) => a - b);
+												}
+											}}
+										>
+											Edit
+										</button>
+										<button
+											class="rounded p-1 text-xs text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30"
+											onclick={() => {
+												verticalGuides.splice(index, 1);
+												verticalGuides = [...verticalGuides];
+											}}
+										>
+											Remove
+										</button>
+									</div>
+								</div>
+							{/each}
+						</div>
+					{/if}
+
+					<div class="mt-2 flex gap-2">
+						<input
+							type="number"
+							class="w-full rounded border p-1 dark:border-gray-600 dark:bg-gray-700"
+							bind:value={newVerticalGuide}
+							placeholder="Position in px"
+						/>
+						<button
+							class="rounded bg-blue-500 px-2 py-1 text-white hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
+							onclick={() => {
+								if (newVerticalGuide && !isNaN(newVerticalGuide)) {
+									verticalGuides = [...verticalGuides, newVerticalGuide].sort((a, b) => a - b);
+									newVerticalGuide = undefined;
+								}
+							}}
+						>
+							Add
+						</button>
+					</div>
+				</div>
+
+				<div class="flex justify-between">
+					<button
+						class="rounded bg-red-500 px-3 py-1 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
+						onclick={() => {
+							if (confirm('Are you sure you want to remove all guides?')) {
+								horizontalGuides = [];
+								verticalGuides = [];
+							}
+						}}
+					>
+						Clear All Guides
+					</button>
+					<button
+						class="rounded bg-gray-300 px-3 py-1 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600"
+						onclick={() => (showGuideManager = false)}
+					>
+						Close
+					</button>
+				</div>
+			</div>
+		</div>
 	{/if}
 </div>
 
 <style>
 	.canvas-viewport-wrapper {
+	}
+
+	@keyframes fade {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	@keyframes slide {
+		from {
+			transform: translateY(20px);
+			opacity: 0;
+		}
+		to {
+			transform: translateY(0);
+			opacity: 1;
+		}
+	}
+
+	@keyframes bounce {
+		0%,
+		20%,
+		50%,
+		80%,
+		100% {
+			transform: translateY(0);
+		}
+		40% {
+			transform: translateY(-10px);
+		}
+		60% {
+			transform: translateY(-5px);
+		}
+	}
+
+	@keyframes pulse {
+		0% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(1.05);
+		}
+		100% {
+			transform: scale(1);
+		}
+	}
+
+	@keyframes spin {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
 	}
 </style>

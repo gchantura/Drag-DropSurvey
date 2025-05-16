@@ -189,21 +189,12 @@
 	<div class="mt-6 mb-4 border-t pt-4 dark:border-gray-700">
 		<h3 class="mb-2 text-lg font-medium">Actions</h3>
 		<SurveyActions onSave={handleSave} onLoad={handleLoad} onClear={handleClear} />
-		<div class="mt-2 grid grid-cols-2 gap-2">
-			<Button size="sm" color="light" onclick={handleExport}>Export JSON</Button>
+		<div class="mt-2 grid grid-cols-1 gap-2">
 			<Button size="sm" color="light" onclick={handleImportClick}>
 				{showImport ? 'Cancel Import' : 'Import JSON'}
 			</Button>
-			<Button size="sm" color="alternative" onclick={() => requestImageExport('png')}>
-				Export PNG
-			</Button>
-			<Button size="sm" color="alternative" onclick={() => requestImageExport('jpeg')}>
-				Export JPG
-			</Button>
-		</div>
-		<div class="mt-2">
 			<Button size="sm" color="primary" class="w-full" onclick={handleCodeExport}>
-				Export as Code
+				Export Survey
 			</Button>
 		</div>
 		{#if showImport}

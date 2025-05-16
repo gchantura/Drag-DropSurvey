@@ -23,9 +23,18 @@
 	function handleResetSelection() {
 		clearSelectionState();
 	}
-	function handleExportImageRequest(event: CustomEvent<{ format: 'png' | 'jpeg' }>) {
+	function handleExportImageRequest(
+		event: CustomEvent<{
+			format: 'png' | 'jpeg';
+			includeBackground?: boolean;
+			includeGrid?: boolean;
+		}>
+	) {
 		if (canvasComponent) {
-			canvasComponent.exportCanvasAsImage(event.detail.format);
+			canvasComponent.exportCanvasAsImage(event.detail.format, {
+				includeBackground: event.detail.includeBackground,
+				includeGrid: event.detail.includeGrid
+			});
 		} else {
 			console.error('Canvas component reference not available for export.');
 		}

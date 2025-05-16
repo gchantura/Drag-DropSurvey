@@ -14,6 +14,7 @@
 		properties: void;
 		selectAll: void;
 		autoPosition: void;
+		autoSpacing: void;
 		deleteGuide: GuideInfo;
 		setPositionGuide: GuideInfo;
 	}>();
@@ -35,6 +36,10 @@
 	}
 	function handleInternalClick(event: MouseEvent) {
 		event.stopPropagation();
+	}
+	function handleAutoSpacing() {
+		dispatch('autoSpacing');
+		dispatch('close');
 	}
 </script>
 
@@ -126,6 +131,14 @@
 			}}
 		>
 			Auto Position
+		</button>
+		<button
+			class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-white"
+			role="menuitem"
+			tabindex="-1"
+			onclick={handleAutoSpacing}
+		>
+			Auto Spacing
 		</button>
 	</div>
 </div>

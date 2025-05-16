@@ -6,9 +6,12 @@
 
 	export let open = false;
 
-	const dispatch = createEventDispatcher<{ close: void }>();
+	const dispatch = createEventDispatcher<{
+		close: void;
+		exportImage: { format: 'png' | 'jpeg'; includeBackground: boolean; includeGrid: boolean };
+	}>();
 
-	let exportFormat: ExportFormat = 'html';
+	let exportFormat: ExportFormat | 'png' | 'jpeg' = 'html';
 	let includeStyles = true;
 	let includeValidation = true;
 	let includeFramework = false;
@@ -16,14 +19,21 @@
 	let splitFiles = false;
 	let exportedFiles: { name: string; content: string }[] = [];
 	let activeTab = 0;
+	let includeBackground = true;
+	let includeGrid = false;
 
 	function handleClose() {
 		dispatch('close');
 	}
 
 	function generateExport() {
+		if (exportFormat === 'png' || exportFormat === 'jpeg') {
+			// Skip code generation for image exports
+			return;
+		}
+
 		const settings = {
-			format: exportFormat,
+			format: exportFormat as ExportFormat,
 			includeStyles,
 			includeValidation,
 			includeFramework,
@@ -32,7 +42,7 @@
 		};
 
 		exportSettingsStore.set(settings);
-		const result = exportSurveyAsCode(exportFormat, settings);
+		const result = exportSurveyAsCode(exportFormat as ExportFormat, settings);
 
 		if (result && 'files' in result) {
 			exportedFiles = result.files;
@@ -77,17 +87,23 @@
 		exportedFiles.forEach(downloadFile);
 	}
 
+	function requestImageExport(format: 'png' | 'jpeg') {
+		dispatch('exportImage', {
+			format,
+			includeBackground,
+			includeGrid
+		});
+		// Don't close the modal to allow multiple exports with different settings
+	}
+
 	$: if (open) {
 		generateExport();
 	}
 
 	$: if (
-		exportFormat ||
-		includeStyles ||
-		includeValidation ||
-		includeFramework ||
-		minify ||
-		splitFiles
+		exportFormat !== 'png' &&
+		exportFormat !== 'jpeg' &&
+		(exportFormat || includeStyles || includeValidation || includeFramework || minify || splitFiles)
 	) {
 		generateExport();
 	}
@@ -127,55 +143,81 @@
 					<option value="react">React</option>
 					<option value="vue">Vue</option>
 					<option value="angular">Angular</option>
+					<option value="png">PNG Image</option>
+					<option value="jpeg">JPEG Image</option>
 				</Select>
 			</div>
 
 			<!-- Export Options -->
-			<div class="space-y-2">
-				<h4 class="text-sm font-medium text-gray-900 dark:text-white">Options</h4>
-				<div class="flex items-center">
-					<Checkbox id="include-styles" bind:checked={includeStyles} />
-					<label for="include-styles" class="ml-2 text-sm text-gray-900 dark:text-white"
-						>Include Styles</label
-					>
-				</div>
-				<div class="flex items-center">
-					<Checkbox id="include-validation" bind:checked={includeValidation} />
-					<label for="include-validation" class="ml-2 text-sm text-gray-900 dark:text-white"
-						>Include Validation</label
-					>
-				</div>
-				{#if exportFormat !== 'html' && exportFormat !== 'json'}
+			{#if exportFormat !== 'png' && exportFormat !== 'jpeg'}
+				<div class="space-y-2">
+					<h4 class="text-sm font-medium text-gray-900 dark:text-white">Options</h4>
 					<div class="flex items-center">
-						<Checkbox id="include-framework" bind:checked={includeFramework} />
-						<label for="include-framework" class="ml-2 text-sm text-gray-900 dark:text-white">
-							Include Framework Dependencies
+						<Checkbox id="include-styles" bind:checked={includeStyles} />
+						<label for="include-styles" class="ml-2 text-sm text-gray-900 dark:text-white"
+							>Include Styles</label
+						>
+					</div>
+					<div class="flex items-center">
+						<Checkbox id="include-validation" bind:checked={includeValidation} />
+						<label for="include-validation" class="ml-2 text-sm text-gray-900 dark:text-white"
+							>Include Validation</label
+						>
+					</div>
+					{#if exportFormat !== 'html' && exportFormat !== 'json'}
+						<div class="flex items-center">
+							<Checkbox id="include-framework" bind:checked={includeFramework} />
+							<label for="include-framework" class="ml-2 text-sm text-gray-900 dark:text-white">
+								Include Framework Dependencies
+							</label>
+						</div>
+					{/if}
+					<div class="flex items-center">
+						<Checkbox id="minify" bind:checked={minify} />
+						<label for="minify" class="ml-2 text-sm text-gray-900 dark:text-white"
+							>Minify Output</label
+						>
+					</div>
+					<div class="flex items-center">
+						<Checkbox id="split-files" bind:checked={splitFiles} />
+						<label for="split-files" class="ml-2 text-sm text-gray-900 dark:text-white"
+							>Split HTML/CSS/JS Files</label
+						>
+					</div>
+				</div>
+
+				<!-- Download Button -->
+				<Button color="primary" on:click={downloadAllFiles}>
+					Download {exportedFiles.length > 1 ? 'All Files' : 'File'}
+				</Button>
+			{:else}
+				<div class="mt-4 space-y-2">
+					<h4 class="text-sm font-medium text-gray-900 dark:text-white">Image Export Options</h4>
+					<div class="flex items-center">
+						<Checkbox id="include-background" bind:checked={includeBackground} />
+						<label for="include-background" class="ml-2 text-sm text-gray-900 dark:text-white">
+							Include Background
 						</label>
 					</div>
-				{/if}
-				<div class="flex items-center">
-					<Checkbox id="minify" bind:checked={minify} />
-					<label for="minify" class="ml-2 text-sm text-gray-900 dark:text-white"
-						>Minify Output</label
+					<div class="flex items-center">
+						<Checkbox id="include-grid" bind:checked={includeGrid} />
+						<label for="include-grid" class="ml-2 text-sm text-gray-900 dark:text-white">
+							Include Grid
+						</label>
+					</div>
+					<Button
+						color="primary"
+						on:click={() => requestImageExport(exportFormat as 'png' | 'jpeg')}
 					>
+						Export as {exportFormat.toUpperCase()}
+					</Button>
 				</div>
-				<div class="flex items-center">
-					<Checkbox id="split-files" bind:checked={splitFiles} />
-					<label for="split-files" class="ml-2 text-sm text-gray-900 dark:text-white"
-						>Split HTML/CSS/JS Files</label
-					>
-				</div>
-			</div>
-
-			<!-- Download Button -->
-			<Button color="primary" on:click={downloadAllFiles}>
-				Download {exportedFiles.length > 1 ? 'All Files' : 'File'}
-			</Button>
+			{/if}
 		</div>
 
 		<!-- Exported Code Tabs -->
 		<div class="col-span-2">
-			{#if exportedFiles.length > 0}
+			{#if exportedFiles.length > 0 && exportFormat !== 'png' && exportFormat !== 'jpeg'}
 				<Tabs>
 					{#each exportedFiles as file, i}
 						<TabItem title={file.name} {open}>

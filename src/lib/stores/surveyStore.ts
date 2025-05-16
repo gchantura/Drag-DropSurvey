@@ -41,6 +41,12 @@ export function addComponent(type: ComponentType) {
             textDecoration: "none",
             opacity: 1,
             boxShadow: "none",
+            // New properties with defaults
+            rotation: 0,
+            scale: 1,
+            animation: "none",
+            animationDuration: 1,
+            zIndex: 10,
             required: false,
             placeholder: type === "input" || type === "textarea" ? "Enter text..." : undefined,
             helpText: "",
