@@ -1,4 +1,6 @@
 <script lang="ts">
+	import TypographyOptions from '$lib/components/SideBarComponents/PropertiesEditor/TextOptions/TypographyOptions.svelte';
+
 	import { Label, Checkbox, Tabs, TabItem, Range } from 'flowbite-svelte';
 	import {
 		updateComponent,
@@ -81,9 +83,7 @@
 {#if component}
 	<Tabs style="underline">
 		<TabItem open title="Basic">
-			<div
-				class=""
-			>
+			<div class="">
 				<!-- Text/Label editor -->
 				<div class="mb-3">
 					<label for="comp-label-input" class="mb-1 block text-sm font-medium">Label:</label>
@@ -301,9 +301,9 @@
 		</TabItem>
 
 		<TabItem title="Style">
-			<div
-				class=""
-			>
+			<TypographyOptions />
+
+			<div class="">
 				<!-- Typography -->
 				<h3 class="mb-2 text-base font-medium">Typography</h3>
 
@@ -664,9 +664,7 @@
 		</TabItem>
 
 		<TabItem title="Advanced">
-			<div
-				class=""
-			>
+			<div class="">
 				<!-- Matrix-->
 				{#if component.type === 'matrix'}
 					<div class="mb-3">

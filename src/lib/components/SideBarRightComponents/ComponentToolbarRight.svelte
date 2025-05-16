@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ToolbarAlign from '$lib/components/CanvasComponents/ToolbarAlignment.svelte';
 	import ToolbarDistribute from '$lib/components/CanvasComponents/ToolbarDistribute.svelte';
-	import TextOptions from '$lib/components/SideBarRightComponents/TextOptions/TypographyOptions.svelte';
+	import TextOptions from '$lib/components/SideBarComponents/PropertiesEditor/TextOptions/TypographyOptions.svelte';
 	import PropertiesEditor from '$lib/components/SideBarComponents/PropertiesEditor.svelte';
 
 	import type { SurveyComponent } from '$lib/types/survey.ts';
