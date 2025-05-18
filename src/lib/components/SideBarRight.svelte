@@ -1,14 +1,18 @@
 <!-- src/lib/components/SideBarRight.svelte -->
 <script lang="ts">
-	import ComponentToolbarRight from '$lib/components/SideBarRightComponents/ComponentToolbarRight.svelte';
 	import { createEventDispatcher } from 'svelte';
 	import type { SurveyComponent } from '$lib/types/survey.ts';
+	import ComponentToolbarRight from '$lib/components/SideBarRightComponents/ComponentToolbarRight.svelte';
+	import PropertiesEditor from '$lib/components/SideBarComponents/PropertiesEditor.svelte';
+
 	const dispatch = createEventDispatcher();
 	const { selectedComponent } = $props<{ selectedComponent: SurveyComponent | null }>();
+
 	let sidebarWidth = $state(300);
 	let startX = $state(0);
 	let startWidth = $state(0);
 	let sidebarEl: HTMLDivElement;
+
 	function handleResizeStart(event: MouseEvent | TouchEvent) {
 		const clientX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX;
 		startX = clientX;
@@ -20,6 +24,7 @@
 		window.addEventListener('mouseup', handleResizeEnd);
 		window.addEventListener('touchend', handleResizeEnd);
 	}
+
 	function handleResizing(event: MouseEvent | TouchEvent) {
 		event.preventDefault();
 		const clientX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX;
@@ -28,6 +33,7 @@
 			sidebarWidth = newWidth;
 		}
 	}
+
 	function handleResizeEnd() {
 		document.body.style.cursor = '';
 		document.body.style.userSelect = '';
@@ -50,10 +56,17 @@
 		onmousedown={handleResizeStart}
 		ontouchstart={handleResizeStart}
 	></button>
+
 	<div class="mb-4 flex items-center justify-between">
-		<h2 class="text-xl font-semibold">Tool Bar Right</h2>
+		<h2 class="text-xl font-semibold">Properties</h2>
 	</div>
-	<ComponentToolbarRight />
+
+	<ComponentToolbarRight {selectedComponent} />
+
+	<div class="mt-6 border-t pt-4 dark:border-gray-700">
+		<h3 class="mb-2 text-lg font-medium">Component Properties</h3>
+		<PropertiesEditor component={selectedComponent} />
+	</div>
 </div>
 
 <style>

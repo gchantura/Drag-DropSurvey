@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { addComponent } from '../../stores/surveyStore.js';
+	import { addComponent } from '../../stores/designStore.ts';
 	import type { ComponentType } from '../../types/survey.js';
 
 	import IconText from '$lib/components/icons/components/text.svg?raw';

@@ -17,7 +17,7 @@
 		deleteComponent,
 		duplicateComponent,
 		loadSurvey
-	} from '$lib/stores/surveyStore.ts';
+	} from '$lib/stores/designStore.ts';
 	import {
 		canvasViewStore,
 		PIXEL_PER_CM,
@@ -961,7 +961,6 @@
 </script>
 
 <div class="flex h-full w-full flex-col bg-gray-50 dark:bg-gray-900" bind:this={containerRef}>
-
 	<CanvasToolbar
 		{units}
 		{enableSnap}
@@ -980,7 +979,7 @@
 			on:distribute={(event) => distributeSelectedComponents(event.detail)}
 		/>
 	</div>
-	
+
 	<div
 		role="group"
 		aria-label="Canvas Area"

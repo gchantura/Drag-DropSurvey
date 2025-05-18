@@ -2,7 +2,7 @@
 <script lang="ts">
 	// ... (script remains the same)
 	import { createEventDispatcher } from 'svelte';
-	import { componentsStore } from '$lib/stores/surveyStore.ts';
+	import { componentsStore } from '$lib/stores/designStore.ts';
 	import type { SurveyComponent as SurveyComponentType, SelectionBox } from '$lib/types/survey.ts';
 	import SurveyComponent from '$lib/components/SurveyComponent.svelte';
 	import { theme } from '$lib/stores/themeStore.ts';

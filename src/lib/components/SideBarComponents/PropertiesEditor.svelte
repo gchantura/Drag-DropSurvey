@@ -1,5 +1,5 @@
+<!-- src/lib/components/SideBarComponents/PropertiesEditor.svelte -->
 <script lang="ts">
-	import { Label, Checkbox } from 'flowbite-svelte';
 	import {
 		updateComponent,
 		addOption,
@@ -12,8 +12,8 @@
 		addColumn,
 		removeColumn,
 		updateColumn
-	} from '../../stores/surveyStore.js';
-	import type { SurveyComponent } from '../../types/survey.js';
+	} from '$lib/stores/designStore.ts';
+	import type { SurveyComponent } from '$lib/types/survey.ts';
 
 	export let component: SurveyComponent | null = null;
 
@@ -202,15 +202,15 @@
 		<!-- Required field (only for form input components) -->
 		{#if ['input', 'textarea', 'checkbox', 'radio', 'dropdown', 'fileUpload', 'matrix', 'rating'].includes(component.type)}
 			<div class="mb-3 flex items-center">
-				<Label color="red" class="mt-4 flex items-center font-bold">
-					<Checkbox
+				<label class="flex items-center text-sm font-medium">
+					<input
 						type="checkbox"
-						id="required-field"
-						class="mr-2 dark:border-gray-700 dark:bg-gray-800"
+						class="mr-2 h-4 w-4 rounded border-gray-300 dark:border-gray-700 dark:bg-gray-800"
 						checked={component.required}
 						on:change={(e) => handleInputChange(e, 'required')}
-					/> Required
-				</Label>
+					/>
+					Required
+				</label>
 			</div>
 		{/if}
 

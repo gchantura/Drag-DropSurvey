@@ -1,6 +1,6 @@
 // src/lib/stores/alignmentStore.ts
 import { writable, derived, get } from 'svelte/store';
-import { componentsStore, updateComponent } from '$lib/stores/surveyStore.ts';
+import { componentsStore, updateComponent } from '$lib/stores/designStore.ts';
 import type { SurveyComponent } from '$lib/types/survey.ts';
 
 export type Alignment = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom';
