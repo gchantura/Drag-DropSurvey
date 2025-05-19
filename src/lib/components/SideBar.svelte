@@ -4,7 +4,7 @@
 	import ComponentToolbar from './SideBarComponents/ComponentToolbar.svelte';
 	import DesignerActions from './SideBarComponents/DesignerActions.svelte';
 	import Alert from './ui/Alert.svelte';
-	import type { SurveyComponent } from '$lib/types/survey.ts';
+	import type { SurveyComponent } from '$lib/types/types.ts';
 	import { theme, toggleTheme } from '$lib/stores/themeStore.ts';
 	import { createEventDispatcher } from 'svelte';
 	import { undo, redo, canUndo, canRedo } from '$lib/stores/historyStore.ts';

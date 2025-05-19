@@ -4,7 +4,7 @@
 	import TextOptions from '$lib/components/SideBarRightComponents/TextOptions/TypographyOptions.svelte';
 	import PropertiesEditor from '$lib/components/SideBarComponents/PropertiesEditor.svelte';
 
-	import type { SurveyComponent } from '$lib/types/survey.ts';
+	import type { SurveyComponent } from '$lib/types/types.ts';
 	const { selectedComponent } = $props<{ selectedComponent: SurveyComponent | null }>();
 
 	import {

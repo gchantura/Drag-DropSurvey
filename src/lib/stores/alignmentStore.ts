@@ -1,7 +1,7 @@
 // src/lib/stores/alignmentStore.ts
 import { writable, derived, get } from 'svelte/store';
 import { componentsStore, updateComponent } from '$lib/stores/designStore.ts';
-import type { SurveyComponent } from '$lib/types/survey.ts';
+import type { SurveyComponent } from '$lib/types/types.ts';
 
 export type Alignment = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom';
 export const selectedComponentIds = writable<string[]>([]); export const primarySelectedComponentId = writable<string | null>(null);

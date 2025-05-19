@@ -13,7 +13,7 @@
 		removeColumn,
 		updateColumn
 	} from '$lib/stores/designStore.ts';
-	import type { SurveyComponent } from '$lib/types/survey.ts';
+	import type { SurveyComponent } from '$lib/types/types.ts';
 
 	export let component: SurveyComponent | null = null;
 

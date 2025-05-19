@@ -1,6 +1,6 @@
 // src/lib/stores/historyStore.ts
 import { writable, get } from "svelte/store"
-import type { SurveyComponent } from "$lib/types/survey.ts"
+import type { SurveyComponent } from "$lib/types/types.ts"
 import { componentsStore } from "./designStore.ts"
 import { primarySelectedComponentId } from "./alignmentStore.ts"
 

@@ -2,7 +2,7 @@
 import { derived, get } from "svelte/store"
 import { selectedComponentIds } from "./alignmentStore.ts"
 import { componentsStore, updateComponent } from "./designStore.ts"
-import type { SurveyComponent } from "$lib/types/survey.ts"
+import type { SurveyComponent } from "$lib/types/types.ts"
 
 export type Distribution = "horizontal" | "vertical"
 

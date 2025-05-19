@@ -1,7 +1,7 @@
 <!-- src/lib/components/SideBarRight.svelte -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import type { SurveyComponent } from '$lib/types/survey.ts';
+	import type { SurveyComponent } from '$lib/types/types.ts';
 	import ComponentToolbarRight from '$lib/components/SideBarRightComponents/ComponentToolbarRight.svelte';
 	import PropertiesEditor from '$lib/components/SideBarComponents/PropertiesEditor.svelte';
 

@@ -1,7 +1,7 @@
 <!-- src/lib/components/CanvasComponents/CanvasViewport.svelte -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import type { SurveyComponent as SurveyComponentType, SelectionBox } from '$lib/types/survey.ts';
+	import type { SurveyComponent as SurveyComponentType, SelectionBox } from '$lib/types/types.ts';
 	import CanvasContent from './CanvasContent.svelte';
 	import CanvasGuide from './CanvasGuide.svelte';
 

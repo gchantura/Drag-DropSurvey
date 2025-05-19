@@ -1,7 +1,7 @@
 <!-- src/lib/components/SurveyComponent.svelte -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import type { SurveyComponent as SurveyComponentType } from '$lib/types/survey.ts';
+	import type { SurveyComponent as SurveyComponentType } from '$lib/types/types.ts';
 	const componentMap = {
 		text: () => import('./MainComponents/TextComponent.svelte'),
 		input: () => import('./MainComponents/InputComponent.svelte'),

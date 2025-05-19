@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import type { SurveyComponent } from '$lib/types/survey.ts';
+	import type { SurveyComponent } from '$lib/types/types.ts';
 	import {
 		canvasViewStore,
 		PIXEL_PER_CM,

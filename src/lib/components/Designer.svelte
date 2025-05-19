@@ -2,7 +2,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { derived } from 'svelte/store';
-	import type { SurveyComponent } from '$lib/types/survey.ts';
+	import type { SurveyComponent } from '$lib/types/types.ts';
 	import { componentsStore } from '$lib/stores/designStore.ts';
 	import { primarySelectedComponentId, clearSelectionState } from '$lib/stores/alignmentStore.ts';
 	import Canvas from './Canvas.svelte';

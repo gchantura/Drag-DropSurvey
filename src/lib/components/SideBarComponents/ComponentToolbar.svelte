@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { addComponent } from '../../stores/designStore.ts';
-	import type { ComponentType } from '../../types/survey.js';
+	import type { ComponentType } from '../../types/types.ts';
 
 	import IconText from '$lib/components/icons/components/text.svg?raw';
 	import IconInput from '$lib/components/icons/components/input.svg?raw';

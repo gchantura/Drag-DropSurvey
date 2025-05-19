@@ -1,7 +1,7 @@
 <!-- src/lib/components/CanvasComponents/ContextMenu.svelte -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import type { SurveyComponent } from '$lib/types/survey.ts';
+	import type { SurveyComponent } from '$lib/types/types.ts';
 	type GuideInfo = { direction: 'horizontal' | 'vertical'; index: number; position: number };
 	export let x: number;
 	export let y: number;

@@ -1,7 +1,7 @@
 // src/lib/stores/designStore.ts
 import { v4 as uuid } from "uuid"
 import { writable, get } from "svelte/store"
-import type { ComponentType, SurveyComponent } from "$lib/types/survey.ts"
+import type { ComponentType, SurveyComponent } from "$lib/types/types.ts"
 import { addHistoryEntry } from "./historyStore.ts"
 
 export const componentsStore = writable<SurveyComponent[]>([])
