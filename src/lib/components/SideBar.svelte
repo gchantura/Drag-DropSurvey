@@ -1,9 +1,8 @@
 <!-- src/lib/components/SideBar.svelte -->
 <script lang="ts">
 	import { exportDesign, clearDesign, importDesign } from '$lib/stores/designStore.ts';
-	import ComponentToolbar from './SideBarComponents/ComponentToolbar.svelte';
-	import DesignerActions from './SideBarComponents/DesignerActions.svelte';
-	import Alert from './ui/Alert.svelte';
+	import DesignerActions from '$lib/components/SideBarComponents/DesignerActions.svelte';
+	import Alert from '$lib/components/ui/Alert.svelte';
 	import type { SurveyComponent } from '$lib/types/types.ts';
 	import { theme, toggleTheme } from '$lib/stores/themeStore.ts';
 	import { createEventDispatcher } from 'svelte';
@@ -170,7 +169,7 @@
 			{/if}
 		</button>
 	</div>
-	<ComponentToolbar />
+
 	<div class="mt-6 mb-4 border-t pt-4 dark:border-gray-700">
 		<h3 class="mb-2 text-lg font-medium">Actions</h3>
 		<DesignerActions

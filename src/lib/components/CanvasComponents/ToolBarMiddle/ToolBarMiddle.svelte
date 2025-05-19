@@ -1,7 +1,43 @@
 <script lang="ts">
-	import DirectLeftTop from '$lib/components/icons/components/direct-left-top.svg?raw';
+	import { get } from 'svelte/store';
+	import { canAlign, alignSelectedComponents } from '$lib/stores/alignmentStore.ts';
+	import { canDistribute, distributeSelectedComponents } from '$lib/stores/distributionStore.ts';
+	import { componentsStore, addComponent } from '$lib/stores/designStore.ts';
+	import type { ComponentType } from '$lib/types/types.ts';
+
+	// Import component icons
 	import IconText from '$lib/components/icons/components/text.svg?raw';
+	import IconInput from '$lib/components/icons/components/input.svg?raw';
+	import IconTextAria from '$lib/components/icons/components/text-aria.svg?raw';
+	import IconCheckbox from '$lib/components/icons/components/checkbox.svg?raw';
+	import IconRadio from '$lib/components/icons/components/radio.svg?raw';
+	import IconDropdown from '$lib/components/icons/components/dropdown.svg?raw';
+	import IconAttachment from '$lib/components/icons/components/attachment.svg?raw';
+	import IconFileUpload from '$lib/components/icons/components/file-upload.svg?raw';
 	import IconSection from '$lib/components/icons/components/section.svg?raw';
+	import IconTitle from '$lib/components/icons/components/title.svg?raw';
+	import IconHeader from '$lib/components/icons/components/header.svg?raw';
+	import IconTable from '$lib/components/icons/components/table.svg?raw';
+	import IconStar from '$lib/components/icons/components/star.svg?raw';
+
+	// Component definitions
+	const components: { type: ComponentType; label: string; icon: string }[] = [
+		{ type: 'text', label: 'Text', icon: IconText },
+		{ type: 'input', label: 'Input', icon: IconInput },
+		{ type: 'textarea', label: 'Text Area', icon: IconTextAria },
+		{ type: 'checkbox', label: 'Checkbox', icon: IconCheckbox },
+		{ type: 'radio', label: 'Radio', icon: IconRadio },
+		{ type: 'dropdown', label: 'Dropdown', icon: IconDropdown },
+		{ type: 'section', label: 'Section', icon: IconSection },
+		{ type: 'title', label: 'Title', icon: IconTitle },
+		{ type: 'introduction', label: 'Header', icon: IconHeader },
+		{ type: 'matrix', label: 'Table', icon: IconTable },
+		{ type: 'rating', label: 'Rating', icon: IconStar }
+	];
+
+	function handleAddComponent(type: ComponentType) {
+		addComponent(type);
+	}
 
 	function sanitizeSvg(svg: string): string {
 		return svg.replace(/stroke="[^"]*"/g, 'stroke="currentColor"');
@@ -11,26 +47,29 @@
 <div
 	class="container-toolbar rounded border border-gray-300 bg-white text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-slate-300"
 >
-	<button
-		class="group flex h-8 w-8 items-center justify-center"
-		title="Zoom Options"
-	>
-		<span
-			class="inline-block h-4 w-4 text-gray-700 dark:text-slate-200 group-hover:text-black dark:group-hover:text-white [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
-		>
-			{@html sanitizeSvg(DirectLeftTop)}
-		</span>
-	</button>
-	<button
-		class="group flex h-8 w-8 items-center justify-center"
-		title="Zoom Options"
-	>
-		<span
-			class="inline-block h-4 w-4 text-gray-700 dark:text-slate-200 group-hover:text-black dark:group-hover:text-white [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
-		>
-			{@html sanitizeSvg(IconText)}
-		</span>
-	</button>
+	<div class="flex items-center">
+		<div class="h-8 w-px bg-gray-300 dark:bg-gray-700"></div>
+
+		<div class="h-8 w-px bg-gray-300 dark:bg-gray-700"></div>
+
+		<!-- Component buttons -->
+		<div class="flex items-center overflow-x-auto px-2">
+			{#each components as comp}
+				<button
+					class="group mx-1 flex h-8 w-8 items-center justify-center"
+					title={comp.label}
+					aria-label={`Add ${comp.label} component`}
+					onclick={() => handleAddComponent(comp.type)}
+				>
+					<span
+						class="inline-block h-5 w-5 text-gray-700 group-hover:text-black dark:text-slate-200 dark:group-hover:text-white [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
+					>
+						{@html sanitizeSvg(comp.icon)}
+					</span>
+				</button>
+			{/each}
+		</div>
+	</div>
 </div>
 
 <style>
