@@ -214,6 +214,22 @@
 			</div>
 		{/if}
 
+		<!-- Lock component -->
+		<div class="mb-3 flex items-center">
+			<label class="flex items-center text-sm font-medium">
+				<input
+					type="checkbox"
+					class="mr-2 h-4 w-4 rounded border-gray-300 dark:border-gray-700 dark:bg-gray-800"
+					checked={component.locked}
+					on:change={(e) => handleInputChange(e, 'locked')}
+				/>
+				Lock Component
+			</label>
+			<span class="ml-2 text-xs text-gray-500 dark:text-gray-400">
+				(Prevents moving, resizing, or editing)
+			</span>
+		</div>
+
 		<!-- Options for multi-choice components -->
 		{#if ['checkbox', 'radio', 'dropdown'].includes(component.type)}
 			<div class="mb-3">

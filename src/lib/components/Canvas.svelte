@@ -16,7 +16,8 @@
 		updateComponent,
 		deleteComponent,
 		duplicateComponent,
-		loadSurvey
+		loadSurvey,
+		addComponent
 	} from '$lib/stores/designStore.ts';
 	import {
 		canvasViewStore,
@@ -406,6 +407,85 @@
 		const step = e.shiftKey ? 10 : 1;
 		let needsUpdate = false;
 		switch (e.key.toLowerCase()) {
+			// Keyboard shortcuts for adding components
+			case 't':
+				if (!e.ctrlKey && !e.metaKey) {
+					e.preventDefault();
+					addComponent('text');
+				}
+				break;
+			case 'i':
+				if (!e.ctrlKey && !e.metaKey) {
+					e.preventDefault();
+					addComponent('input');
+				}
+				break;
+			case 'a':
+				if (!e.ctrlKey && !e.metaKey) {
+					e.preventDefault();
+					addComponent('textarea');
+				}
+				break;
+			case 'c':
+				if (!e.ctrlKey && !e.metaKey) {
+					e.preventDefault();
+					addComponent('checkbox');
+				}
+				break;
+			case 'r':
+				if (!e.ctrlKey && !e.metaKey) {
+					e.preventDefault();
+					addComponent('radio');
+				}
+				break;
+			case 'd':
+				if (!e.ctrlKey && !e.metaKey) {
+					e.preventDefault();
+					addComponent('dropdown');
+				}
+				break;
+			case 'f':
+				if (!e.ctrlKey && !e.metaKey) {
+					e.preventDefault();
+					addComponent('fileAttachment');
+				}
+				break;
+			case 'u':
+				if (!e.ctrlKey && !e.metaKey) {
+					e.preventDefault();
+					addComponent('fileUpload');
+				}
+				break;
+			case 's':
+				if (!e.ctrlKey && !e.metaKey) {
+					e.preventDefault();
+					addComponent('section');
+				}
+				break;
+			case 'h':
+				if (!e.ctrlKey && !e.metaKey) {
+					e.preventDefault();
+					addComponent('title');
+				}
+				break;
+			case 'n':
+				if (!e.ctrlKey && !e.metaKey) {
+					e.preventDefault();
+					addComponent('introduction');
+				}
+				break;
+			case 'm':
+				if (!e.ctrlKey && !e.metaKey) {
+					e.preventDefault();
+					addComponent('matrix');
+				}
+				break;
+			case 'e':
+				if (!e.ctrlKey && !e.metaKey) {
+					e.preventDefault();
+					addComponent('rating');
+				}
+				break;
 			case 'arrowup':
 				dy = -step;
 				needsUpdate = true;
@@ -985,6 +1065,24 @@
 		});
 
 		closeContextMenu();
+	}
+
+	// Memoize component rendering based on visibility
+	function isComponentVisible(component, canvasState, viewportWidth, viewportHeight) {
+		const compLeft = component.x * canvasState.scale + canvasState.offsetX;
+		const compTop = component.y * canvasState.scale + canvasState.offsetY;
+		const compRight = compLeft + component.width * canvasState.scale;
+		const compBottom = compTop + component.height * canvasState.scale;
+
+		// Add a buffer zone around the viewport for smoother scrolling
+		const buffer = 200;
+
+		return !(
+			compRight < -buffer ||
+			compLeft > viewportWidth + buffer ||
+			compBottom < -buffer ||
+			compTop > viewportHeight + buffer
+		);
 	}
 
 	onMount(() => {

@@ -37,11 +37,13 @@
 		}
 	}
 	function handleMouseDown(e: MouseEvent): void {
+		if (component.locked) return;
 		if (e.button === 0 && !(e.target as HTMLElement).classList.contains('resize-handle')) {
 			dispatch('startDrag', { event: e, component });
 		}
 	}
 	function handleResizeMouseDown(e: MouseEvent): void {
+		if (component.locked) return;
 		if (e.button === 0) {
 			dispatch('startResize', { event: e, component });
 			e.stopPropagation();
@@ -70,6 +72,7 @@
 	class="component absolute border outline-none"
 	class:selected={isSelected}
 	class:active={isActive}
+	class:locked={component.locked}
 	data-component-id={component.id}
 	style:top="{component.y}px"
 	style:left="{component.x}px"
@@ -148,5 +151,20 @@
 	}
 	.resize-handle {
 		z-index: 25;
+	}
+	.component.locked {
+		position: relative;
+	}
+
+	.component.locked::after {
+		content: '🔒';
+		position: absolute;
+		top: 2px;
+		right: 2px;
+		font-size: 12px;
+		background-color: rgba(255, 255, 255, 0.7);
+		border-radius: 3px;
+		padding: 2px;
+		pointer-events: none;
 	}
 </style>

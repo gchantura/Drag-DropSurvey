@@ -79,6 +79,7 @@ export function addComponent(type: ComponentType) {
         rows: type === "matrix" ? ["Row 1", "Row 2"] : [],
         startX: 0,
         startY: 0,
+        locked: false,
     }
 
     const newComponents = [...currentComponents, newComponent]

@@ -4,6 +4,8 @@
 	import type { SurveyComponent as SurveyComponentType, SelectionBox } from '$lib/types/types.ts';
 	import CanvasContent from './CanvasContent.svelte';
 	import CanvasGuide from './CanvasGuide.svelte';
+	import { get } from 'svelte/store';
+	import { canvasViewStore } from '$lib/stores/canvasStore.ts';
 
 	export let canvasWidth: number;
 	export let canvasHeight: number;
@@ -37,6 +39,27 @@
 		clearSelection: void; // Event to signal background click
 	};
 	const dispatch = createEventDispatcher<EventMap>();
+
+	// Add this function inside the component
+	function isComponentVisible(component: SurveyComponentType): boolean {
+		const canvasState = get(canvasViewStore);
+		const compLeft = component.x * canvasState.scale + canvasState.offsetX;
+		const compTop = component.y * canvasState.scale + canvasState.offsetY;
+		const compRight = compLeft + component.width * canvasState.scale;
+		const compBottom = compTop + component.height * canvasState.scale;
+
+		// Add a buffer zone around the viewport for smoother scrolling
+		const buffer = 200;
+		const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1000;
+		const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
+
+		return !(
+			compRight < -buffer ||
+			compLeft > viewportWidth + buffer ||
+			compBottom < -buffer ||
+			compTop > viewportHeight + buffer
+		);
+	}
 
 	function forwardEventFromContent(event: Event) {
 		dispatch((event as CustomEvent).type as keyof EventMap, (event as CustomEvent).detail);
@@ -100,6 +123,7 @@
 			{canvasScale}
 			{canvasOffsetX}
 			{canvasOffsetY}
+			{isComponentVisible}
 			on:selectComponent={forwardEventFromContent}
 			on:startDrag={forwardEventFromContent}
 			on:startResize={forwardEventFromContent}

@@ -17,6 +17,7 @@
 	export let canvasScale: number = 1;
 	export let canvasOffsetX: number = 0;
 	export let canvasOffsetY: number = 0;
+	export let isComponentVisible: (component: SurveyComponentType) => boolean;
 	type EventMap = {
 		selectComponent: { event: MouseEvent; component: SurveyComponentType };
 		startDrag: { event: MouseEvent; component: SurveyComponentType };
@@ -73,7 +74,7 @@
 			style:border-color="var(--selection-border-color)"
 		></div>
 	{/if}
-	{#each $componentsStore as component (component.id)}
+	{#each $componentsStore.filter( (component) => isComponentVisible(component) ) as component (component.id)}
 		<SurveyComponent
 			{component}
 			isSelected={multiSelectedComponentIds.includes(component.id)}

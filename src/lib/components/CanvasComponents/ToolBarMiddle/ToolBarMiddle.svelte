@@ -42,6 +42,26 @@
 	function sanitizeSvg(svg: string): string {
 		return svg.replace(/stroke="[^"]*"/g, 'stroke="currentColor"');
 	}
+
+	function getShortcutKey(type: ComponentType): string {
+		const shortcuts: Record<ComponentType, string> = {
+			text: 'T',
+			input: 'I',
+			textarea: 'A',
+			checkbox: 'C',
+			radio: 'R',
+			dropdown: 'D',
+			fileAttachment: 'F',
+			fileUpload: 'U',
+			section: 'S',
+			title: 'H',
+			introduction: 'N',
+			matrix: 'M',
+			rating: 'E'
+		};
+
+		return shortcuts[type] || '';
+	}
 </script>
 
 <div
@@ -54,20 +74,69 @@
 
 		<!-- Component buttons -->
 		<div class="flex items-center overflow-x-auto px-2">
-			{#each components as comp}
-				<button
-					class="group mx-1 flex h-8 w-8 items-center justify-center"
-					title={comp.label}
-					aria-label={`Add ${comp.label} component`}
-					onclick={() => handleAddComponent(comp.type)}
-				>
-					<span
-						class="inline-block h-5 w-5 text-gray-700 group-hover:text-black dark:text-slate-200 dark:group-hover:text-white [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
-					>
-						{@html sanitizeSvg(comp.icon)}
-					</span>
-				</button>
-			{/each}
+			<div class="flex flex-col">
+				<div class="mb-1 text-xs text-gray-500 dark:text-gray-400">Basic</div>
+				<div class="flex">
+					{#each components.filter((c) => ['text', 'input', 'textarea'].includes(c.type)) as comp}
+						<button
+							class="group mx-1 flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+							title="{comp.label} (Shortcut: {getShortcutKey(comp.type)})"
+							aria-label={`Add ${comp.label} component`}
+							onclick={() => handleAddComponent(comp.type)}
+						>
+							<span
+								class="inline-block h-5 w-5 text-gray-700 group-hover:text-black dark:text-slate-200 dark:group-hover:text-white [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
+							>
+								{@html sanitizeSvg(comp.icon)}
+							</span>
+						</button>
+					{/each}
+				</div>
+			</div>
+
+			<div class="mx-2 h-8 w-px bg-gray-300 dark:bg-gray-700"></div>
+
+			<div class="flex flex-col">
+				<div class="mb-1 text-xs text-gray-500 dark:text-gray-400">Form</div>
+				<div class="flex">
+					{#each components.filter( (c) => ['checkbox', 'radio', 'dropdown', 'fileUpload', 'rating'].includes(c.type) ) as comp}
+						<button
+							class="group mx-1 flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+							title="{comp.label} (Shortcut: {getShortcutKey(comp.type)})"
+							aria-label={`Add ${comp.label} component`}
+							onclick={() => handleAddComponent(comp.type)}
+						>
+							<span
+								class="inline-block h-5 w-5 text-gray-700 group-hover:text-black dark:text-slate-200 dark:group-hover:text-white [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
+							>
+								{@html sanitizeSvg(comp.icon)}
+							</span>
+						</button>
+					{/each}
+				</div>
+			</div>
+
+			<div class="mx-2 h-8 w-px bg-gray-300 dark:bg-gray-700"></div>
+
+			<div class="flex flex-col">
+				<div class="mb-1 text-xs text-gray-500 dark:text-gray-400">Structure</div>
+				<div class="flex">
+					{#each components.filter( (c) => ['section', 'title', 'introduction', 'matrix', 'attachment'].includes(c.type) ) as comp}
+						<button
+							class="group mx-1 flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+							title="{comp.label} (Shortcut: {getShortcutKey(comp.type)})"
+							aria-label={`Add ${comp.label} component`}
+							onclick={() => handleAddComponent(comp.type)}
+						>
+							<span
+								class="inline-block h-5 w-5 text-gray-700 group-hover:text-black dark:text-slate-200 dark:group-hover:text-white [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
+							>
+								{@html sanitizeSvg(comp.icon)}
+							</span>
+						</button>
+					{/each}
+				</div>
+			</div>
 		</div>
 	</div>
 </div>

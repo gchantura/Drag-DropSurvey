@@ -73,4 +73,15 @@
 	.resize-handle {
 		z-index: 50;
 	}
+
+	@media (max-width: 768px) {
+		.sidebar-right-container {
+			width: 100% !important;
+			padding: 0.5rem;
+		}
+
+		.resize-handle {
+			display: none;
+		}
+	}
 </style>
