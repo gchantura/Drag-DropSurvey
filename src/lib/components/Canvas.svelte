@@ -402,6 +402,16 @@
 			return;
 		}
 		if (spacebarHeld) return;
+
+		// Add keyboard shortcut for toggling code sidebar
+		if (e.key.toLowerCase() === 'e' && (e.ctrlKey || e.metaKey)) {
+			e.preventDefault();
+			import('$lib/stores/uiStore.ts').then(({ showCodeSidebar }) => {
+				showCodeSidebar.update((value) => !value);
+			});
+			return;
+		}
+
 		let dx = 0,
 			dy = 0;
 		const step = e.shiftKey ? 10 : 1;

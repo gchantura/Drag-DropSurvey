@@ -4,15 +4,25 @@
 	import { derived } from 'svelte/store';
 	import type { SurveyComponent } from '$lib/types/types.ts';
 	import { componentsStore } from '$lib/stores/designStore.ts';
-	import { primarySelectedComponentId, clearSelectionState } from '$lib/stores/alignmentStore.ts';
+	import {
+		primarySelectedComponentId,
+		clearSelectionState,
+		selectedComponentIds
+	} from '$lib/stores/alignmentStore.ts';
 	import Canvas from './Canvas.svelte';
 	import SideBar from '$lib/components/SideBar.svelte';
 	import SideBarRight from '$lib/components/SideBarRight.svelte';
+	import CodeSidebar from '$lib/components/CodeSidebar.svelte';
 	import { initHistory } from '$lib/stores/historyStore.ts';
-	import { showShortcutsDialog } from '$lib/stores/uiStore.ts';
+	import { showShortcutsDialog, showCodeSidebar } from '$lib/stores/uiStore.ts';
+	import { generateFullExport } from '$lib/utils/code-export-utils.ts';
 
 	function toggleShortcutsDialog() {
 		showShortcutsDialog.update((value) => !value);
+	}
+
+	function toggleCodeSidebar() {
+		showCodeSidebar.update((value) => !value);
 	}
 
 	const selectedComponent = derived(
@@ -41,6 +51,55 @@
 			console.error('Canvas component reference not available for export.');
 		}
 	}
+
+	function handleExportCode() {
+		const selectedIds = $selectedComponentIds;
+		const allComponents = $componentsStore;
+
+		// If no components are selected, export all components
+		const componentsToExport =
+			selectedIds.length > 0
+				? allComponents.filter((c) => selectedIds.includes(c.id))
+				: allComponents;
+
+		if (componentsToExport.length === 0) {
+			alert('No components to export');
+			return;
+		}
+
+		const { html, css, js } = generateFullExport(componentsToExport);
+
+		// Create a blob with the HTML content
+		const htmlBlob = new Blob([html], { type: 'text/html' });
+		const cssBlob = new Blob([css], { type: 'text/css' });
+		const jsBlob = new Blob([js], { type: 'text/javascript' });
+
+		// Create download links
+		const htmlLink = document.createElement('a');
+		htmlLink.href = URL.createObjectURL(htmlBlob);
+		htmlLink.download = 'components.html';
+
+		const cssLink = document.createElement('a');
+		cssLink.href = URL.createObjectURL(cssBlob);
+		cssLink.download = 'components.css';
+
+		const jsLink = document.createElement('a');
+		jsLink.href = URL.createObjectURL(jsBlob);
+		jsLink.download = 'components.js';
+
+		// Trigger downloads
+		document.body.appendChild(htmlLink);
+		htmlLink.click();
+		document.body.removeChild(htmlLink);
+
+		document.body.appendChild(cssLink);
+		cssLink.click();
+		document.body.removeChild(cssLink);
+
+		document.body.appendChild(jsLink);
+		jsLink.click();
+		document.body.removeChild(jsLink);
+	}
 </script>
 
 <svelte:head><title>Kceva Designer</title></svelte:head>
@@ -53,16 +112,26 @@
 			on:resetSelection={handleResetSelection}
 			on:exportImageRequest={handleExportImageRequest}
 			on:toggleShortcutsDialog={toggleShortcutsDialog}
+			on:toggleCodeSidebar={toggleCodeSidebar}
+			on:exportCode={handleExportCode}
 		/>
 	</aside>
 	<main class="flex-1 overflow-hidden">
 		<Canvas bind:this={canvasComponent} selectedComponent={$selectedComponent} />
 	</main>
-	<aside
-		class="sidebar border-t border-gray-200 md:flex-shrink-0 md:border-t-0 md:border-l dark:border-gray-700"
-	>
-		<SideBarRight selectedComponent={$selectedComponent} />
-	</aside>
+	{#if $showCodeSidebar}
+		<aside
+			class="sidebar border-t border-gray-200 md:flex-shrink-0 md:border-t-0 md:border-l dark:border-gray-700"
+		>
+			<CodeSidebar selectedComponent={$selectedComponent} />
+		</aside>
+	{:else}
+		<aside
+			class="sidebar border-t border-gray-200 md:flex-shrink-0 md:border-t-0 md:border-l dark:border-gray-700"
+		>
+			<SideBarRight selectedComponent={$selectedComponent} />
+		</aside>
+	{/if}
 
 	{#if $showShortcutsDialog}
 		<div class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
@@ -146,6 +215,12 @@
 								<span>Select All</span>
 								<kbd class="rounded bg-gray-100 px-2 py-1 font-mono text-sm dark:bg-gray-700"
 									>Ctrl + A</kbd
+								>
+							</li>
+							<li class="flex justify-between">
+								<span>Toggle Code View</span>
+								<kbd class="rounded bg-gray-100 px-2 py-1 font-mono text-sm dark:bg-gray-700"
+									>Ctrl + E</kbd
 								>
 							</li>
 						</ul>
