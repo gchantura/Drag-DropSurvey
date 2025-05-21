@@ -1,4 +1,3 @@
-<!-- src/lib/components/SideBar.svelte -->
 <script lang="ts">
 	import { exportDesign, clearDesign, importDesign } from '$lib/stores/designStore.ts';
 	import DesignerActions from '$lib/components/SideBarComponents/DesignerActions.svelte';
@@ -7,7 +6,11 @@
 	import { theme, toggleTheme } from '$lib/stores/themeStore.ts';
 	import { createEventDispatcher } from 'svelte';
 	import { undo, redo, canUndo, canRedo } from '$lib/stores/historyStore.ts';
-	import { showShortcutsDialog, showCodeSidebar } from '$lib/stores/uiStore.ts';
+	import {
+		showShortcutsDialog,
+		showCodeSidebar,
+		showThemeCustomizer
+	} from '$lib/stores/uiStore.ts';
 	import ThemeToggle from '$lib/components/ThemeCustomizer/ThemeToggle.svelte';
 	import ThemeCustomizer from '$lib/components/ThemeCustomizer/ThemeCustomizer.svelte';
 
@@ -26,7 +29,6 @@
 	let alertTimeout: number | undefined = undefined;
 	let showImport = $state(false);
 	let importFile: FileList | null = $state(null);
-	let showThemeCustomizer = $state(false);
 
 	function showAlert(message: string, color: typeof alertColor = 'info', duration: number = 3000) {
 		alertMessage = message;
@@ -145,8 +147,8 @@
 		showAlert('Exporting component code...', 'info', 1500);
 	}
 
-	function handleToggleThemeCustomizer(event: CustomEvent<boolean>) {
-		showThemeCustomizer = event.detail;
+	function handleToggleThemeCustomizer() {
+		showThemeCustomizer.update((value) => !value);
 	}
 </script>
 
@@ -167,6 +169,32 @@
 		<div class="flex">
 			<button
 				type="button"
+				aria-label="Theme customizer"
+				class="rounded-lg p-2.5 text-sm text-gray-500 hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 focus:outline-none dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-700 {$showThemeCustomizer
+					? 'bg-gray-200 dark:bg-gray-700'
+					: ''}"
+				onclick={handleToggleThemeCustomizer}
+				title="Theme Customizer"
+			>
+				<svg
+					class="h-5 w-5"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+					xmlns="http://www.w3.org/2000/svg"
+					aria-hidden="true"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
+					></path>
+				</svg>
+				<span class="sr-only">Open theme customizer</span>
+			</button>
+			<button
+				type="button"
 				aria-label="Toggle code view"
 				class="rounded-lg p-2.5 text-sm text-gray-500 hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 focus:outline-none dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-700 {$showCodeSidebar
 					? 'bg-gray-200 dark:bg-gray-700'
@@ -180,6 +208,7 @@
 					stroke="currentColor"
 					viewBox="0 0 24 24"
 					xmlns="http://www.w3.org/2000/svg"
+					aria-hidden="true"
 				>
 					<path
 						stroke-linecap="round"
@@ -188,6 +217,7 @@
 						d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
 					></path>
 				</svg>
+				<span class="sr-only">Toggle code view</span>
 			</button>
 			<button
 				type="button"
@@ -201,6 +231,7 @@
 					stroke="currentColor"
 					viewBox="0 0 24 24"
 					xmlns="http://www.w3.org/2000/svg"
+					aria-hidden="true"
 				>
 					<path
 						stroke-linecap="round"
@@ -209,6 +240,7 @@
 						d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
 					></path>
 				</svg>
+				<span class="sr-only">Show keyboard shortcuts</span>
 			</button>
 			<button
 				type="button"
@@ -222,21 +254,25 @@
 						fill="currentColor"
 						viewBox="0 0 20 20"
 						xmlns="http://www.w3.org/2000/svg"
+						aria-hidden="true"
 						><path
 							d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
 							fill-rule="evenodd"
 							clip-rule="evenodd"
 						></path></svg
 					>
+					<span class="sr-only">Switch to light mode</span>
 				{:else}
 					<svg
 						class="h-5 w-5"
 						fill="currentColor"
 						viewBox="0 0 20 20"
 						xmlns="http://www.w3.org/2000/svg"
+						aria-hidden="true"
 						><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"
 						></path></svg
 					>
+					<span class="sr-only">Switch to dark mode</span>
 				{/if}
 			</button>
 		</div>
@@ -329,11 +365,9 @@
 	{/if}
 </div>
 
-<!-- Theme Customizer Toggle Button -->
-<ThemeToggle bind:isOpen={showThemeCustomizer} on:toggle={handleToggleThemeCustomizer} />
-
-<!-- Theme Customizer Panel -->
-<ThemeCustomizer bind:isOpen={showThemeCustomizer} />
+{#if $showThemeCustomizer}
+	<ThemeCustomizer isOpen={$showThemeCustomizer} />
+{/if}
 
 <style>
 	.resize-handle {

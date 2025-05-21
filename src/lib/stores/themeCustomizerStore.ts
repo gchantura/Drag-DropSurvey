@@ -11,6 +11,12 @@ export interface ThemeSettings {
   errorColor: string
   successColor: string
   warningColor: string
+  borderColor: string
+
+  // New global colors
+  canvasBackgroundColor: string
+  darkModeBackgroundColor: string
+  darkModeTextColor: string
 
   // Typography
   fontFamily: string
@@ -20,7 +26,6 @@ export interface ThemeSettings {
   // Borders
   borderRadius: string
   borderWidth: string
-  borderColor: string
 
   // Spacing
   inputPadding: string
@@ -45,6 +50,12 @@ const defaultTheme: ThemeSettings = {
   errorColor: "#ef4444", // Red
   successColor: "#22c55e", // Green
   warningColor: "#f59e0b", // Amber
+  borderColor: "#d1d5db", // Light gray
+
+  // New global colors
+  canvasBackgroundColor: "#ffffff", // White
+  darkModeBackgroundColor: "#1f2937", // Dark gray
+  darkModeTextColor: "#f3f4f6", // Light gray
 
   // Typography
   fontFamily: "Arial, sans-serif",
@@ -54,7 +65,6 @@ const defaultTheme: ThemeSettings = {
   // Borders
   borderRadius: "0.375rem", // 6px
   borderWidth: "1px",
-  borderColor: "#d1d5db", // Light gray
 
   // Spacing
   inputPadding: "0.5rem 0.75rem",
@@ -69,44 +79,64 @@ const defaultTheme: ThemeSettings = {
 }
 
 // Create the theme store
-const { subscribe, set, update } = writable<ThemeSettings>(defaultTheme)
+const createThemeStore = () => {
+  const { subscribe, set, update } = writable<ThemeSettings>(defaultTheme)
 
-// Load theme from localStorage if available
-function loadTheme() {
-  if (typeof window !== "undefined") {
-    const savedTheme = localStorage.getItem("kceva-theme")
-    if (savedTheme) {
-      try {
-        const parsedTheme = JSON.parse(savedTheme)
-        set({ ...defaultTheme, ...parsedTheme })
-      } catch (e) {
-        console.error("Failed to parse saved theme:", e)
+  // Load theme from localStorage if available
+  function loadTheme() {
+    if (typeof window !== "undefined") {
+      const savedTheme = localStorage.getItem("kceva-theme")
+      if (savedTheme) {
+        try {
+          const parsedTheme = JSON.parse(savedTheme)
+          set({ ...defaultTheme, ...parsedTheme })
+        } catch (e) {
+          console.error("Failed to parse saved theme:", e)
+        }
       }
     }
   }
-}
 
-// Save theme to localStorage
-function saveTheme() {
-  if (typeof window !== "undefined") {
-    const currentTheme = get({ subscribe })
-    localStorage.setItem("kceva-theme", JSON.stringify(currentTheme))
+  // Save theme to localStorage
+  function saveTheme() {
+    if (typeof window !== "undefined") {
+      const currentTheme = get({ subscribe })
+      localStorage.setItem("kceva-theme", JSON.stringify(currentTheme))
+    }
   }
-}
 
-// Update a single theme property
-function updateThemeSetting<K extends keyof ThemeSettings>(key: K, value: ThemeSettings[K]) {
-  update((theme) => {
-    const updatedTheme = { ...theme, [key]: value }
-    return updatedTheme
-  })
-  saveTheme()
-}
+  // Update a single theme property
+  function updateThemeSetting<K extends keyof ThemeSettings>(key: K, value: ThemeSettings[K]) {
+    update((theme) => {
+      const updatedTheme = { ...theme, [key]: value }
+      return updatedTheme
+    })
+    saveTheme()
+  }
 
-// Reset theme to defaults
-function resetTheme() {
-  set(defaultTheme)
-  saveTheme()
+  // Reset theme to defaults
+  function resetTheme() {
+    set(defaultTheme)
+    saveTheme()
+  }
+
+  // Initialize by loading saved theme
+  if (typeof window !== "undefined") {
+    loadTheme()
+  }
+
+  return {
+    subscribe,
+    updateSetting: updateThemeSetting,
+    reset: resetTheme,
+    applyTheme: (themeName: keyof typeof predefinedThemes) => {
+      if (predefinedThemes[themeName]) {
+        set(predefinedThemes[themeName])
+        saveTheme()
+      }
+    },
+    load: loadTheme,
+  }
 }
 
 // Export predefined themes
@@ -120,6 +150,9 @@ export const predefinedThemes = {
     textColor: "#f3f4f6", // Light gray
     backgroundColor: "#1f2937", // Dark gray
     borderColor: "#4b5563", // Medium gray
+    canvasBackgroundColor: "#1f2937", // Dark gray
+    darkModeBackgroundColor: "#111827", // Darker gray
+    darkModeTextColor: "#f9fafb", // Lighter gray
   },
   modern: {
     ...defaultTheme,
@@ -129,6 +162,9 @@ export const predefinedThemes = {
     borderRadius: "0.5rem", // 8px
     boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
     fontFamily: "Inter, sans-serif",
+    canvasBackgroundColor: "#f9fafb", // Light gray
+    darkModeBackgroundColor: "#1e1e2e", // Dark blue-gray
+    darkModeTextColor: "#e2e8f0", // Light blue-gray
   },
   minimal: {
     ...defaultTheme,
@@ -138,6 +174,9 @@ export const predefinedThemes = {
     borderRadius: "0.125rem", // 2px
     boxShadow: "none",
     borderWidth: "1px",
+    canvasBackgroundColor: "#ffffff", // White
+    darkModeBackgroundColor: "#121212", // Very dark gray
+    darkModeTextColor: "#e5e5e5", // Light gray
   },
   playful: {
     ...defaultTheme,
@@ -147,27 +186,11 @@ export const predefinedThemes = {
     borderRadius: "1rem", // 16px
     boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
     fontFamily: "Comic Sans MS, cursive",
+    canvasBackgroundColor: "#f0f9ff", // Light blue
+    darkModeBackgroundColor: "#1e293b", // Dark slate
+    darkModeTextColor: "#f8fafc", // Light slate
   },
 }
 
-// Apply a predefined theme
-function applyPredefinedTheme(themeName: keyof typeof predefinedThemes) {
-  if (predefinedThemes[themeName]) {
-    set(predefinedThemes[themeName])
-    saveTheme()
-  }
-}
-
-// Initialize by loading saved theme
-if (typeof window !== "undefined") {
-  loadTheme()
-}
-
-// Export the store and its methods
-export const themeStore = {
-  subscribe,
-  updateSetting: updateThemeSetting,
-  reset: resetTheme,
-  applyTheme: applyPredefinedTheme,
-  load: loadTheme,
-}
+// Export the theme store
+export const themeStore = createThemeStore()

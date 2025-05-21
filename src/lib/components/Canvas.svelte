@@ -58,6 +58,10 @@
 	import StatusBar from '$lib/components/CanvasComponents/StatusBar.svelte';
 	import ToolBarMiddle from '$lib/components/CanvasComponents/ToolBarMiddle/ToolBarMiddle.svelte';
 
+	// Update the Canvas component to use the theme customizer settings for the canvas background
+	// Import the themeStore
+	import { themeStore } from '$lib/stores/themeCustomizerStore.ts';
+
 	type GuideInfo = { direction: 'horizontal' | 'vertical'; index: number; position: number };
 
 	export let selectedComponent: SurveyComponentType | null = null;
@@ -98,6 +102,8 @@
 
 	let selectedComponentId: string | null;
 	let multiSelectedComponentIds: string[];
+	// Import the theme store directly
+	import { theme as themeMode } from '$lib/stores/themeStore.ts';
 
 	const primarySelectedComponentIdStore = primarySelectedComponentId;
 	const selectedComponentIdsStore = selectedComponentIds;
@@ -1145,7 +1151,13 @@
 	}
 </script>
 
-<div class="flex h-full w-full flex-col bg-gray-50 dark:bg-gray-900" bind:this={containerRef}>
+<div
+	class="flex h-full w-full flex-col"
+	style="background-color: {$themeMode === 'dark'
+		? $themeStore.darkModeBackgroundColor
+		: $themeStore.canvasBackgroundColor};"
+	bind:this={containerRef}
+>
 	<CanvasToolbar
 		{units}
 		{enableSnap}

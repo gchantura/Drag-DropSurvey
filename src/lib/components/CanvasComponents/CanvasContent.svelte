@@ -6,6 +6,9 @@
 	import type { SurveyComponent as SurveyComponentType, SelectionBox } from '$lib/types/types.ts';
 	import SurveyComponent from '$lib/components/SurveyComponent.svelte';
 	import { theme } from '$lib/stores/themeStore.ts';
+	// Update the CanvasContent component to use the theme customizer settings
+	// Import the themeStore
+	import { themeStore } from '$lib/stores/themeCustomizerStore.ts';
 
 	export let canvasWidth: number;
 	export let canvasHeight: number;
@@ -29,10 +32,15 @@
 	}
 </script>
 
+<!-- Find the div with class "canvas-content-area relative bg-white dark:bg-gray-800"
+// and update it to use the theme customizer settings: -->
 <div
 	id="canvas-content-capture-area"
-	class="canvas-content-area relative bg-white dark:bg-gray-800"
-	style="width: {canvasWidth}px; height: {canvasHeight}px; overflow: visible;"
+	class="canvas-content-area relative"
+	style="width: {canvasWidth}px; height: {canvasHeight}px; overflow: visible; background-color: {$theme ===
+	'dark'
+		? $themeStore.darkModeBackgroundColor
+		: $themeStore.canvasBackgroundColor};"
 	role="presentation"
 >
 	{#if enableSnap && gridSize > 0 && canvasScale > 0.1}

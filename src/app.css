@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 @plugin 'flowbite/plugin';
@@ -16,8 +16,30 @@
     --color-primary-700: #eb4f27;
     --color-primary-800: #cc4522;
     --color-primary-900: #a5371b;
+}
 
+/* Add CSS variables for theme colors */
+:root {
+    --color-light-bg: #ffffff;
+    --color-light-text: #111827;
+    --color-dark-bg: #1f2937;
+    --color-dark-text: #f3f4f6;
+}
 
+/* Apply the CSS variables */
+.dark {
+    background-color: var(--color-dark-bg);
+    color: var(--color-dark-text);
+}
+
+body {
+    background-color: var(--color-light-bg);
+    color: var(--color-light-text);
+}
+
+.dark body {
+    background-color: var(--color-dark-bg);
+    color: var(--color-dark-text);
 }
 
 @source "../node_modules/flowbite-svelte/dist";
