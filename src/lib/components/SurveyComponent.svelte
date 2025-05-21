@@ -1,7 +1,10 @@
 <!-- src/lib/components/SurveyComponent.svelte -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import type { SurveyComponent } from '$lib/types/types.ts';
+	import type { SurveyComponent, ComponentStyle } from '$lib/types/types.ts';
+	import { themeStore } from '$lib/stores/themeCustomizerStore.ts';
+	import { componentStyleStore } from '$lib/stores/componentStyleStore.ts';
+
 	const componentMap = {
 		text: () => import('$lib/components/MainComponents/TextComponent.svelte'),
 		input: () => import('$lib/components/MainComponents/InputComponent.svelte'),
@@ -65,6 +68,84 @@
 			e.stopPropagation();
 		}
 	}
+
+	// Get the component style from the store based on component type
+	$: componentTypeStyle = $componentStyleStore[component.type] || $componentStyleStore.default;
+
+	// Apply component style
+	$: componentStyle = getComponentStyle(component, componentTypeStyle);
+
+	function getComponentStyle(comp: SurveyComponent, typeStyle: ComponentStyle) {
+		// Base styles from component properties and component type style
+		let style = `
+			top: ${comp.y}px;
+			left: ${comp.x}px;
+			width: ${comp.width}px;
+			height: ${comp.height}px;
+			z-index: ${isSelected ? 20 : 10};
+		`;
+
+		// Apply font styles
+		style += `
+			font-family: ${comp.fontFamily || typeStyle.fontFamily};
+			font-size: ${comp.fontSize ? comp.fontSize + 'px' : typeStyle.fontSize};
+			font-weight: ${typeStyle.fontWeight};
+			color: ${comp.color || typeStyle.color};
+			text-align: ${typeStyle.textAlign};
+		`;
+
+		// Apply background (solid or gradient)
+		if (typeStyle.backgroundGradient) {
+			style += `
+				background: linear-gradient(
+					${typeStyle.backgroundGradientDirection}, 
+					${typeStyle.backgroundGradientStart}, 
+					${typeStyle.backgroundGradientEnd}
+				);
+			`;
+		} else {
+			style += `background-color: ${comp.bgColor || typeStyle.backgroundColor};`;
+		}
+
+		// Apply opacity
+		style += `opacity: ${typeStyle.opacity};`;
+
+		// Apply borders and spacing
+		style += `
+			border: ${typeStyle.borderWidth} ${typeStyle.borderStyle} ${typeStyle.borderColor};
+			border-radius: ${typeStyle.borderRadius};
+			padding: ${typeStyle.padding};
+			margin: ${typeStyle.margin};
+		`;
+
+		// Apply box shadow (conditionally based on selection state)
+		if (isSelected) {
+			style += `box-shadow: ${typeStyle.boxShadow || '0 0 0 2px rgba(59, 130, 246, 0.5)'};`;
+		} else if (typeStyle.boxShadow) {
+			style += `box-shadow: ${typeStyle.boxShadow};`;
+		}
+
+		// Apply transition
+		style += `transition: ${typeStyle.transition};`;
+
+		// Apply transform if provided
+		if (typeStyle.transform && typeStyle.transform !== 'none') {
+			style += `transform: ${typeStyle.transform};`;
+		}
+
+		// Apply any custom style overrides from the component
+		if (comp.customStyle) {
+			Object.entries(comp.customStyle).forEach(([key, value]) => {
+				if (value !== undefined && value !== null) {
+					// Convert camelCase to kebab-case for CSS properties
+					const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+					style += `${cssKey}: ${value};`;
+				}
+			});
+		}
+
+		return style;
+	}
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -74,15 +155,7 @@
 	class:active={isActive}
 	class:locked={component.locked}
 	data-component-id={component.id}
-	style:top="{component.y}px"
-	style:left="{component.x}px"
-	style:width="{component.width}px"
-	style:height="{component.height}px"
-	style:font-family={component.fontFamily ?? 'Arial'}
-	style:font-size="{component.fontSize ?? 16}px"
-	style:color={component.color ?? '#000000'}
-	style:background-color="transparent"
-	style:z-index={isSelected ? 20 : 10}
+	style={componentStyle}
 	onmousedown={handleMouseDown}
 	onclick={handleClick}
 	onkeydown={handleKeyDown}
@@ -120,9 +193,6 @@
 <style>
 	.component {
 		border: none;
-		transition:
-			box-shadow 0.1s ease-in-out,
-			border-color 0.1s ease-in-out;
 		user-select: none;
 		-webkit-user-select: none;
 		overflow: hidden;

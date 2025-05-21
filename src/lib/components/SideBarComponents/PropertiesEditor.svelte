@@ -235,7 +235,7 @@
 			<div class="mb-3">
 				<span class="mb-1 block text-sm font-medium">Options:</span>
 				<ul class="space-y-2">
-					{#each component.options as option, i}
+					{#each component.options || [] as option, i}
 						<li class="flex items-center">
 							<input
 								type="text"
@@ -322,7 +322,7 @@
 			<div class="mb-3">
 				<span class="mb-1 block text-sm font-medium">Matrix Rows:</span>
 				<ul class="space-y-2">
-					{#each component.rows as row, i}
+					{#each Array.isArray(component.rows) ? component.rows : [] as row, i}
 						<li class="flex items-center">
 							<input
 								type="text"
@@ -352,7 +352,7 @@
 			<div class="mb-3">
 				<span class="mb-1 block text-sm font-medium">Matrix Columns:</span>
 				<ul class="space-y-2">
-					{#each component.columns as column, i}
+					{#each component.columns || [] as column, i}
 						<li class="flex items-center">
 							<input
 								type="text"

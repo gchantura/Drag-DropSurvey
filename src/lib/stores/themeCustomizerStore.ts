@@ -1,6 +1,6 @@
 import { writable, get } from "svelte/store"
 
-// Define the theme interface
+// Define the theme interface with expanded properties
 export interface ThemeSettings {
   // Colors
   primaryColor: string
@@ -11,6 +11,7 @@ export interface ThemeSettings {
   errorColor: string
   successColor: string
   warningColor: string
+  infoColor: string
   borderColor: string
 
   // New global colors
@@ -18,10 +19,26 @@ export interface ThemeSettings {
   darkModeBackgroundColor: string
   darkModeTextColor: string
 
+  // Gradient colors
+  primaryGradientStart: string
+  primaryGradientEnd: string
+  primaryGradientDirection: string
+  backgroundGradientStart: string
+  backgroundGradientEnd: string
+  backgroundGradientDirection: string
+
+  // Opacity settings
+  primaryOpacity: number
+  backgroundOpacity: number
+
   // Typography
   fontFamily: string
   fontSize: string
   headingFontFamily: string
+  headingFontSize: string
+  lineHeight: string
+  fontWeight: string
+  letterSpacing: string
 
   // Borders
   borderRadius: string
@@ -31,12 +48,15 @@ export interface ThemeSettings {
   inputPadding: string
   buttonPadding: string
   componentSpacing: string
+  containerPadding: string
 
   // Shadows
   boxShadow: string
+  hoverBoxShadow: string
 
   // Transitions
   transitionDuration: string
+  transitionTimingFunction: string
 }
 
 // Default theme settings
@@ -50,6 +70,7 @@ const defaultTheme: ThemeSettings = {
   errorColor: "#ef4444", // Red
   successColor: "#22c55e", // Green
   warningColor: "#f59e0b", // Amber
+  infoColor: "#3b82f6", // Blue
   borderColor: "#d1d5db", // Light gray
 
   // New global colors
@@ -57,10 +78,26 @@ const defaultTheme: ThemeSettings = {
   darkModeBackgroundColor: "#1f2937", // Dark gray
   darkModeTextColor: "#f3f4f6", // Light gray
 
+  // Gradient colors
+  primaryGradientStart: "#3b82f6", // Blue
+  primaryGradientEnd: "#2563eb", // Darker blue
+  primaryGradientDirection: "to right",
+  backgroundGradientStart: "#ffffff", // White
+  backgroundGradientEnd: "#f9fafb", // Light gray
+  backgroundGradientDirection: "to bottom",
+
+  // Opacity settings
+  primaryOpacity: 1,
+  backgroundOpacity: 1,
+
   // Typography
   fontFamily: "Arial, sans-serif",
   fontSize: "16px",
   headingFontFamily: "Arial, sans-serif",
+  headingFontSize: "24px",
+  lineHeight: "1.5",
+  fontWeight: "normal",
+  letterSpacing: "normal",
 
   // Borders
   borderRadius: "0.375rem", // 6px
@@ -70,12 +107,15 @@ const defaultTheme: ThemeSettings = {
   inputPadding: "0.5rem 0.75rem",
   buttonPadding: "0.5rem 1rem",
   componentSpacing: "1rem",
+  containerPadding: "1.5rem",
 
   // Shadows
   boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+  hoverBoxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
 
   // Transitions
   transitionDuration: "150ms",
+  transitionTimingFunction: "ease-in-out",
 }
 
 // Create the theme store
@@ -120,6 +160,12 @@ const createThemeStore = () => {
     saveTheme()
   }
 
+  // Apply a custom theme
+  function applyCustomTheme(customTheme: ThemeSettings) {
+    set({ ...defaultTheme, ...customTheme })
+    saveTheme()
+  }
+
   // Initialize by loading saved theme
   if (typeof window !== "undefined") {
     loadTheme()
@@ -135,6 +181,7 @@ const createThemeStore = () => {
         saveTheme()
       }
     },
+    applyCustomTheme,
     load: loadTheme,
   }
 }
@@ -153,6 +200,10 @@ export const predefinedThemes = {
     canvasBackgroundColor: "#1f2937", // Dark gray
     darkModeBackgroundColor: "#111827", // Darker gray
     darkModeTextColor: "#f9fafb", // Lighter gray
+    primaryGradientStart: "#3b82f6", // Blue
+    primaryGradientEnd: "#1d4ed8", // Darker blue
+    backgroundGradientStart: "#1f2937", // Dark gray
+    backgroundGradientEnd: "#111827", // Darker gray
   },
   modern: {
     ...defaultTheme,
@@ -162,9 +213,12 @@ export const predefinedThemes = {
     borderRadius: "0.5rem", // 8px
     boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
     fontFamily: "Inter, sans-serif",
+    headingFontFamily: "Inter, sans-serif",
     canvasBackgroundColor: "#f9fafb", // Light gray
     darkModeBackgroundColor: "#1e1e2e", // Dark blue-gray
     darkModeTextColor: "#e2e8f0", // Light blue-gray
+    primaryGradientStart: "#8b5cf6", // Purple
+    primaryGradientEnd: "#6d28d9", // Darker purple
   },
   minimal: {
     ...defaultTheme,
@@ -177,6 +231,8 @@ export const predefinedThemes = {
     canvasBackgroundColor: "#ffffff", // White
     darkModeBackgroundColor: "#121212", // Very dark gray
     darkModeTextColor: "#e5e5e5", // Light gray
+    primaryGradientStart: "#000000", // Black
+    primaryGradientEnd: "#000000", // Black
   },
   playful: {
     ...defaultTheme,
@@ -186,10 +242,55 @@ export const predefinedThemes = {
     borderRadius: "1rem", // 16px
     boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
     fontFamily: "Comic Sans MS, cursive",
+    headingFontFamily: "Comic Sans MS, cursive",
     canvasBackgroundColor: "#f0f9ff", // Light blue
     darkModeBackgroundColor: "#1e293b", // Dark slate
     darkModeTextColor: "#f8fafc", // Light slate
+    primaryGradientStart: "#8b5cf6", // Purple
+    primaryGradientEnd: "#ec4899", // Pink
+    primaryGradientDirection: "to right",
   },
+}
+
+// Custom theme management
+export function saveCustomTheme(name: string, settings: ThemeSettings) {
+  if (typeof window !== "undefined") {
+    const customThemes = loadCustomThemes()
+
+    // Check if theme with this name already exists
+    const existingIndex = customThemes.findIndex((t) => t.name === name)
+
+    if (existingIndex >= 0) {
+      // Update existing theme
+      customThemes[existingIndex] = { name, settings }
+    } else {
+      // Add new theme
+      customThemes.push({ name, settings })
+    }
+
+    localStorage.setItem("kceva-custom-themes", JSON.stringify(customThemes))
+  }
+}
+
+export function loadCustomThemes() {
+  if (typeof window !== "undefined") {
+    try {
+      const themes = localStorage.getItem("kceva-custom-themes")
+      return themes ? JSON.parse(themes) : []
+    } catch (e) {
+      console.error("Failed to load custom themes:", e)
+      return []
+    }
+  }
+  return []
+}
+
+export function deleteCustomTheme(name: string) {
+  if (typeof window !== "undefined") {
+    const customThemes = loadCustomThemes()
+    const filteredThemes = customThemes.filter((t) => t.name !== name)
+    localStorage.setItem("kceva-custom-themes", JSON.stringify(filteredThemes))
+  }
 }
 
 // Export the theme store

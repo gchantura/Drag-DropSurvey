@@ -1,4 +1,3 @@
-<!-- src/lib/components/Designer.svelte -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { derived } from 'svelte/store';
@@ -16,6 +15,7 @@
 	import { initHistory } from '$lib/stores/historyStore.ts';
 	import { showShortcutsDialog, showCodeSidebar } from '$lib/stores/uiStore.ts';
 	import { generateFullExport } from '$lib/utils/code-export-utils.ts';
+	import KcevaLogo from '$lib/components/KcevaLogo.svelte';
 
 	function toggleShortcutsDialog() {
 		showShortcutsDialog.update((value) => !value);
@@ -102,7 +102,11 @@
 	}
 </script>
 
-<svelte:head><title>Kceva Designer</title></svelte:head>
+<svelte:head>
+	<title>Kceva Designer</title>
+	<link rel="icon" href="/favicon.png" type="image/png" />
+</svelte:head>
+
 <div class="flex h-screen w-screen flex-col overflow-hidden bg-white md:flex-row dark:bg-gray-900">
 	<aside
 		class="sidebar border-b border-gray-200 md:flex-shrink-0 md:border-r md:border-b-0 dark:border-gray-700"
@@ -139,7 +143,10 @@
 				class="max-h-[80vh] w-[600px] overflow-y-auto rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800"
 			>
 				<div class="mb-4 flex items-center justify-between">
-					<h2 class="text-xl font-bold">Keyboard Shortcuts</h2>
+					<div class="flex items-center gap-2">
+						<KcevaLogo size={24} />
+						<h2 class="text-xl font-bold">Keyboard Shortcuts</h2>
+					</div>
 					<button
 						class="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
 						on:click={toggleShortcutsDialog}
