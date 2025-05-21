@@ -34,29 +34,33 @@
 	}
 </script>
 
-<label for={id}>
-	{label}{required ? ' *' : ''}
-</label>
+<div class="dropdown-component w-full">
+	<label for={id} class="mb-1 block text-sm font-medium">
+		{label}{required ? ' *' : ''}
+	</label>
 
-{#if description}
-	<p>{description}</p>
-{/if}
+	{#if description}
+		<p class="mt-1 mb-2 text-xs text-gray-500">{description}</p>
+	{/if}
 
-<select
-	{id}
-	bind:this={selectElement}
-	{disabled}
-	{required}
-	{value}
-	on:change={handleChange}
-	on:blur={handleBlur}
->
-	<option value="" disabled>{placeholder}</option>
-	{#each options as option}
-		<option value={option}>{option}</option>
-	{/each}
-</select>
+	<select
+		{id}
+		bind:this={selectElement}
+		class="w-full rounded border border-gray-300 p-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+		class:border-red-500={error && touched}
+		{disabled}
+		{required}
+		{value}
+		on:change={handleChange}
+		on:blur={handleBlur}
+	>
+		<option value="" disabled>{placeholder}</option>
+		{#each options as option}
+			<option value={option}>{option}</option>
+		{/each}
+	</select>
 
-{#if error && touched}
-	<p>{error}</p>
-{/if}
+	{#if error && touched}
+		<p class="mt-1 text-xs text-red-500">{error}</p>
+	{/if}
+</div>

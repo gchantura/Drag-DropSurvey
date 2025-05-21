@@ -51,79 +51,47 @@
 			error = '';
 		}
 	}
-
-	// Dynamic styles based on theme
-	$: textareaStyle = {
-		fontFamily: $themeStore.fontFamily,
-		fontSize: $themeStore.fontSize,
-		color: $themeStore.textColor,
-		backgroundColor: $themeStore.backgroundColor,
-		borderRadius: $themeStore.borderRadius,
-		borderWidth: $themeStore.borderWidth,
-		borderColor: error && touched ? $themeStore.errorColor : $themeStore.borderColor,
-		padding: $themeStore.inputPadding,
-		boxShadow: $themeStore.boxShadow,
-		transition: `all ${$themeStore.transitionDuration} ease-in-out`,
-		width: '100%',
-		resize
-	};
-
-	// Convert style object to inline style string
-	function styleToString(style: Record<string, string>) {
-		return Object.entries(style)
-			.map(([key, value]) => `${key}: ${value}`)
-			.join('; ');
-	}
 </script>
 
-<label
-	for={id}
-	class="block text-sm font-medium"
-	style="color: {$themeStore.textColor}; font-family: {$themeStore.fontFamily};"
->
-	{label}{required ? ' *' : ''}
-</label>
+<div class="textarea-component w-full">
+	<label for={id} class="mb-1 block text-sm font-medium">
+		{label}{required ? ' *' : ''}
+	</label>
 
-{#if description}
-	<p
-		class="mt-1 mb-2 text-xs"
-		style="color: {$themeStore.secondaryColor}; font-family: {$themeStore.fontFamily};"
-	>
-		{description}
-	</p>
-{/if}
+	{#if description}
+		<p class="mt-1 mb-2 text-xs text-gray-500">
+			{description}
+		</p>
+	{/if}
 
-<textarea
-	{id}
-	bind:this={textareaElement}
-	style={styleToString(textareaStyle)}
-	{placeholder}
-	{disabled}
-	{required}
-	maxlength={maxLength}
-	minlength={minLength}
-	{rows}
-	{value}
-	on:input={handleInput}
-	on:blur={handleBlur}
-></textarea>
+	<textarea
+		{id}
+		bind:this={textareaElement}
+		class="w-full rounded border border-gray-300 p-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+		class:border-red-500={error && touched}
+		style="resize: {resize};"
+		{placeholder}
+		{disabled}
+		{required}
+		maxlength={maxLength}
+		minlength={minLength}
+		{rows}
+		{value}
+		on:input={handleInput}
+		on:blur={handleBlur}
+	></textarea>
 
-{#if maxLength}
-	<div class="mt-1 flex justify-end">
-		<span
-			class="text-xs"
-			style="color: {$themeStore.secondaryColor}; font-family: {$themeStore.fontFamily};"
-		>
-			{charCount}/{maxLength}
-		</span>
-	</div>
-{/if}
+	{#if maxLength}
+		<div class="mt-1 flex justify-end">
+			<span class="text-xs text-gray-500">
+				{charCount}/{maxLength}
+			</span>
+		</div>
+	{/if}
 
-{#if error && touched}
-	<p
-		class="mt-1 text-xs"
-		style="color: {$themeStore.errorColor}; font-family: {$themeStore.fontFamily};"
-	>
-		{error}
-	</p>
-{/if}
+	{#if error && touched}
+		<p class="mt-1 text-xs text-red-500">
+			{error}
+		</p>
+	{/if}
+</div>

@@ -25,6 +25,8 @@
 		selectComponent: { event: MouseEvent; component: SurveyComponentType };
 		startDrag: { event: MouseEvent; component: SurveyComponentType };
 		startResize: { event: MouseEvent; component: SurveyComponentType };
+		selectArea: SelectionBox;
+		clickOutside: void;
 	};
 	const dispatch = createEventDispatcher<EventMap>();
 	function forwardEvent(event: Event) {

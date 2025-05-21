@@ -39,12 +39,19 @@ export interface SurveyComponent {
     locked?: boolean
 }
 
+// Update the SelectionBox type to include the properties used in CanvasContent.svelte
 export type SelectionBox = {
     active: boolean
     startX: number
     startY: number
     endX: number
     endY: number
+    // Add these properties for compatibility with CanvasContent.svelte
+    x?: number
+    y?: number
+    width?: number
+    height?: number
+    visible?: boolean
 }
 
 export type DraggingGuide = {

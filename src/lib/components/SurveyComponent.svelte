@@ -3,19 +3,19 @@
 	import { createEventDispatcher } from 'svelte';
 	import type { SurveyComponent } from '$lib/types/types.ts';
 	const componentMap = {
-		text: () => import('./MainComponents/TextComponent.svelte'),
-		input: () => import('./MainComponents/InputComponent.svelte'),
-		textarea: () => import('./MainComponents/TextAreaComponent.svelte'),
-		checkbox: () => import('./MainComponents/CheckboxComponent.svelte'),
-		radio: () => import('./MainComponents/RadioComponent.svelte'),
-		dropdown: () => import('./MainComponents/DropdownComponent.svelte'),
-		fileAttachment: () => import('./MainComponents/FileAttachmentComponent.svelte'),
-		fileUpload: () => import('./MainComponents/FileUploadComponent.svelte'),
-		section: () => import('./MainComponents/SectionComponent.svelte'),
-		title: () => import('./MainComponents/TitleComponent.svelte'),
-		introduction: () => import('./MainComponents/IntroductionComponent.svelte'),
-		matrix: () => import('./MainComponents/MatrixComponent.svelte'),
-		rating: () => import('./MainComponents/RatingComponent.svelte')
+		text: () => import('$lib/components/MainComponents/TextComponent.svelte'),
+		input: () => import('$lib/components/MainComponents/InputComponent.svelte'),
+		textarea: () => import('$lib/components/MainComponents/TextAreaComponent.svelte'),
+		checkbox: () => import('$lib/components/MainComponents/CheckboxComponent.svelte'),
+		radio: () => import('$lib/components/MainComponents/RadioComponent.svelte'),
+		dropdown: () => import('$lib/components/MainComponents/DropdownComponent.svelte'),
+		fileAttachment: () => import('$lib/components/MainComponents/FileAttachmentComponent.svelte'),
+		fileUpload: () => import('$lib/components/MainComponents/FileUploadComponent.svelte'),
+		section: () => import('$lib/components/MainComponents/SectionComponent.svelte'),
+		title: () => import('$lib/components/MainComponents/TitleComponent.svelte'),
+		introduction: () => import('$lib/components/MainComponents/IntroductionComponent.svelte'),
+		matrix: () => import('$lib/components/MainComponents/MatrixComponent.svelte'),
+		rating: () => import('$lib/components/MainComponents/RatingComponent.svelte')
 	};
 	export let component: SurveyComponent;
 	export let isSelected: boolean = false;
@@ -140,12 +140,15 @@
 	}
 	.component-content {
 		position: relative;
+		pointer-events: none;
 	}
 	.component-content :global(input),
 	.component-content :global(textarea),
 	.component-content :global(select),
-	.component-content :global(button) {
-		pointer-events: auto;
+	.component-content :global(button),
+	.component-content :global(label),
+	.component-content :global(fieldset) {
+		pointer-events: none;
 	}
 	.resize-handle {
 		z-index: 25;
