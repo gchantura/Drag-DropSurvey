@@ -8,6 +8,8 @@
 	import { createEventDispatcher } from 'svelte';
 	import { undo, redo, canUndo, canRedo } from '$lib/stores/historyStore.ts';
 	import { showShortcutsDialog, showCodeSidebar } from '$lib/stores/uiStore.ts';
+	import ThemeToggle from '$lib/components/ThemeCustomizer/ThemeToggle.svelte';
+	import ThemeCustomizer from '$lib/components/ThemeCustomizer/ThemeCustomizer.svelte';
 
 	const dispatch = createEventDispatcher<{
 		resetSelection: void;
@@ -24,6 +26,7 @@
 	let alertTimeout: number | undefined = undefined;
 	let showImport = $state(false);
 	let importFile: FileList | null = $state(null);
+	let showThemeCustomizer = $state(false);
 
 	function showAlert(message: string, color: typeof alertColor = 'info', duration: number = 3000) {
 		alertMessage = message;
@@ -140,6 +143,10 @@
 	function handleExportCode() {
 		dispatch('exportCode');
 		showAlert('Exporting component code...', 'info', 1500);
+	}
+
+	function handleToggleThemeCustomizer(event: CustomEvent<boolean>) {
+		showThemeCustomizer = event.detail;
 	}
 </script>
 
@@ -321,6 +328,12 @@
 		</div>
 	{/if}
 </div>
+
+<!-- Theme Customizer Toggle Button -->
+<ThemeToggle bind:isOpen={showThemeCustomizer} on:toggle={handleToggleThemeCustomizer} />
+
+<!-- Theme Customizer Panel -->
+<ThemeCustomizer bind:isOpen={showThemeCustomizer} />
 
 <style>
 	.resize-handle {

@@ -1,7 +1,7 @@
 <!-- src/lib/components/SurveyComponent.svelte -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import type { SurveyComponent as SurveyComponentType } from '$lib/types/types.ts';
+	import type { SurveyComponent } from '$lib/types/types.ts';
 	const componentMap = {
 		text: () => import('./MainComponents/TextComponent.svelte'),
 		input: () => import('./MainComponents/InputComponent.svelte'),
@@ -17,13 +17,13 @@
 		matrix: () => import('./MainComponents/MatrixComponent.svelte'),
 		rating: () => import('./MainComponents/RatingComponent.svelte')
 	};
-	export let component: SurveyComponentType;
+	export let component: SurveyComponent;
 	export let isSelected: boolean = false;
 	export let isActive: boolean = false;
 	const dispatch = createEventDispatcher<{
-		select: { event: MouseEvent; component: SurveyComponentType };
-		startDrag: { event: MouseEvent; component: SurveyComponentType };
-		startResize: { event: MouseEvent; component: SurveyComponentType };
+		select: { event: MouseEvent; component: SurveyComponent };
+		startDrag: { event: MouseEvent; component: SurveyComponent };
+		startResize: { event: MouseEvent; component: SurveyComponent };
 	}>();
 	let componentImplementation: Promise<{ default: any }> | null = null;
 	$: {
@@ -69,7 +69,7 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-	class="component absolute border outline-none"
+	class="component absolute outline-none"
 	class:selected={isSelected}
 	class:active={isActive}
 	class:locked={component.locked}
@@ -81,7 +81,7 @@
 	style:font-family={component.fontFamily ?? 'Arial'}
 	style:font-size="{component.fontSize ?? 16}px"
 	style:color={component.color ?? '#000000'}
-	style:background-color={component.bgColor ?? '#FFFFFF'}
+	style:background-color="transparent"
 	style:z-index={isSelected ? 20 : 10}
 	onmousedown={handleMouseDown}
 	onclick={handleClick}
@@ -91,7 +91,7 @@
 	aria-label="{component.type} component: {component.label ?? 'No Label'}"
 	aria-pressed={isSelected}
 >
-	<div class="component-content pointer-events-none h-full w-full overflow-hidden p-2">
+	<div class="component-content pointer-events-none h-full w-full overflow-hidden">
 		{#if componentImplementation}
 			{#await componentImplementation then module}
 				{#if module && module.default}
@@ -119,7 +119,7 @@
 
 <style>
 	.component {
-		border-color: transparent;
+		border: none;
 		transition:
 			box-shadow 0.1s ease-in-out,
 			border-color 0.1s ease-in-out;
@@ -133,12 +133,10 @@
 	.component.selected {
 		outline: 1px solid #3b82f6;
 		outline-offset: 1px;
-		border-color: #3b82f6;
 	}
 	.component.active {
 		outline: 2px solid #2563eb;
 		outline-offset: 0px;
-		border-color: #2563eb;
 	}
 	.component-content {
 		position: relative;
