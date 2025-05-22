@@ -12,8 +12,6 @@
 	import IconCheckbox from '$lib/components/icons/components/checkbox.svg?raw';
 	import IconRadio from '$lib/components/icons/components/radio.svg?raw';
 	import IconDropdown from '$lib/components/icons/components/dropdown.svg?raw';
-	import IconAttachment from '$lib/components/icons/components/attachment.svg?raw';
-	import IconFileUpload from '$lib/components/icons/components/file-upload.svg?raw';
 	import IconSection from '$lib/components/icons/components/section.svg?raw';
 	import IconTitle from '$lib/components/icons/components/title.svg?raw';
 	import IconHeader from '$lib/components/icons/components/header.svg?raw';
@@ -65,78 +63,54 @@
 </script>
 
 <div
-	class="container-toolbar rounded border border-gray-300 bg-white text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-slate-300"
+	class="Top_Middle_Toolbar_Container container-toolbar rounded border border-gray-300 bg-white text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-slate-300"
 >
 	<div class="flex items-center">
-		<div class="h-8 w-px bg-gray-300 dark:bg-gray-700"></div>
+		<div class="Top_Middle_Toolbar">
+			{#each components.filter((c) => ['text', 'input', 'textarea'].includes(c.type)) as comp}
+				<button
+					class="group mx-1 flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+					title="{comp.label} (Shortcut: {getShortcutKey(comp.type)})"
+					aria-label={`Add ${comp.label} component`}
+					onclick={() => handleAddComponent(comp.type)}
+				>
+					<span
+						class="inline-block h-5 w-5 text-gray-700 group-hover:text-black dark:text-slate-200 dark:group-hover:text-white [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
+					>
+						{@html sanitizeSvg(comp.icon)}
+					</span>
+				</button>
+			{/each}
 
-		<div class="h-8 w-px bg-gray-300 dark:bg-gray-700"></div>
+			{#each components.filter( (c) => ['checkbox', 'radio', 'dropdown', 'fileUpload', 'rating'].includes(c.type) ) as comp}
+				<button
+					class="group mx-1 flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+					title="{comp.label} (Shortcut: {getShortcutKey(comp.type)})"
+					aria-label={`Add ${comp.label} component`}
+					onclick={() => handleAddComponent(comp.type)}
+				>
+					<span
+						class="inline-block h-5 w-5 text-gray-700 group-hover:text-black dark:text-slate-200 dark:group-hover:text-white [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
+					>
+						{@html sanitizeSvg(comp.icon)}
+					</span>
+				</button>
+			{/each}
 
-		<!-- Component buttons -->
-		<div class="flex items-center overflow-x-auto px-2">
-			<div class="flex flex-col">
-				<div class="mb-1 text-xs text-gray-500 dark:text-gray-400">Basic</div>
-				<div class="flex">
-					{#each components.filter((c) => ['text', 'input', 'textarea'].includes(c.type)) as comp}
-						<button
-							class="group mx-1 flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-							title="{comp.label} (Shortcut: {getShortcutKey(comp.type)})"
-							aria-label={`Add ${comp.label} component`}
-							onclick={() => handleAddComponent(comp.type)}
-						>
-							<span
-								class="inline-block h-5 w-5 text-gray-700 group-hover:text-black dark:text-slate-200 dark:group-hover:text-white [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
-							>
-								{@html sanitizeSvg(comp.icon)}
-							</span>
-						</button>
-					{/each}
-				</div>
-			</div>
-
-			<div class="mx-2 h-8 w-px bg-gray-300 dark:bg-gray-700"></div>
-
-			<div class="flex flex-col">
-				<div class="mb-1 text-xs text-gray-500 dark:text-gray-400">Form</div>
-				<div class="flex">
-					{#each components.filter( (c) => ['checkbox', 'radio', 'dropdown', 'fileUpload', 'rating'].includes(c.type) ) as comp}
-						<button
-							class="group mx-1 flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-							title="{comp.label} (Shortcut: {getShortcutKey(comp.type)})"
-							aria-label={`Add ${comp.label} component`}
-							onclick={() => handleAddComponent(comp.type)}
-						>
-							<span
-								class="inline-block h-5 w-5 text-gray-700 group-hover:text-black dark:text-slate-200 dark:group-hover:text-white [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
-							>
-								{@html sanitizeSvg(comp.icon)}
-							</span>
-						</button>
-					{/each}
-				</div>
-			</div>
-
-			<div class="mx-2 h-8 w-px bg-gray-300 dark:bg-gray-700"></div>
-
-			<div class="flex flex-col">
-				<div class="mb-1 text-xs text-gray-500 dark:text-gray-400">Structure</div>
-				<div class="flex">
-					{#each components.filter( (c) => ['section', 'title', 'introduction', 'matrix', 'attachment'].includes(c.type) ) as comp}
-						<button
-							class="group mx-1 flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-							title="{comp.label} (Shortcut: {getShortcutKey(comp.type)})"
-							aria-label={`Add ${comp.label} component`}
-							onclick={() => handleAddComponent(comp.type)}
-						>
-							<span
-								class="inline-block h-5 w-5 text-gray-700 group-hover:text-black dark:text-slate-200 dark:group-hover:text-white [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
-							>
-								{@html sanitizeSvg(comp.icon)}
-							</span>
-						</button>
-					{/each}
-				</div>
-			</div>
+			{#each components.filter( (c) => ['section', 'title', 'introduction', 'matrix', 'attachment'].includes(c.type) ) as comp}
+				<button
+					class="group mx-1 flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+					title="{comp.label} (Shortcut: {getShortcutKey(comp.type)})"
+					aria-label={`Add ${comp.label} component`}
+					onclick={() => handleAddComponent(comp.type)}
+				>
+					<span
+						class="inline-block h-5 w-5 text-gray-700 group-hover:text-black dark:text-slate-200 dark:group-hover:text-white [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current"
+					>
+						{@html sanitizeSvg(comp.icon)}
+					</span>
+				</button>
+			{/each}
 		</div>
 	</div>
 </div>
@@ -153,5 +127,11 @@
 	}
 	.container-toolbar button {
 		cursor: pointer;
+	}
+
+	.Top_Middle_Toolbar {
+		display: flex;
+		align-items: center;
+		opacity: 0.8;
 	}
 </style>

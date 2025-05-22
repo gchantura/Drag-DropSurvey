@@ -670,7 +670,6 @@
 									selectedPredefinedTheme = themeName;
 									applyPredefinedTheme();
 								})}
-							role="button"
 							tabindex="0"
 							aria-pressed={selectedPredefinedTheme === themeName}
 						>

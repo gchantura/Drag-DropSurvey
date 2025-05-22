@@ -6,12 +6,7 @@
 	import { theme, toggleTheme } from '$lib/stores/themeStore.ts';
 	import { createEventDispatcher } from 'svelte';
 	import { undo, redo, canUndo, canRedo } from '$lib/stores/historyStore.ts';
-	import {
-		showShortcutsDialog,
-		showCodeSidebar,
-		showThemeCustomizer
-	} from '$lib/stores/uiStore.ts';
-	import ThemeToggle from '$lib/components/ThemeCustomizer/ThemeToggle.svelte';
+	import { showCodeSidebar, showThemeCustomizer } from '$lib/stores/uiStore.ts';
 	import ThemeCustomizer from '$lib/components/ThemeCustomizer/ThemeCustomizer.svelte';
 	import KcevaLogo from '$lib/components/KcevaLogo.svelte';
 
@@ -160,17 +155,16 @@
 >
 	<button
 		type="button"
-		class="resize-handle absolute top-0 right-0 z-10 h-full w-2 cursor-col-resize touch-none bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500"
+		class="resize-handle"
 		aria-label="Resize sidebar"
 		onmousedown={handleResizeStart}
 		ontouchstart={handleResizeStart}
 	></button>
-	<div class="mb-4 flex items-center justify-between">
+	<div class="Left_Sidebar_Header">
 		<div class="flex items-center gap-2">
-			<KcevaLogo size={28} />
-			<h2 class="text-xl font-semibold">Kceva Designer</h2>
+			<h1 class="Logo">Kceva</h1>
 		</div>
-		<div class="flex">
+		<div class="Main_Properties_Row">
 			<button
 				type="button"
 				aria-label="Theme customizer"
@@ -281,7 +275,6 @@
 			</button>
 		</div>
 	</div>
-
 	<div class="mt-6 mb-4 border-t pt-4 dark:border-gray-700">
 		<h3 class="mb-2 text-lg font-medium">Actions</h3>
 		<DesignerActions
@@ -386,6 +379,57 @@
 
 		.resize-handle {
 			display: none;
+		}
+	}
+
+	.Left_Sidebar_Header {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		align-items: self-start;
+	}
+	.Main_Properties_Row {
+		margin-top: 1rem;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		width: 100%;
+	}
+	.Logo {
+		font-size: 1.5rem;
+		font-weight: bold;
+		letter-spacing: 1px;
+	}
+	.Logo::first-letter {
+		color: var(--color-primary-700);
+	}
+	.resize-handle {
+		position: absolute;
+		top: 0;
+		right: 0;
+		z-index: 10;
+		height: 100%;
+		width: 2px;
+		cursor: col-resize;
+		touch-action: none;
+		background-color: #e5e7eb; /* gray-200 */
+
+		/* Optional: Transition for hover effect */
+		transition: background-color 0.2s ease;
+	}
+
+	/* Hover effect for light mode */
+	.resize-handle:hover {
+		background-color: #d1d5db; /* gray-300 */
+	}
+
+	/* Dark mode styles */
+	@media (prefers-color-scheme: dark) {
+		.resize-handle {
+			background-color: #4b5563; /* gray-600 */
+		}
+		.resize-handle:hover {
+			background-color: #6b7280; /* gray-500 */
 		}
 	}
 </style>

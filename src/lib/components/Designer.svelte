@@ -8,7 +8,7 @@
 		clearSelectionState,
 		selectedComponentIds
 	} from '$lib/stores/alignmentStore.ts';
-	import Canvas from './Canvas.svelte';
+	import Canvas from '$lib/components/Canvas.svelte';
 	import SideBar from '$lib/components/SideBar.svelte';
 	import SideBarRight from '$lib/components/SideBarRight.svelte';
 	import CodeSidebar from '$lib/components/CodeSidebar.svelte';
@@ -102,10 +102,7 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Kceva Designer</title>
-	<link rel="icon" href="/favicon.png" type="image/png" />
-</svelte:head>
+<svelte:head></svelte:head>
 
 <div class="flex h-screen w-screen flex-col overflow-hidden bg-white md:flex-row dark:bg-gray-900">
 	<aside
@@ -143,9 +140,9 @@
 				class="max-h-[80vh] w-[600px] overflow-y-auto rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800"
 			>
 				<div class="mb-4 flex items-center justify-between">
-					<div class="flex items-center gap-2">
+					<div>
 						<KcevaLogo size={24} />
-						<h2 class="text-xl font-bold">Keyboard Shortcuts</h2>
+						<h2 class="mt-1 text-xl font-bold">Keyboard Shortcuts</h2>
 					</div>
 					<button
 						class="rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
