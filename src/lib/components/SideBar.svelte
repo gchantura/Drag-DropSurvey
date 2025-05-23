@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { exportDesign, clearDesign, importDesign } from '$lib/stores/designStore.ts';
 	import DesignerActions from '$lib/components/SideBarComponents/DesignerActions.svelte';
+	import LogoKceva from '$lib/components/icons/KcevaLogo.svelte';
 	import Alert from '$lib/components/ui/Alert.svelte';
 	import type { SurveyComponent } from '$lib/types/types.ts';
 	import { theme, toggleTheme } from '$lib/stores/themeStore.ts';
@@ -8,7 +9,7 @@
 	import { undo, redo, canUndo, canRedo } from '$lib/stores/historyStore.ts';
 	import { showCodeSidebar, showThemeCustomizer } from '$lib/stores/uiStore.ts';
 	import ThemeCustomizer from '$lib/components/ThemeCustomizer/ThemeCustomizer.svelte';
-	import KcevaLogo from '$lib/components/KcevaLogo.svelte';
+	import KcevaLogo from '$lib/components/icons/KcevaLogo.svelte';
 
 	const dispatch = createEventDispatcher<{
 		resetSelection: void;
@@ -162,7 +163,8 @@
 	></button>
 	<div class="Left_Sidebar_Header">
 		<div class="flex items-center gap-2">
-			<h1 class="Logo">Kceva</h1>
+			<!-- <h1 class="Logo">Kceva</h1> -->
+			<KcevaLogo />
 		</div>
 		<div class="Main_Properties_Row">
 			<button
