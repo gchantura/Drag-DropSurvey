@@ -669,7 +669,10 @@
 	}
 
 	function handleDeleteGuide(e: CustomEvent<GuideInfo>): void {
-		handleRemoveGuide({ detail: { direction: e.detail.direction, index: e.detail.index } } as any);
+		const event = new CustomEvent('removeGuide', {
+			detail: { direction: e.detail.direction, index: e.detail.index }
+		});
+		handleRemoveGuide(event);
 		closeContextMenu();
 	}
 

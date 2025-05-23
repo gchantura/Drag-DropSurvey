@@ -367,10 +367,6 @@
 {/if}
 
 <style>
-	.resize-handle {
-		z-index: 50;
-	}
-
 	@media (max-width: 768px) {
 		.sidebar-left-container {
 			width: 100% !important;
@@ -409,7 +405,7 @@
 		right: 0;
 		z-index: 10;
 		height: 100%;
-		width: 2px;
+		width: 0.3rem;
 		cursor: col-resize;
 		touch-action: none;
 		background-color: #e5e7eb; /* gray-200 */

@@ -46,34 +46,77 @@
 
 <div
 	bind:this={sidebarEl}
-	class="sidebar-right-container allow-input relative h-full overflow-y-auto bg-gray-50 p-4 pl-6 dark:bg-gray-800 dark:text-gray-300"
+	class="sidebar-right-container allow-input bg-gray-50 dark:bg-gray-800 dark:text-gray-300"
 	style="width: {sidebarWidth}px;"
 >
 	<button
 		type="button"
-		class="resize-handle absolute top-0 left-0 z-10 h-full w-2 cursor-col-resize touch-none bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500"
+		class="resize-handle bg-gray-200 hover:bg-gray-500 dark:bg-gray-600 dark:hover:bg-gray-500"
 		aria-label="Resize sidebar"
 		onmousedown={handleResizeStart}
 		ontouchstart={handleResizeStart}
 	></button>
 
-	<div class="mb-4 flex items-center justify-between">
-		<h2 class="text-xl font-semibold">Properties</h2>
+	<div class="header-container">
+		<h2 class="header-title">Properties</h2>
 	</div>
 
 	<ComponentToolbarRight {selectedComponent} />
 
-	<div class="mt-6 border-t pt-4 dark:border-gray-700">
-		<h3 class="mb-2 text-lg font-medium">Component Properties</h3>
+	<div class="properties-section border-gray-300 dark:border-gray-700">
+		<h3 class="section-title">Component Properties</h3>
 		<PropertiesEditor component={selectedComponent} />
 	</div>
 </div>
 
 <style>
-	.resize-handle {
-		z-index: 50;
+	.sidebar-right-container {
+		position: relative;
+		height: 100%;
+		overflow-y: auto;
+		z-index: 1000;
+		padding: 1rem;
+		padding-left: 1.5rem;
 	}
 
+	.resize-handle {
+		position: absolute;
+		z-index: 10000;
+		top: 0;
+		left: 0;
+		z-index: 50;
+		height: 100%;
+		width: 0.3rem;
+		cursor: col-resize;
+		touch-action: none;
+	}
+
+	.header-container {
+		margin-bottom: 1rem;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.header-title {
+		font-size: 1.25rem;
+		font-weight: 600;
+	}
+
+	.properties-section {
+		margin-top: 1.5rem;
+		border-top-width: 1px;
+		border-top-style: solid;
+		padding-top: 1rem;
+	}
+
+	.section-title {
+		margin-bottom: 0.5rem;
+		font-size: 1.125rem;
+		font-weight: 500;
+	}
+
+	/* Mobile responsive styles */
 	@media (max-width: 768px) {
 		.sidebar-right-container {
 			width: 100% !important;

@@ -2,7 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 
 	const { units, enableSnap, showGuides } = $props<{
-		units: 'cm' | 'inches' | 'px';
+		units: 'px' | 'inches' | 'cm';
 		enableSnap: boolean;
 		showGuides: boolean;
 	}>();
