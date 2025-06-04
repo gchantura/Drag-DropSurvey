@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { derived } from 'svelte/store';
-	import type { SurveyComponent } from '$lib/types/types.ts';
 	import { componentsStore } from '$lib/stores/designStore.ts';
 	import {
 		primarySelectedComponentId,
@@ -141,7 +140,6 @@
 			>
 				<div class="mb-4 flex items-center justify-between">
 					<div>
-						<KcevaLogo size={24} />
 						<h2 class="mt-1 text-xl font-bold">Keyboard Shortcuts</h2>
 					</div>
 					<button
@@ -149,19 +147,6 @@
 						on:click={toggleShortcutsDialog}
 						aria-label="Close shortcuts dialog"
 					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="24"
-							height="24"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"
-							></line></svg
-						>
 					</button>
 				</div>
 

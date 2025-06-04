@@ -1,16 +1,16 @@
 <!-- src/lib/components/KcevaLogo.svelte -->
 <script>
-    export let className = '';
-  </script>
-  
-  <svg
-    class={className}
-    width="70"
-    viewBox="0 0 1405 1051"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    aria-hidden="true"
-  >
+	export let className = '';
+</script>
+
+<svg
+	class={className}
+	width="70"
+	viewBox="0 0 1405 1051"
+	fill="none"
+	xmlns="http://www.w3.org/2000/svg"
+	aria-hidden="true"
+>
 	<g clip-path="url(#clip0_1_13)">
 		<path
 			d="M979.102 1016.41H693.593L743.806 843.328H928.889L979.102 1016.41Z"

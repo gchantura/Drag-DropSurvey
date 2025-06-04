@@ -9,20 +9,15 @@
 	} from '$lib/stores/themeCustomizerStore.ts';
 	import { componentStyleStore } from '$lib/stores/componentStyleStore.ts';
 	import ColorPicker from './ColorPicker.svelte';
-	import RangeSlider from './RangeSlider.svelte';
 	import SelectInput from './SelectInput.svelte';
 	import TextInput from './TextInput.svelte';
 	import ComponentStyleEditor from './ComponentStyleEditor.svelte';
-	import { theme } from '$lib/stores/themeStore.ts';
 	import { showThemeCustomizer } from '$lib/stores/uiStore.ts';
-	import GradientPicker from './GradientPicker.svelte';
-	import OpacityControl from './OpacityControl.svelte';
-	import KcevaLogo from '$lib/components/KcevaLogo.svelte';
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
-	import { componentsStore } from '$lib/stores/designStore.ts';
 	import type { SurveyComponent } from '$lib/types/types.ts';
 	import SurveyComponentPreview from './SurveyComponentPreview.svelte';
+	import KcevaLogo from '$lib/components/KcevaLogo.svelte';
 
 	export let isOpen = false;
 
@@ -279,34 +274,6 @@
 	<div
 		class="relative max-h-[90vh] w-[800px] overflow-y-auto rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800"
 	>
-		<div class="mb-4 flex items-center justify-between">
-			<div class="flex items-center gap-3">
-				<KcevaLogo size={32} />
-				<h2 class="text-xl font-bold text-gray-900 dark:text-white">Theme Customizer</h2>
-			</div>
-			<button
-				class="rounded-full p-1 text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"
-				on:click={handleClose}
-				aria-label="Close theme customizer"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					aria-hidden="true"
-				>
-					<line x1="18" y1="6" x2="6" y2="18"></line>
-					<line x1="6" y1="6" x2="18" y2="18"></line>
-				</svg>
-			</button>
-		</div>
-
 		<!-- Main tabs -->
 		<div class="mb-4 border-b border-gray-200 dark:border-gray-700">
 			<ul class="-mb-px flex flex-wrap">

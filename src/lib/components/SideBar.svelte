@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { exportDesign, clearDesign, importDesign } from '$lib/stores/designStore.ts';
 	import DesignerActions from '$lib/components/SideBarComponents/DesignerActions.svelte';
-	import LogoKceva from '$lib/components/icons/KcevaLogo.svelte';
 	import Alert from '$lib/components/ui/Alert.svelte';
 	import type { SurveyComponent } from '$lib/types/types.ts';
 	import { theme, toggleTheme } from '$lib/stores/themeStore.ts';
@@ -393,14 +392,7 @@
 		align-items: center;
 		width: 100%;
 	}
-	.Logo {
-		font-size: 1.5rem;
-		font-weight: bold;
-		letter-spacing: 1px;
-	}
-	.Logo::first-letter {
-		color: var(--color-primary-700);
-	}
+
 	.resize-handle {
 		position: absolute;
 		top: 0;
