@@ -14,7 +14,7 @@
 	}>();
 </script>
 
-<div class="toolbar">
+<div class="toolbar bg-gray-50 dark:bg-gray-800">
 	<div class="button-group">
 		<button
 			class="toolbar-button"
@@ -124,8 +124,6 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 8px 0;
-		border-bottom: 1px solid #d1d5db;
-		background-color: #f3f4f6;
 		padding: 8px;
 	}
 
@@ -155,17 +153,5 @@
 
 	.icon {
 		flex-shrink: 0;
-	}
-
-	/* Dark mode styles */
-	@media (prefers-color-scheme: dark) {
-		.toolbar {
-			border-bottom-color: #374151;
-			background-color: #1f2937;
-		}
-
-		.toolbar-button:hover {
-			background-color: rgba(255, 255, 255, 0.1);
-		}
 	}
 </style>
